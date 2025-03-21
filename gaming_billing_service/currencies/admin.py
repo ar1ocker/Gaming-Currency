@@ -1,0 +1,146 @@
+from django.contrib import admin
+from django.http import HttpRequest
+
+from .models import (
+    CheckingAccount,
+    CurrencyTransaction,
+    CurrencyUnit,
+    ExchangeRule,
+    ExchangeTransaction,
+    Player,
+    Service,
+    TransferTransaction,
+)
+
+
+class ReadOnlyAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj=...):
+        return False
+
+
+@admin.register(ExchangeRule)
+class ExchangeRuleAdmin(admin.ModelAdmin):
+    list_display = [
+        "enabled_forward",
+        "enabled_reverse",
+        "first_unit",
+        "second_unit",
+        "forward_rate",
+        "reverse_rate",
+        "min_first_amount",
+        "min_second_amount",
+        "created_at",
+        "updated_at",
+    ]
+    list_display_links = list_display
+    list_filter = list_display
+
+
+@admin.register(CurrencyTransaction)
+class CurrencyTransactionAdmin(ReadOnlyAdmin):
+    change_form_template = "transactions/admin/change.html"
+    change_list_template = "transactions/admin/list.html"
+
+    search_fields = [
+        "uuid",
+        "status_description",
+        "service__name",
+        "description__search",
+        "checking_account__player__player_id",
+    ]
+    list_filter = ["status", "service", "created_at", "closed_at"]
+    list_display = ["uuid", "service", "amount", "checking_account", "status", "created_at", "closed_at"]
+
+
+@admin.register(TransferTransaction)
+class TransferTransactionAdmin(ReadOnlyAdmin):
+    change_form_template = "transfers/admin/change.html"
+    change_list_template = "transfers/admin/list.html"
+
+    search_fields = [
+        "uuid",
+        "status_description",
+        "description",
+        "from_checking_account__player__player_id",
+        "to_checking_account__player__player_id",
+        "service__name",
+    ]
+    list_filter = ["status", "service", "created_at", "closed_at"]
+    list_display = [
+        "uuid",
+        "service__name",
+        "amount",
+        "from_checking_account",
+        "to_checking_account",
+        "status",
+        "created_at",
+        "closed_at",
+    ]
+
+
+@admin.register(ExchangeTransaction)
+class ExchangeTransactionAdmin(ReadOnlyAdmin):
+    change_form_template = "exchanges/admin/change.html"
+    change_list_template = "exchanges/admin/list.html"
+
+    search_fields = [
+        "uuid",
+        "status_description",
+        "description",
+        "from_checking_account__player__player_id",
+        "to_checking_account__player__player_id",
+        "service__name",
+    ]
+    list_filter = ["status", "service", "created_at", "closed_at"]
+    list_display = [
+        "uuid",
+        "service__name",
+        "from_amount",
+        "to_amount",
+        "from_checking_account",
+        "to_checking_account",
+        "status",
+        "created_at",
+        "closed_at",
+    ]
+
+
+@admin.register(CheckingAccount)
+class CheckingAccountAdmin(admin.ModelAdmin):
+    search_fields = ["player"]
+    list_filter = ["currency_unit", "created_at"]
+    list_display = ["player", "currency_unit__measurement", "amount", "created_at"]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj=...):
+        return False
+
+
+@admin.register(CurrencyUnit)
+class CurrencyUnitAdmin(admin.ModelAdmin):
+    list_display = ["id", "symbol", "measurement"]
+
+
+@admin.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ["enabled", "player_id"]
+    search_fields = ["player_id"]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj=...):
+        return False
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display: list[str] = ["name"]

@@ -1,0 +1,22 @@
+[DJANGO]
+SECRET_KEY = "dev"
+
+# Вывод дебаг информации при ошибках, true или false, true использовать только при разработке
+DEBUG = true
+
+POSTGRES_DB = 'postgres'
+POSTGRES_USER = 'postgres'
+POSTGRES_PASSWORD = 'dev'
+POSTGRES_HOST = 'db'
+POSTGRES_PORT = 5432
+
+# IP или домен под которым будет работать ваш сайт, указывать без порта и 
+# протокола, при запросе сайта с другим заголовком host в запросе - конфигуратор не ответит
+ALLOWED_HOSTS = ['*']
+
+[HMAC]
+ENABLE = false
+TIMESTAMP_DEVIATION = 10
+
+[CURRENCY_TRANSACTIONS]
+DEFAULT_AUTO_REJECT_SECONDS = 180
