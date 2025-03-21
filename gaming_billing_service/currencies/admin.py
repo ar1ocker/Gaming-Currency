@@ -131,7 +131,7 @@ class CurrencyUnitAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ["enabled", "player_id"]
+    list_display = ["player_id", "enabled"]
     search_fields = ["player_id"]
 
     def has_delete_permission(self, request, obj=None):

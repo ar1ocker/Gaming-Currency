@@ -17,6 +17,7 @@ class Service(models.Model):
 
 
 class Player(models.Model):
+    enabled = models.BooleanField()
     player_id = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -95,7 +96,7 @@ class CheckingAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Счёт пользователя {self.player_id} - {self.amount}"  # type: ignore _id adds by django
+        return f"Счёт пользователя {self.player.player_id} {self.currency_unit.symbol} - {self.amount}"  # type: ignore _id adds by django
 
     class Meta:
         verbose_name = "Счет пользователя"
