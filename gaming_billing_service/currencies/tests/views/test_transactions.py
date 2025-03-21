@@ -36,21 +36,21 @@ class TransactionActionLoginTest(TestCase):
 
 class TransactionActionTest(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpTestData(cls) -> None:
         cls.uuid = uuid1()
+        cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
+        cls.service = Service.objects.create(name="test_service")
+        cls.player = PlayersService.get_or_create(player_id="123123")
 
-        super().setUpClass()
+        return super().setUpTestData()
 
     def assertMessages(self, response: HttpResponse, message: Message):
         msgs = list(messages.get_messages(response.wsgi_request))
         self.assertIn(message, msgs)
 
     def setUp(self) -> None:
-        superuser = User.objects.create_superuser("root", "email@example.com", "pass")
-        self.client.force_login(superuser)
+        self.client.force_login(self.superuser)
 
-        self.service = Service.objects.create(name="test_service")
-        self.player = PlayersService.get_or_create(player_id="123123")
         self.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         self.account = AccountsService.get_or_create(player=self.player, currency_unit=self.unit)
 

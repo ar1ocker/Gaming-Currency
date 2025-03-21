@@ -41,23 +41,23 @@ class TransferActionLoginTest(TestCase):
 
 class TransferActionTest(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpTestData(cls):
         cls.uuid = uuid1()
+        cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
 
-        super().setUpClass()
+        cls.service = Service.objects.create(name="test_service")
+        cls.player1 = PlayersService.get_or_create(player_id="123123")
+        cls.player2 = PlayersService.get_or_create(player_id="321321")
+        cls.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
+
+        return super().setUpTestData()
 
     def assertMessages(self, response: HttpResponse, message: Message):
         msgs = list(messages.get_messages(response.wsgi_request))
         self.assertIn(message, msgs)
 
     def setUp(self) -> None:
-        superuser = User.objects.create_superuser("root", "email@example.com", "pass")
-        self.client.force_login(superuser)
-
-        self.service = Service.objects.create(name="test_service")
-        self.player1 = PlayersService.get_or_create(player_id="123123")
-        self.player2 = PlayersService.get_or_create(player_id="321321")
-        self.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
+        self.client.force_login(self.superuser)
         self.account1 = AccountsService.get_or_create(player=self.player1, currency_unit=self.unit)
 
         TransactionsService.confirm(
