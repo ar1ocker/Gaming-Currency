@@ -38,12 +38,13 @@ class HolderType(models.Model):
 
 class Holder(models.Model):
     enabled = models.BooleanField()
+    holder_id = models.CharField(max_length=255, unique=True)
     holder_type = models.ForeignKey(
         HolderType,
         on_delete=models.PROTECT,
         related_name="holders",
     )
-    holder_id = models.CharField(max_length=255, unique=True)
+    info = models.JSONField(default=dict)
 
     def __str__(self):
         return f"Держатель {self.holder_type}:{self.holder_id}"

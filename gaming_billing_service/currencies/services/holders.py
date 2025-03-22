@@ -3,9 +3,9 @@ from currencies.models import Holder, HolderType
 
 class HoldersService:
     @classmethod
-    def get_or_create(cls, *, holder_id: str, holder_type: HolderType) -> Holder:
+    def get_or_create(cls, *, holder_id: str, holder_type: HolderType, info: dict = {}) -> Holder:
         return Holder.objects.get_or_create(
-            holder_id=holder_id, defaults={"enabled": True, "holder_type": holder_type}
+            holder_id=holder_id, defaults={"enabled": True, "holder_type": holder_type, "info": info}
         )[0]
 
     @classmethod
