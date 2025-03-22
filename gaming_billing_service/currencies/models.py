@@ -21,11 +21,11 @@ class Holder(models.Model):
     holder_id = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return f"Игрок {self.holder_id}"
+        return f"Держатель {self.holder_id}"
 
     class Meta:
-        verbose_name = "Игрок"
-        verbose_name_plural = "Игроки"
+        verbose_name = "Держатель"
+        verbose_name_plural = "Держатели"
 
 
 class CurrencyUnit(models.Model):
