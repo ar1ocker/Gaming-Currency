@@ -121,7 +121,7 @@ class CheckingAccount(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Счёт держателя {self.holder.holder_id} {self.currency_unit.symbol} - {self.amount}"  # type: ignore _id adds by django
+        return f"Счёт держателя {self.holder.holder_id} {self.currency_unit.symbol} - {self.amount}"
 
     class Meta:
         verbose_name = "Счет держателя"
