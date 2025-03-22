@@ -131,8 +131,8 @@ class CurrencyUnitAdmin(admin.ModelAdmin):
 
 @admin.register(Holder)
 class HolderAdmin(admin.ModelAdmin):
-    list_display = ["holder_id", "enabled"]
-    search_fields = ["holder_id"]
+    list_display = ["holder_id", "holder_type", "enabled"]
+    search_fields = ["holder_id", "holder_type"]
 
     def has_delete_permission(self, request, obj=None):
         return False

@@ -1,12 +1,19 @@
 from currencies.models import CurrencyUnit, Service
-from currencies.services import AccountsService, HoldersService, TransactionsService
+from currencies.services import (
+    AccountsService,
+    HoldersService,
+    HoldersTypeService,
+    TransactionsService,
+)
 from django.test import TestCase
 
 
 class CurrencyTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.holder = HoldersService().get_or_create(holder_id="test")
+        holder_type = HoldersTypeService.get_default()
+
+        cls.holder = HoldersService.get_or_create(holder_id="test", holder_type=holder_type)
         cls.service = Service.objects.create(name="servicename")
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 

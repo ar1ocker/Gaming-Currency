@@ -1,11 +1,10 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Holder, Service
-from currencies.services import AccountsService, TransactionsService
+from currencies.models import CurrencyTransaction, CurrencyUnit, Service
+from currencies.services import AccountsService, HoldersService, TransactionsService
 from django import forms, views
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.validators import MinValueValidator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -35,9 +34,9 @@ class TransactionCreateView(views.View):
         if not form.is_valid():
             return self.render_form(request, form)
 
-        try:
-            holder = Holder.objects.get(holder_id=form.cleaned_data["holder_id"])
-        except Holder.DoesNotExist:
+        holder = HoldersService.get(holder_id=form.cleaned_data["holder_id"])
+
+        if holder is None:
             form.add_error("holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 

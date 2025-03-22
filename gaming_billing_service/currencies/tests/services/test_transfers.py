@@ -2,6 +2,7 @@ from currencies.models import CheckingAccount, CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
     HoldersService,
+    HoldersTypeService,
     TransactionsService,
     TransfersService,
 )
@@ -11,10 +12,12 @@ from django.test import TestCase
 class CurrencyTransferTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
+        holder_type = HoldersTypeService.get_default()
+
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         cls.service = Service.objects.create(name="servicename")
-        cls.first_holder = HoldersService.get_or_create(holder_id="1")
-        cls.second_holder = HoldersService.get_or_create(holder_id="2")
+        cls.first_holder = HoldersService.get_or_create(holder_id="1", holder_type=holder_type)
+        cls.second_holder = HoldersService.get_or_create(holder_id="2", holder_type=holder_type)
 
         return super().setUpTestData()
 

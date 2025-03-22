@@ -1,5 +1,6 @@
 import uuid
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -16,12 +17,36 @@ class Service(models.Model):
         verbose_name_plural = "Сервисы"
 
 
+class HolderType(models.Model):
+    name = models.SlugField(max_length=100, unique=True)
+
+    def __str__(self):
+        return f"Тип держателя {self.name}"
+
+    class Meta:
+        verbose_name = "Тип держателя"
+        verbose_name_plural = "Типы держателей"
+
+    @classmethod
+    def get_default(cls):
+        return cls.objects.get_or_create(name=settings.CURRENCY_DEFAULT_HOLDER_TYPE_SLUG)[0]
+
+    @classmethod
+    def get_default_holder_pk(cls):
+        return cls.get_default().pk
+
+
 class Holder(models.Model):
     enabled = models.BooleanField()
+    holder_type = models.ForeignKey(
+        HolderType,
+        on_delete=models.PROTECT,
+        related_name="holders",
+    )
     holder_id = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return f"Держатель {self.holder_id}"
+        return f"Держатель {self.holder_type}:{self.holder_id}"
 
     class Meta:
         verbose_name = "Держатель"

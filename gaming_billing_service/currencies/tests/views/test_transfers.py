@@ -4,6 +4,7 @@ from currencies.models import CurrencyUnit, Service, TransferTransaction
 from currencies.services import (
     AccountsService,
     HoldersService,
+    HoldersTypeService,
     TransactionsService,
     TransfersService,
 )
@@ -46,8 +47,9 @@ class TransferActionTest(TestCase):
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
 
         cls.service = Service.objects.create(name="test_service")
-        cls.holder1 = HoldersService.get_or_create(holder_id="123123")
-        cls.holder2 = HoldersService.get_or_create(holder_id="321321")
+        holder_type = HoldersTypeService.get_default()
+        cls.holder1 = HoldersService.get_or_create(holder_id="123123", holder_type=holder_type)
+        cls.holder2 = HoldersService.get_or_create(holder_id="321321", holder_type=holder_type)
         cls.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 
         return super().setUpTestData()

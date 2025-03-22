@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyUnit, Holder, Service, TransferTransaction
-from currencies.services import TransfersService
+from currencies.models import CurrencyUnit, Service, TransferTransaction
+from currencies.services import HoldersService, TransfersService
 from currencies.services.accounts import AccountsService
 from django import forms, views
 from django.contrib import messages
@@ -36,11 +36,14 @@ class TransferCreateView(views.View):
         if not form.is_valid():
             return self.render_form(request, form)
 
-        try:
-            from_holder = Holder.objects.get(holder_id=form.cleaned_data["from_holder_id"])
-            to_holder = Holder.objects.get(holder_id=form.cleaned_data["to_holder_id"])
-        except Holder.DoesNotExist:
-            form.add_error("holder_id", "Holder with given ID does not exist")
+        from_holder = HoldersService.get(holder_id=form.cleaned_data["from_holder_id"])
+        if from_holder is None:
+            form.add_error("from_holder_id", "Holder with given ID does not exist")
+            return self.render_form(request, form)
+
+        to_holder = HoldersService.get(holder_id=form.cleaned_data["to_holder_id"])
+        if to_holder is None:
+            form.add_error("to_holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 
         from_checking_account = AccountsService.get_or_create(

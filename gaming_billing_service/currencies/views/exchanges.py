@@ -1,13 +1,7 @@
 from datetime import timedelta
 
-from currencies.models import (
-    CurrencyUnit,
-    ExchangeRule,
-    ExchangeTransaction,
-    Holder,
-    Service,
-)
-from currencies.services import ExchangesService
+from currencies.models import CurrencyUnit, ExchangeRule, ExchangeTransaction, Service
+from currencies.services import ExchangesService, HoldersService
 from django import forms, views
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -38,9 +32,9 @@ class ExchangeCreateView(views.View):
         if not form.is_valid():
             return render(request, "exchanges/create.html", {"form": form})
 
-        try:
-            holder = Holder.objects.get(holder_id=form.cleaned_data["holder_id"])
-        except Holder.DoesNotExist:
+        holder = HoldersService.get(holder_id=form.cleaned_data["holder_id"])
+
+        if holder is None:
             form.add_error("holder_id", "Holder with given ID does not exist")
             return render(request, "exchanges/create.html", {"form": form})
 

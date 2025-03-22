@@ -3,6 +3,7 @@ from currencies.services import (
     AccountsService,
     ExchangesService,
     HoldersService,
+    HoldersTypeService,
     TransactionsService,
 )
 from django.test import TestCase
@@ -12,7 +13,10 @@ class ExchangesServiceTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.service = Service.objects.create(name="service_name")
-        cls.holder = HoldersService.get_or_create(holder_id="testholderid")
+
+        holder_type = HoldersTypeService.get_default()
+        cls.holder = HoldersService.get_or_create(holder_id="testholderid", holder_type=holder_type)
+
         cls.unit1 = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         cls.unit2 = CurrencyUnit.objects.create(symbol="ultrappg", measurement="ультра попугаи")
 

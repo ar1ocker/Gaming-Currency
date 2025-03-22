@@ -161,3 +161,5 @@ LOGIN_URL = "/admin/login/"
 
 # Currency transactions
 DEFAULT_AUTO_REJECT_TIMEOUT = timedelta(seconds=config["CURRENCY_TRANSACTIONS"]["DEFAULT_AUTO_REJECT_SECONDS"])
+
+CURRENCY_DEFAULT_HOLDER_TYPE_SLUG = "player"

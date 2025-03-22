@@ -1,19 +1,12 @@
-from datetime import timedelta
 from uuid import uuid1
 
-from currencies.models import (
-    CurrencyUnit,
-    ExchangeRule,
-    ExchangeTransaction,
-    Service,
-    TransferTransaction,
-)
+from currencies.models import CurrencyUnit, ExchangeRule, ExchangeTransaction, Service
 from currencies.services import (
     AccountsService,
     ExchangesService,
     HoldersService,
+    HoldersTypeService,
     TransactionsService,
-    TransfersService,
 )
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -53,7 +46,8 @@ class ExchangesActionTests(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
         cls.service = Service.objects.create(name="test service")
-        cls.holder = HoldersService.get_or_create(holder_id="holderidtest")
+        holder_type = HoldersTypeService.get_default()
+        cls.holder = HoldersService.get_or_create(holder_id="holderidtest", holder_type=holder_type)
         cls.unit1 = CurrencyUnit.objects.create(symbol="ppg", measurement="popugi")
         cls.unit2 = CurrencyUnit.objects.create(symbol="uppg", measurement="ultra popugi")
 

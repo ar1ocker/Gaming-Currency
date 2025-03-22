@@ -1,7 +1,12 @@
 from uuid import uuid1
 
 from currencies.models import CurrencyTransaction, CurrencyUnit, Service
-from currencies.services import AccountsService, HoldersService, TransactionsService
+from currencies.services import (
+    AccountsService,
+    HoldersService,
+    HoldersTypeService,
+    TransactionsService,
+)
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.base import Message
@@ -40,7 +45,7 @@ class TransactionActionTest(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
         cls.service = Service.objects.create(name="test_service")
-        cls.holder = HoldersService.get_or_create(holder_id="123123")
+        cls.holder = HoldersService.get_or_create(holder_id="123123", holder_type=HoldersTypeService.get_default())
 
         return super().setUpTestData()
 
