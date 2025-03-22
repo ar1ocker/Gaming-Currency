@@ -1,7 +1,7 @@
 from currencies.models import CheckingAccount, CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
-    PlayersService,
+    HoldersService,
     TransactionsService,
     TransfersService,
 )
@@ -13,17 +13,17 @@ class CurrencyTransferTransactionServicesTests(TestCase):
     def setUpTestData(cls) -> None:
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         cls.service = Service.objects.create(name="servicename")
-        cls.first_player = PlayersService.get_or_create(player_id="1")
-        cls.second_player = PlayersService.get_or_create(player_id="2")
+        cls.first_holder = HoldersService.get_or_create(holder_id="1")
+        cls.second_holder = HoldersService.get_or_create(holder_id="2")
 
         return super().setUpTestData()
 
     def setUp(self):
         self.one_checking_account = AccountsService.get_or_create(
-            player=self.first_player, currency_unit=self.currency_unit
+            holder=self.first_holder, currency_unit=self.currency_unit
         )
         self.two_checking_account = AccountsService.get_or_create(
-            player=self.second_player, currency_unit=self.currency_unit
+            holder=self.second_holder, currency_unit=self.currency_unit
         )
 
     def add_amount(self, checking_account: CheckingAccount, amount: int):
@@ -166,7 +166,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         currency_unit = CurrencyUnit.objects.create(symbol="sln", measurement="слоны")
 
-        diff_currency_account = AccountsService.get_or_create(player=self.second_player, currency_unit=currency_unit)
+        diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)
         self.add_amount(diff_currency_account, 100)
 
         with self.assertRaisesRegex(TransfersService.ValidationError, ".*different currency units.*"):

@@ -7,7 +7,7 @@ from .models import (
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
-    Player,
+    Holder,
     Service,
     TransferTransaction,
 )
@@ -52,7 +52,7 @@ class CurrencyTransactionAdmin(ReadOnlyAdmin):
         "status_description",
         "service__name",
         "description__search",
-        "checking_account__player__player_id",
+        "checking_account__holder__holder_id",
     ]
     list_filter = ["status", "service", "created_at", "closed_at"]
     list_display = ["uuid", "service", "amount", "checking_account", "status", "created_at", "closed_at"]
@@ -67,8 +67,8 @@ class TransferTransactionAdmin(ReadOnlyAdmin):
         "uuid",
         "status_description",
         "description",
-        "from_checking_account__player__player_id",
-        "to_checking_account__player__player_id",
+        "from_checking_account__holder__holder_id",
+        "to_checking_account__holder__holder_id",
         "service__name",
     ]
     list_filter = ["status", "service", "created_at", "closed_at"]
@@ -93,8 +93,8 @@ class ExchangeTransactionAdmin(ReadOnlyAdmin):
         "uuid",
         "status_description",
         "description",
-        "from_checking_account__player__player_id",
-        "to_checking_account__player__player_id",
+        "from_checking_account__holder__holder_id",
+        "to_checking_account__holder__holder_id",
         "service__name",
     ]
     list_filter = ["status", "service", "created_at", "closed_at"]
@@ -113,9 +113,9 @@ class ExchangeTransactionAdmin(ReadOnlyAdmin):
 
 @admin.register(CheckingAccount)
 class CheckingAccountAdmin(admin.ModelAdmin):
-    search_fields = ["player"]
+    search_fields = ["holder"]
     list_filter = ["currency_unit", "created_at"]
-    list_display = ["player", "currency_unit__measurement", "amount", "created_at"]
+    list_display = ["holder", "currency_unit__measurement", "amount", "created_at"]
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -129,10 +129,10 @@ class CurrencyUnitAdmin(admin.ModelAdmin):
     list_display = ["id", "symbol", "measurement"]
 
 
-@admin.register(Player)
-class PlayerAdmin(admin.ModelAdmin):
-    list_display = ["player_id", "enabled"]
-    search_fields = ["player_id"]
+@admin.register(Holder)
+class HolderAdmin(admin.ModelAdmin):
+    list_display = ["holder_id", "enabled"]
+    search_fields = ["holder_id"]
 
     def has_delete_permission(self, request, obj=None):
         return False

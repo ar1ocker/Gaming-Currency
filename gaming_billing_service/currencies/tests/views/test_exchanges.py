@@ -11,7 +11,7 @@ from currencies.models import (
 from currencies.services import (
     AccountsService,
     ExchangesService,
-    PlayersService,
+    HoldersService,
     TransactionsService,
     TransfersService,
 )
@@ -53,12 +53,12 @@ class ExchangesActionTests(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
         cls.service = Service.objects.create(name="test service")
-        cls.player = PlayersService.get_or_create(player_id="playeridtest")
+        cls.holder = HoldersService.get_or_create(holder_id="holderidtest")
         cls.unit1 = CurrencyUnit.objects.create(symbol="ppg", measurement="popugi")
         cls.unit2 = CurrencyUnit.objects.create(symbol="uppg", measurement="ultra popugi")
 
-        cls.checking_account1 = AccountsService.get_or_create(player=cls.player, currency_unit=cls.unit1)
-        cls.checking_account2 = AccountsService.get_or_create(player=cls.player, currency_unit=cls.unit2)
+        cls.checking_account1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit1)
+        cls.checking_account2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit2)
 
         cls.rule = ExchangeRule.objects.create(
             enabled_forward=True,
@@ -90,7 +90,7 @@ class ExchangesActionTests(TestCase):
 
         self.transaction = ExchangesService.create(
             service=self.service,
-            player=self.player,
+            holder=self.holder,
             exchange_rule=self.rule,
             from_unit=self.unit1,
             to_unit=self.unit2,
@@ -118,7 +118,7 @@ class ExchangesActionTests(TestCase):
             reverse("currencies:exchange_create"),
             {
                 "service": self.service.pk,
-                "player_id": self.player.player_id,
+                "holder_id": self.holder.holder_id,
                 "exchange_rule": self.rule.pk,
                 "from_unit": self.unit1.pk,
                 "to_unit": self.unit2.pk,

@@ -4,7 +4,7 @@ from currencies.models import (
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
-    Player,
+    Holder,
     Service,
 )
 from currencies.services import ExchangesService
@@ -22,7 +22,7 @@ from django.utils.decorators import method_decorator
 class ExchangeCreateView(views.View):
     class Form(forms.Form):
         service = forms.ModelChoiceField(Service.objects.all())
-        player_id = forms.CharField()
+        holder_id = forms.CharField()
         exchange_rule = forms.ModelChoiceField(ExchangeRule.objects.all())
         from_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
         to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
@@ -39,9 +39,9 @@ class ExchangeCreateView(views.View):
             return render(request, "exchanges/create.html", {"form": form})
 
         try:
-            player = Player.objects.get(player_id=form.cleaned_data["player_id"])
-        except Player.DoesNotExist:
-            form.add_error("player_id", "Player with given ID does not exist")
+            holder = Holder.objects.get(holder_id=form.cleaned_data["holder_id"])
+        except Holder.DoesNotExist:
+            form.add_error("holder_id", "Holder with given ID does not exist")
             return render(request, "exchanges/create.html", {"form": form})
 
         service = form.cleaned_data["service"]
@@ -54,7 +54,7 @@ class ExchangeCreateView(views.View):
         try:
             exchange_transaction = ExchangesService.create(
                 service=service,
-                player=player,
+                holder=holder,
                 exchange_rule=exchange_rule,
                 from_unit=from_unit,
                 to_unit=to_unit,

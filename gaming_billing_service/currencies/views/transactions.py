@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Player, Service
+from currencies.models import CurrencyTransaction, CurrencyUnit, Holder, Service
 from currencies.services import AccountsService, TransactionsService
 from django import forms, views
 from django.contrib import messages
@@ -18,7 +18,7 @@ class TransactionCreateView(views.View):
 
     class Form(forms.Form):
         service = forms.ModelChoiceField(Service.objects.all())
-        player_id = forms.CharField()
+        holder_id = forms.CharField()
         to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
         amount = forms.IntegerField()
         auto_reject_timedelta = forms.IntegerField(min_value=180)
@@ -36,12 +36,12 @@ class TransactionCreateView(views.View):
             return self.render_form(request, form)
 
         try:
-            player = Player.objects.get(player_id=form.cleaned_data["player_id"])
-        except Player.DoesNotExist:
-            form.add_error("player_id", "Player with given ID does not exist")
+            holder = Holder.objects.get(holder_id=form.cleaned_data["holder_id"])
+        except Holder.DoesNotExist:
+            form.add_error("holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 
-        checking_account = AccountsService.get_or_create(player=player, currency_unit=form.cleaned_data["to_unit"])
+        checking_account = AccountsService.get_or_create(holder=holder, currency_unit=form.cleaned_data["to_unit"])
 
         service = form.cleaned_data["service"]
         amount = form.cleaned_data["amount"]

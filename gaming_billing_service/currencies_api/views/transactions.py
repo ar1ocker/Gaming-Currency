@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Player
+from currencies.models import CurrencyTransaction, CurrencyUnit, Holder
 from currencies.services import AccountsService, TransactionsService
 from currencies_api.models import ServiceHMAC
 from currencies_api.service_auth import hmac_service_auth
@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 class TransactionCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        player_id = serializers.SlugRelatedField(queryset=Player.objects.all(), slug_field="player_id")
+        holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
         unit_symbol = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
         amount = serializers.IntegerField()
         description = serializers.CharField()
@@ -27,7 +27,7 @@ class TransactionCreateAPI(APIView):
         serializer.is_valid(raise_exception=True)
 
         account = AccountsService.get_or_create(
-            player=serializer.validated_data["player_id"], currency_unit=serializer.validated_data["unit_symbol"]
+            holder=serializer.validated_data["holder_id"], currency_unit=serializer.validated_data["unit_symbol"]
         )
 
         transaction = TransactionsService.create(

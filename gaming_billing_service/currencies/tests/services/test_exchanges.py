@@ -2,7 +2,7 @@ from currencies.models import CurrencyUnit, ExchangeRule, Service
 from currencies.services import (
     AccountsService,
     ExchangesService,
-    PlayersService,
+    HoldersService,
     TransactionsService,
 )
 from django.test import TestCase
@@ -12,15 +12,15 @@ class ExchangesServiceTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.service = Service.objects.create(name="service_name")
-        cls.player = PlayersService.get_or_create(player_id="testplayerid")
+        cls.holder = HoldersService.get_or_create(holder_id="testholderid")
         cls.unit1 = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         cls.unit2 = CurrencyUnit.objects.create(symbol="ultrappg", measurement="ультра попугаи")
 
         return super().setUpTestData()
 
     def setUp(self):
-        self.checking_account_unit1 = AccountsService.get_or_create(player=self.player, currency_unit=self.unit1)
-        self.checking_account_unit2 = AccountsService.get_or_create(player=self.player, currency_unit=self.unit2)
+        self.checking_account_unit1 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit1)
+        self.checking_account_unit2 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit2)
 
         self.exchange_rule = ExchangeRule.objects.create(
             enabled_forward=True,
@@ -54,7 +54,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesMessage(ExchangesService.ValidationError, "Forward exchange is disabled"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -69,7 +69,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesMessage(ExchangesService.ValidationError, "Reverse exchange is disabled"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit2,
                 to_unit=self.unit1,
@@ -82,7 +82,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*from_unit.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=new_unit,
                 to_unit=self.unit2,
@@ -93,7 +93,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*to_unit.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=new_unit,
@@ -105,7 +105,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*меньше минимальной.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -116,7 +116,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*меньше минимальной.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit2,
                 to_unit=self.unit1,
@@ -128,7 +128,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*не делится нацело.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -140,7 +140,7 @@ class ExchangesServiceTests(TestCase):
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*Insufficient.*"):
             ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -151,7 +151,7 @@ class ExchangesServiceTests(TestCase):
     def test_create_exchange_remove_amount_from_account(self):
         ExchangesService.create(
             service=self.service,
-            player=self.player,
+            holder=self.holder,
             exchange_rule=self.exchange_rule,
             from_unit=self.unit1,
             to_unit=self.unit2,
@@ -166,7 +166,7 @@ class ExchangesServiceTests(TestCase):
         exchange_transaction = ExchangesService.confirm(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -183,7 +183,7 @@ class ExchangesServiceTests(TestCase):
         exchange_transaction = ExchangesService.reject(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -200,7 +200,7 @@ class ExchangesServiceTests(TestCase):
         ExchangesService.confirm(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -219,7 +219,7 @@ class ExchangesServiceTests(TestCase):
         ExchangesService.confirm(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit2,
                 to_unit=self.unit1,
@@ -238,7 +238,7 @@ class ExchangesServiceTests(TestCase):
         ExchangesService.reject(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
@@ -256,7 +256,7 @@ class ExchangesServiceTests(TestCase):
         ExchangesService.reject(
             exchange_transaction=ExchangesService.create(
                 service=self.service,
-                player=self.player,
+                holder=self.holder,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit2,
                 to_unit=self.unit1,

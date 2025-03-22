@@ -3,7 +3,7 @@ from uuid import uuid1
 from currencies.models import CurrencyUnit, Service, TransferTransaction
 from currencies.services import (
     AccountsService,
-    PlayersService,
+    HoldersService,
     TransactionsService,
     TransfersService,
 )
@@ -46,8 +46,8 @@ class TransferActionTest(TestCase):
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
 
         cls.service = Service.objects.create(name="test_service")
-        cls.player1 = PlayersService.get_or_create(player_id="123123")
-        cls.player2 = PlayersService.get_or_create(player_id="321321")
+        cls.holder1 = HoldersService.get_or_create(holder_id="123123")
+        cls.holder2 = HoldersService.get_or_create(holder_id="321321")
         cls.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 
         return super().setUpTestData()
@@ -58,7 +58,7 @@ class TransferActionTest(TestCase):
 
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
-        self.account1 = AccountsService.get_or_create(player=self.player1, currency_unit=self.unit)
+        self.account1 = AccountsService.get_or_create(holder=self.holder1, currency_unit=self.unit)
 
         TransactionsService.confirm(
             currency_transaction=TransactionsService.create(
@@ -67,7 +67,7 @@ class TransferActionTest(TestCase):
             status_description="teststatus",
         )
 
-        account2 = AccountsService.get_or_create(player=self.player2, currency_unit=self.unit)
+        account2 = AccountsService.get_or_create(holder=self.holder2, currency_unit=self.unit)
 
         self.transfer = TransfersService.create(
             service=self.service,
@@ -90,8 +90,8 @@ class TransferActionTest(TestCase):
             {
                 "service": self.service.pk,
                 "unit": self.unit.pk,
-                "from_player_id": self.player1.player_id,
-                "to_player_id": self.player2.player_id,
+                "from_holder_id": self.holder1.holder_id,
+                "to_holder_id": self.holder2.holder_id,
                 "amount": 10,
                 "auto_reject_timedelta": 180,
             },

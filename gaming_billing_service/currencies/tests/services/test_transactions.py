@@ -1,19 +1,19 @@
 from currencies.models import CurrencyUnit, Service
-from currencies.services import AccountsService, PlayersService, TransactionsService
+from currencies.services import AccountsService, HoldersService, TransactionsService
 from django.test import TestCase
 
 
 class CurrencyTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.player = PlayersService().get_or_create(player_id="test")
+        cls.holder = HoldersService().get_or_create(holder_id="test")
         cls.service = Service.objects.create(name="servicename")
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 
         return super().setUpTestData()
 
     def setUp(self):
-        self.checking_account = AccountsService().get_or_create(player=self.player, currency_unit=self.currency_unit)
+        self.checking_account = AccountsService().get_or_create(holder=self.holder, currency_unit=self.currency_unit)
 
     def add_amount(self, amount):
         return TransactionsService().confirm(

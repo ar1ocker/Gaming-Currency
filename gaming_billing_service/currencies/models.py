@@ -16,12 +16,12 @@ class Service(models.Model):
         verbose_name_plural = "Сервисы"
 
 
-class Player(models.Model):
+class Holder(models.Model):
     enabled = models.BooleanField()
-    player_id = models.CharField(max_length=100, unique=True)
+    holder_id = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
-        return f"Игрок {self.player_id}"
+        return f"Игрок {self.holder_id}"
 
     class Meta:
         verbose_name = "Игрок"
@@ -90,20 +90,20 @@ class ExchangeRule(models.Model):
 
 
 class CheckingAccount(models.Model):
-    player = models.ForeignKey(Player, on_delete=models.PROTECT, related_name="checking_accounts")
+    holder = models.ForeignKey(Holder, on_delete=models.PROTECT, related_name="checking_accounts")
     currency_unit = models.ForeignKey(CurrencyUnit, on_delete=models.PROTECT)
     amount = models.PositiveBigIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Счёт пользователя {self.player.player_id} {self.currency_unit.symbol} - {self.amount}"  # type: ignore _id adds by django
+        return f"Счёт держателя {self.holder.holder_id} {self.currency_unit.symbol} - {self.amount}"  # type: ignore _id adds by django
 
     class Meta:
-        verbose_name = "Счет пользователя"
-        verbose_name_plural = "Счета пользователей"
+        verbose_name = "Счет держателя"
+        verbose_name_plural = "Счета держателей"
 
         constraints = [
-            models.UniqueConstraint(fields=["player", "currency_unit"], name="unique_user_currency"),
+            models.UniqueConstraint(fields=["holder", "currency_unit"], name="unique_holder_currency"),
         ]
 
 

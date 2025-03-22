@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyUnit, Player, Service, TransferTransaction
+from currencies.models import CurrencyUnit, Holder, Service, TransferTransaction
 from currencies.services import TransfersService
 from currencies.services.accounts import AccountsService
 from django import forms, views
@@ -19,8 +19,8 @@ class TransferCreateView(views.View):
     class Form(forms.Form):
         service = forms.ModelChoiceField(Service.objects.all())
         unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        from_player_id = forms.CharField()
-        to_player_id = forms.CharField()
+        from_holder_id = forms.CharField()
+        to_holder_id = forms.CharField()
         amount = forms.IntegerField(min_value=1)
         auto_reject_timedelta = forms.IntegerField(min_value=180)
 
@@ -37,17 +37,17 @@ class TransferCreateView(views.View):
             return self.render_form(request, form)
 
         try:
-            from_player = Player.objects.get(player_id=form.cleaned_data["from_player_id"])
-            to_player = Player.objects.get(player_id=form.cleaned_data["to_player_id"])
-        except Player.DoesNotExist:
-            form.add_error("player_id", "Player with given ID does not exist")
+            from_holder = Holder.objects.get(holder_id=form.cleaned_data["from_holder_id"])
+            to_holder = Holder.objects.get(holder_id=form.cleaned_data["to_holder_id"])
+        except Holder.DoesNotExist:
+            form.add_error("holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 
         from_checking_account = AccountsService.get_or_create(
-            player=from_player, currency_unit=form.cleaned_data["unit"]
+            holder=from_holder, currency_unit=form.cleaned_data["unit"]
         )
 
-        to_checking_account = AccountsService.get_or_create(player=to_player, currency_unit=form.cleaned_data["unit"])
+        to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=form.cleaned_data["unit"])
 
         service = form.cleaned_data["service"]
         amount = form.cleaned_data["amount"]

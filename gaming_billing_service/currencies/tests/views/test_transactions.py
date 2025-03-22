@@ -1,7 +1,7 @@
 from uuid import uuid1
 
 from currencies.models import CurrencyTransaction, CurrencyUnit, Service
-from currencies.services import AccountsService, PlayersService, TransactionsService
+from currencies.services import AccountsService, HoldersService, TransactionsService
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.base import Message
@@ -40,7 +40,7 @@ class TransactionActionTest(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
         cls.service = Service.objects.create(name="test_service")
-        cls.player = PlayersService.get_or_create(player_id="123123")
+        cls.holder = HoldersService.get_or_create(holder_id="123123")
 
         return super().setUpTestData()
 
@@ -52,7 +52,7 @@ class TransactionActionTest(TestCase):
         self.client.force_login(self.superuser)
 
         self.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
-        self.account = AccountsService.get_or_create(player=self.player, currency_unit=self.unit)
+        self.account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit)
 
         self.transaction = TransactionsService.create(
             service=self.service, checking_account=self.account, amount=100, description="test description"
@@ -74,7 +74,7 @@ class TransactionActionTest(TestCase):
             reverse("currencies:transaction_create"),
             {
                 "service": self.service.pk,
-                "player_id": self.player.player_id,
+                "holder_id": self.holder.holder_id,
                 "to_unit": self.unit.pk,
                 "amount": 100,
                 "auto_reject_timedelta": 180,

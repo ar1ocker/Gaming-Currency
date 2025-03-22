@@ -4,7 +4,7 @@ from currencies.models import (
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
-    Player,
+    Holder,
     Service,
 )
 from currencies.utils import retry_on_serialization_error
@@ -26,7 +26,7 @@ class ExchangesService:
         cls,
         *,
         service: Service,
-        player: Player,
+        holder: Holder,
         exchange_rule: ExchangeRule,
         from_unit: CurrencyUnit,
         to_unit: CurrencyUnit,
@@ -64,8 +64,8 @@ class ExchangesService:
                 raise ValidationError("Reverse exchange is disabled")
 
         with transaction.atomic():
-            from_account = AccountsService.get_or_create(player=player, currency_unit=from_unit)
-            to_account = AccountsService.get_or_create(player=player, currency_unit=to_unit)
+            from_account = AccountsService.get_or_create(holder=holder, currency_unit=from_unit)
+            to_account = AccountsService.get_or_create(holder=holder, currency_unit=to_unit)
 
             if from_account.amount < from_amount:
                 raise ValidationError("Insufficient funds in the 'from' checking account")
