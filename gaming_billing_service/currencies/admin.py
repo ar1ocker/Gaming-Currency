@@ -8,6 +8,7 @@ from .models import (
     ExchangeRule,
     ExchangeTransaction,
     Holder,
+    HolderType,
     Service,
     TransferTransaction,
 )
@@ -139,6 +140,11 @@ class HolderAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request: HttpRequest, obj=...):
         return False
+
+
+@admin.register(HolderType)
+class HolderTypeAdmin(admin.ModelAdmin):
+    list_display = ["name"]
 
 
 @admin.register(Service)
