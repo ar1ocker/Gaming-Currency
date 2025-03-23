@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from currencies.models import CheckingAccount, CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
@@ -213,3 +215,33 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 amount=-50,
                 description="",
             )
+
+    def test_reject_outdated(self):
+        self.add_amount(self.one_checking_account, 100)
+
+        transaction1 = TransfersService.create(
+            service=self.service,
+            from_checking_account=self.one_checking_account,
+            to_checking_account=self.two_checking_account,
+            amount=10,
+            description="test",
+            auto_reject_timedelta=timedelta(seconds=-1),
+        )
+
+        transaction2 = TransfersService.create(
+            service=self.service,
+            from_checking_account=self.one_checking_account,
+            to_checking_account=self.two_checking_account,
+            amount=10,
+            description="test",
+            auto_reject_timedelta=timedelta(seconds=-1),
+        )
+
+        rejecteds = TransfersService.reject_all_outdated()
+        self.assertEqual(len(rejecteds), 2)
+
+        transaction1.refresh_from_db()
+        transaction2.refresh_from_db()
+
+        self.assertEqual(transaction1.status, "REJECTED")
+        self.assertEqual(transaction2.status, "REJECTED")
