@@ -1,7 +1,11 @@
 from celery import shared_task
-from currencies.services import ExchangesService, TransfersService
-
-from .services import AdjustmentsService
+from currencies.services import (
+    AdjustmentsService,
+    ExchangesService,
+    TransactionsService,
+    TransfersService,
+)
+from django.conf import settings
 
 
 @shared_task
@@ -30,4 +34,4 @@ def reject_outdated_exchange_transactions():
 
 @shared_task
 def collapse_all_old_transactions():
-    pass
+    TransactionsService.collapse_old_transactions(old_than_timedelta=settings.COLLAPSE_OLD_TRANSACTIONS_TIMEDELTA)

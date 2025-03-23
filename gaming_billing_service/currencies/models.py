@@ -44,7 +44,7 @@ class Holder(models.Model):
         on_delete=models.PROTECT,
         related_name="holders",
     )
-    info = models.JSONField(default=dict)
+    info = models.JSONField(default=dict, null=True, blank=True)
 
     def __str__(self):
         return f"Держатель {self.holder_type}:{self.holder_id}"
@@ -138,7 +138,7 @@ class BaseTransaction(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
-    service = models.ForeignKey(Service, on_delete=models.PROTECT)
+    service = models.ForeignKey(Service, on_delete=models.PROTECT, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUSES, default="PENDING")
     status_description = models.TextField(blank=True)

@@ -3,7 +3,7 @@ name: gaming-billing-dev
 
 services:
 
-  gaming-billing-migrations:
+  migrations:
     build: ../gaming_billing_service/
     command: ["./migrations.sh"]
     stop_signal: SIGINT
@@ -16,12 +16,12 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
-  gaming-billing-tests:
+  tests:
     build: ../gaming_billing_service/
     command: ["python3", "manage.py", "test", "--no-input"]
     stop_signal: SIGINT
     depends_on:
-      gaming-billing-migrations:
+      migrations:
         condition: service_completed_successfully
     networks:
       - only-lan-network
@@ -29,11 +29,16 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
-  gaming-billing-celery:
+  celery:
     build: ../gaming_billing_service/
-    command: celery -A settings worker -l info -n gaming-billing-celery-worker@%h
+    command: celery -A settings worker -l info -n celery-worker@%h
+    develop:
+      watch:
+        - path: ../gaming_billing_service
+          target: /app
+          action: sync+restart
     depends_on:
-      - gaming-billing-migrations
+      - migrations
       - rabbitmq
     restart: on-failure
     networks:
@@ -60,7 +65,7 @@ services:
     group_add:
       - 110
     depends_on:
-      gaming-billing-tests:
+      tests:
         condition: service_completed_successfully
     networks:
       - only-lan-network
@@ -69,11 +74,11 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
-  gaming-billing-celery-beats:
+  celery-beats:
     build: ../gaming_billing_service/
     command: celery -A settings beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     depends_on:
-      - gaming-billing-tests
+      - tests
       - rabbitmq
     restart: on-failure
     networks:
@@ -107,6 +112,12 @@ services:
     networks:
       - only-lan-network
 
+configs:
+  gaming-billing:
+    file: ./configs/gaming_billing/config.toml
+  nginx:
+    file: ./configs/nginx/default.conf
+
 volumes:
   postgres_value:
   static_value:
@@ -115,8 +126,3 @@ networks:
   to-wan-network:
   only-lan-network:
 
-configs:
-  gaming-billing:
-    file: ./configs/gaming_billing/config.toml
-  nginx:
-    file: ./configs/nginx/default.conf
