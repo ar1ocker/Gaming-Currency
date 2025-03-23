@@ -1,7 +1,7 @@
 import logging
 from datetime import timedelta
 
-from currencies.models import CheckingAccount, CurrencyTransaction, Service
+from currencies.models import AdjustmentTransaction, CheckingAccount, Service
 from currencies.utils import retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -10,7 +10,7 @@ from django.db.models import F
 from django.utils import timezone
 
 
-class TransactionsService:
+class AdjustmentsService:
     ValidationError = ValidationError
 
     @classmethod
@@ -23,7 +23,7 @@ class TransactionsService:
         amount: int,
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
-    ) -> CurrencyTransaction:
+    ) -> AdjustmentTransaction:
         with transaction.atomic():
             blocked_checking_account = CheckingAccount.objects.get(pk=checking_account.pk)
 
@@ -38,7 +38,7 @@ class TransactionsService:
                 blocked_checking_account.amount = F("amount") - abs_amount
                 blocked_checking_account.save()
 
-            currency_transaction = CurrencyTransaction(
+            currency_transaction = AdjustmentTransaction(
                 service=service,
                 checking_account=blocked_checking_account,
                 amount=amount,
@@ -53,10 +53,10 @@ class TransactionsService:
 
     @classmethod
     @retry_on_serialization_error()
-    def confirm(cls, *, currency_transaction: CurrencyTransaction, status_description: str):
+    def confirm(cls, *, adjustment_transaction: AdjustmentTransaction, status_description: str):
         with transaction.atomic():
-            blocked_currency_transaction = CurrencyTransaction.objects.select_related("checking_account").get(
-                pk=currency_transaction.pk
+            blocked_currency_transaction = AdjustmentTransaction.objects.select_related("checking_account").get(
+                pk=adjustment_transaction.pk
             )
 
             blocked_currency_transaction._confirm(status_description)
@@ -70,10 +70,10 @@ class TransactionsService:
 
     @classmethod
     @retry_on_serialization_error()
-    def reject(cls, *, currency_transaction: CurrencyTransaction, status_description: str):
+    def reject(cls, *, adjustment_transaction: AdjustmentTransaction, status_description: str):
         with transaction.atomic():
-            blocked_currency_transaction = CurrencyTransaction.objects.select_related("checking_account").get(
-                pk=currency_transaction.pk
+            blocked_currency_transaction = AdjustmentTransaction.objects.select_related("checking_account").get(
+                pk=adjustment_transaction.pk
             )
 
             blocked_currency_transaction._reject(status_description)
@@ -88,15 +88,15 @@ class TransactionsService:
         return blocked_currency_transaction
 
     @classmethod
-    def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[CurrencyTransaction]:
+    def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[AdjustmentTransaction]:
         now = timezone.now()
 
-        transactions = CurrencyTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
+        transactions = AdjustmentTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
 
         rejected = []
         for transaction in transactions:
             try:
-                rejected.append(cls.reject(currency_transaction=transaction, status_description=status_description))
+                rejected.append(cls.reject(adjustment_transaction=transaction, status_description=status_description))
             except cls.ValidationError as e:
                 logging.error(
                     f"Error on rejecting outdated transfer transactions, transaction {transaction.uuid}, error {str(e)}"

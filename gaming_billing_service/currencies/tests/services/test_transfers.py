@@ -3,9 +3,9 @@ from datetime import timedelta
 from currencies.models import CheckingAccount, CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
     TransfersService,
 )
 from django.test import TestCase
@@ -32,8 +32,8 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         )
 
     def add_amount(self, checking_account: CheckingAccount, amount: int):
-        return TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        return AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service,
                 checking_account=checking_account,
                 amount=amount,
@@ -206,7 +206,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
     def test_negative_amount_create(self):
         with self.assertRaisesRegex(
-            TransactionsService.ValidationError, ".*Ensure this value is greater than or equal to 0.*"
+            AdjustmentsService.ValidationError, ".*Ensure this value is greater than or equal to 0.*"
         ):
             TransfersService.create(
                 service=self.service,

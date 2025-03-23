@@ -1,11 +1,11 @@
 from uuid import uuid1
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Service
+from currencies.models import AdjustmentTransaction, CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
 )
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -21,19 +21,19 @@ class TransactionActionLoginTest(TestCase):
     def setUp(self) -> None:
         self.client = Client()
 
-    def test_login_required_transaction_create(self):
-        response = self.client.get(reverse("currencies:transaction_create"), follow=True)
+    def test_login_required_adjustment_create(self):
+        response = self.client.get(reverse("currencies:adjustment_create"), follow=True)
         self.assertEqual(response.redirect_chain[0][1], 302, "Redirected unauthorized user to admin site")
         self.assertEqual(response.status_code, 200)
 
-    def test_login_required_transaction_confirm(self):
-        response = self.client.get(reverse("currencies:transaction_confirm", kwargs={"object_pk": 1}), follow=True)
+    def test_login_required_adjustment_confirm(self):
+        response = self.client.get(reverse("currencies:adjustment_confirm", kwargs={"object_pk": 1}), follow=True)
         self.assertEqual(response.redirect_chain[0][1], 302, "Redirected unauthorized user to admin site")
         self.assertEqual(response.status_code, 200)
 
-    def test_login_required_transaction_reject(self):
+    def test_login_required_adjustment_reject(self):
         response: HttpResponse = self.client.get(
-            reverse("currencies:transaction_reject", kwargs={"object_pk": 1}), follow=True
+            reverse("currencies:adjustment_reject", kwargs={"object_pk": 1}), follow=True
         )
         self.assertEqual(response.redirect_chain[0][1], 302, "Redirected unauthorized user to admin site")
         self.assertEqual(response.status_code, 200)
@@ -59,24 +59,24 @@ class TransactionActionTest(TestCase):
         self.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
         self.account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit)
 
-        self.transaction = TransactionsService.create(
+        self.transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.account, amount=100, description="test description"
         )
 
     def send_confirm_request(self, object_pk: str) -> HttpResponse:
-        return self.client.post(reverse("currencies:transaction_confirm", kwargs={"object_pk": object_pk}), follow=True)
+        return self.client.post(reverse("currencies:adjustment_confirm", kwargs={"object_pk": object_pk}), follow=True)
 
     def send_reject_request(self, object_pk: str) -> HttpResponse:
-        return self.client.post(reverse("currencies:transaction_reject", kwargs={"object_pk": object_pk}), follow=True)
+        return self.client.post(reverse("currencies:adjustment_reject", kwargs={"object_pk": object_pk}), follow=True)
 
-    def test_transaction_create_status_code(self):
-        response = self.client.get(reverse("currencies:transaction_create"))
+    def test_adjustment_create_status_code(self):
+        response = self.client.get(reverse("currencies:adjustment_create"))
         self.assertEqual(response.status_code, 200)
 
-    def test_transaction_create_post_view(self):
-        count_transactions_before = CurrencyTransaction.objects.count()
+    def test_adjustment_create_post_view(self):
+        count_transactions_before = AdjustmentTransaction.objects.count()
         response = self.client.post(
-            reverse("currencies:transaction_create"),
+            reverse("currencies:adjustment_create"),
             {
                 "service": self.service.pk,
                 "holder_id": self.holder.holder_id,
@@ -89,70 +89,70 @@ class TransactionActionTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertMessages(response, Message(20, "Transaction created"))
-        self.assertEqual(CurrencyTransaction.objects.count(), count_transactions_before + 1)
+        self.assertEqual(AdjustmentTransaction.objects.count(), count_transactions_before + 1)
 
-    def test_transaction_confirm(self):
+    def test_adjustment_confirm(self):
         response = self.send_confirm_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(response, Message(20, "Transaction confirmed"))
         self.transaction.refresh_from_db()
         self.assertEqual(self.transaction.status, "CONFIRMED")
 
-    def test_transaction_reject(self):
+    def test_adjustment_reject(self):
         response = self.send_reject_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(response, Message(20, "Transaction rejected"))
         self.transaction.refresh_from_db()
         self.assertEqual(self.transaction.status, "REJECTED")
 
-    def test_transaction_confirm_double(self):
+    def test_adjustment_confirm_double(self):
         self.send_confirm_request(object_pk=str(self.transaction.uuid))
 
         response = self.send_confirm_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(
-            response, Message(40, "Error on confirm currency transaction The transaction has already been closed")
+            response, Message(40, "Error on confirm adjustment transaction The transaction has already been closed")
         )
 
-    def test_transaction_reject_double(self):
+    def test_adjustment_reject_double(self):
         self.send_reject_request(object_pk=str(self.transaction.uuid))
 
         response = self.send_reject_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(
-            response, Message(40, "Error on reject currency transaction The transaction has already been closed")
+            response, Message(40, "Error on reject adjustment transaction The transaction has already been closed")
         )
 
-    def test_transaction_reject_confirmed(self):
+    def test_adjustment_reject_confirmed(self):
         self.send_confirm_request(object_pk=str(self.transaction.uuid))
 
         response = self.send_reject_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(
-            response, Message(40, "Error on reject currency transaction The transaction has already been closed")
+            response, Message(40, "Error on reject adjustment transaction The transaction has already been closed")
         )
         self.transaction.refresh_from_db()
         self.assertEqual(self.transaction.status, "CONFIRMED")
 
-    def test_transaction_confirm_rejected(self):
+    def test_adjustment_confirm_rejected(self):
         self.send_reject_request(object_pk=str(self.transaction.uuid))
 
         response = self.send_confirm_request(object_pk=str(self.transaction.uuid))
         self.assertEqual(response.status_code, 200)
         self.assertMessages(
-            response, Message(40, "Error on confirm currency transaction The transaction has already been closed")
+            response, Message(40, "Error on confirm adjustment transaction The transaction has already been closed")
         )
         self.transaction.refresh_from_db()
         self.assertEqual(self.transaction.status, "REJECTED")
 
-    def test_transaction_confirm_undefined(self):
+    def test_adjustment_confirm_undefined(self):
         response = self.send_confirm_request(object_pk=str(self.uuid))
 
         self.assertEqual(response.status_code, 200)
-        self.assertMessages(response, Message(40, "Currency Transaction not found"))
+        self.assertMessages(response, Message(40, "Adjustment transaction not found"))
 
-    def test_transaction_reject_undefined(self):
+    def test_adjustment_reject_undefined(self):
         response = self.send_reject_request(object_pk=str(self.uuid))
 
         self.assertEqual(response.status_code, 200)
-        self.assertMessages(response, Message(40, "Currency Transaction not found"))
+        self.assertMessages(response, Message(40, "Adjustment transaction not found"))

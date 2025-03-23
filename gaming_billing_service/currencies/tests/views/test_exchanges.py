@@ -3,10 +3,10 @@ from uuid import uuid1
 from currencies.models import CurrencyUnit, ExchangeRule, ExchangeTransaction, Service
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     ExchangesService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
 )
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -68,15 +68,15 @@ class ExchangesActionTests(TestCase):
 
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
-        TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account1, amount=500, description=""
             ),
             status_description="",
         )
 
-        TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account2, amount=500, description=""
             ),
             status_description="",

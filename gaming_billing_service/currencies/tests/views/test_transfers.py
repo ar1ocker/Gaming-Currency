@@ -3,9 +3,9 @@ from uuid import uuid1
 from currencies.models import CurrencyUnit, Service, TransferTransaction
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
     TransfersService,
 )
 from django.contrib import messages
@@ -62,8 +62,8 @@ class TransferActionTest(TestCase):
         self.client.force_login(self.superuser)
         self.account1 = AccountsService.get_or_create(holder=self.holder1, currency_unit=self.unit)
 
-        TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.account1, amount=200, description="test"
             ),
             status_description="teststatus",

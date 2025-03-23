@@ -3,10 +3,10 @@ from datetime import timedelta
 from currencies.models import CurrencyUnit, ExchangeRule, Service
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     ExchangesService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
 )
 from django.test import TestCase
 
@@ -39,15 +39,15 @@ class ExchangesServiceTests(TestCase):
             min_second_amount=10,
         )
 
-        TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account_unit1, amount=1000, description=""
             ),
             status_description="",
         )
 
-        TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account_unit2, amount=100, description=""
             ),
             status_description="",

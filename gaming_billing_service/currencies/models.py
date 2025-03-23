@@ -169,7 +169,7 @@ class BaseTransaction(models.Model):
         abstract = True
 
 
-class CurrencyTransaction(BaseTransaction):
+class AdjustmentTransaction(BaseTransaction):
     checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="transactions")
     amount = models.BigIntegerField()
 

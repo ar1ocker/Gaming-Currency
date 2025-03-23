@@ -1,5 +1,5 @@
 from currencies.models import CurrencyUnit
-from currencies.services import AccountsService, HoldersService
+from currencies.services import AccountsService, HoldersService, HoldersTypeService
 from currencies_api.models import ServiceHMAC
 from currencies_api.service_auth import hmac_service_auth
 from rest_framework import serializers
@@ -11,6 +11,7 @@ class CheckingAccountDetailAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.CharField()
         unit_symbol = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
+        create_if_not_exists = serializers.BooleanField(default=False)
 
     class OutputSerializer(serializers.Serializer):
         holder_id = serializers.CharField()
@@ -23,7 +24,9 @@ class CheckingAccountDetailAPI(APIView):
         serializer = self.InputSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        holder = HoldersService.get_or_create(holder_id=serializer.validated_data["holder_id"])
+        holder = HoldersService.get(
+            holder_id=serializer.validated_data["holder_id"], holder_type=HoldersTypeService.get_default()
+        )
 
         return Response(
             self.OutputSerializer(

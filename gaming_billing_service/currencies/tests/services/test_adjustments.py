@@ -3,9 +3,9 @@ from datetime import timedelta
 from currencies.models import CurrencyUnit, Service
 from currencies.services import (
     AccountsService,
+    AdjustmentsService,
     HoldersService,
     HoldersTypeService,
-    TransactionsService,
 )
 from django.test import TestCase
 
@@ -25,15 +25,15 @@ class CurrencyTransactionServicesTests(TestCase):
         self.checking_account = AccountsService().get_or_create(holder=self.holder, currency_unit=self.currency_unit)
 
     def add_amount(self, amount):
-        return TransactionsService().confirm(
-            currency_transaction=TransactionsService.create(
+        return AdjustmentsService().confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=amount, description=""
             ),
             status_description="confirm",
         )
 
     def test_create(self):
-        transaction = TransactionsService.create(
+        transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=100, description="testdescr"
         )
 
@@ -44,13 +44,13 @@ class CurrencyTransactionServicesTests(TestCase):
         self.assertIsNone(transaction.closed_at)
 
     def test_insufficient_amount_error(self):
-        with self.assertRaises(TransactionsService.ValidationError):
-            TransactionsService.create(
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=-100, description=""
             )
 
     def test_positive_transaction_not_change_account_amount(self):
-        TransactionsService.create(
+        AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=100, description=""
         )
 
@@ -60,7 +60,7 @@ class CurrencyTransactionServicesTests(TestCase):
     def test_create_negative_transaction_substract_account_amount(self):
         self.add_amount(100)
 
-        TransactionsService.create(
+        AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=-100, description=""
         )
 
@@ -68,11 +68,13 @@ class CurrencyTransactionServicesTests(TestCase):
         self.assertEqual(self.checking_account.amount, 0)
 
     def test_confirm_positive_amount_adds_amount(self):
-        transaction = TransactionsService.create(
+        transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=100, description="testdescr"
         )
 
-        transaction_confirmed = TransactionsService.confirm(currency_transaction=transaction, status_description="test")
+        transaction_confirmed = AdjustmentsService.confirm(
+            adjustment_transaction=transaction, status_description="test"
+        )
 
         self.assertEqual(transaction_confirmed.status, "CONFIRMED")
         self.assertEqual(transaction_confirmed.status_description, "test")
@@ -83,12 +85,12 @@ class CurrencyTransactionServicesTests(TestCase):
     def test_confirm_negative_transaction_substract_amount(self):
         self.add_amount(100)
 
-        negative_transaction = TransactionsService.create(
+        negative_transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=-100, description=""
         )
 
-        confirmed_negative_transaction = TransactionsService.confirm(
-            currency_transaction=negative_transaction,
+        confirmed_negative_transaction = AdjustmentsService.confirm(
+            adjustment_transaction=negative_transaction,
             status_description="negative",
         )
 
@@ -99,12 +101,12 @@ class CurrencyTransactionServicesTests(TestCase):
         self.assertEqual(self.checking_account.amount, 0)
 
     def test_reject_positive_amount_not_change_amount(self):
-        currency_transaction = TransactionsService.create(
+        adjustment_transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=100, description=""
         )
 
-        transaction_rejected = TransactionsService.reject(
-            currency_transaction=currency_transaction, status_description="reject"
+        transaction_rejected = AdjustmentsService.reject(
+            adjustment_transaction=adjustment_transaction, status_description="reject"
         )
 
         self.assertEqual(transaction_rejected.status, "REJECTED")
@@ -116,8 +118,8 @@ class CurrencyTransactionServicesTests(TestCase):
     def test_reject_negative_amount_return_amount_on_account(self):
         self.add_amount(100)
 
-        transaction_rejected = TransactionsService.reject(
-            currency_transaction=TransactionsService.create(
+        transaction_rejected = AdjustmentsService.reject(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=-100, description=""
             ),
             status_description="reject",
@@ -130,54 +132,54 @@ class CurrencyTransactionServicesTests(TestCase):
         self.assertEqual(self.checking_account.amount, 100)
 
     def test_confirm_rejected_transaction_raise_error(self):
-        rejected_transaction = TransactionsService.reject(
-            currency_transaction=TransactionsService.create(
+        rejected_transaction = AdjustmentsService.reject(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=100, description=""
             ),
             status_description="reject",
         )
 
-        with self.assertRaises(TransactionsService.ValidationError):
-            TransactionsService.confirm(currency_transaction=rejected_transaction, status_description="")
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.confirm(adjustment_transaction=rejected_transaction, status_description="")
 
     def test_confirm_confirmed_transaction_raise_error(self):
-        confirmed_transaction = TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        confirmed_transaction = AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=100, description=""
             ),
             status_description="reject",
         )
 
-        with self.assertRaises(TransactionsService.ValidationError):
-            TransactionsService.confirm(currency_transaction=confirmed_transaction, status_description="")
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.confirm(adjustment_transaction=confirmed_transaction, status_description="")
 
     def test_reject_rejected_transaction_raise_error(self):
-        rejected_transaction = TransactionsService.reject(
-            currency_transaction=TransactionsService.create(
+        rejected_transaction = AdjustmentsService.reject(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=100, description=""
             ),
             status_description="reject",
         )
 
-        with self.assertRaises(TransactionsService.ValidationError):
-            TransactionsService.reject(currency_transaction=rejected_transaction, status_description="")
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.reject(adjustment_transaction=rejected_transaction, status_description="")
 
     def test_reject_confirmed_transaction_raise_error(self):
-        confirmed_transaction = TransactionsService.confirm(
-            currency_transaction=TransactionsService.create(
+        confirmed_transaction = AdjustmentsService.confirm(
+            adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=100, description=""
             ),
             status_description="reject",
         )
 
-        with self.assertRaises(TransactionsService.ValidationError):
-            TransactionsService.reject(currency_transaction=confirmed_transaction, status_description="")
-            TransactionsService.reject(currency_transaction=confirmed_transaction, status_description="")
-            TransactionsService.reject(currency_transaction=confirmed_transaction, status_description="")
-            TransactionsService.reject(currency_transaction=confirmed_transaction, status_description="")
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
+            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
+            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
+            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
 
     def test_reject_outdated(self):
-        transaction1 = TransactionsService.create(
+        transaction1 = AdjustmentsService.create(
             service=self.service,
             checking_account=self.checking_account,
             amount=100,
@@ -185,7 +187,7 @@ class CurrencyTransactionServicesTests(TestCase):
             auto_reject_timedelta=timedelta(seconds=-1),
         )
 
-        transaction2 = TransactionsService.create(
+        transaction2 = AdjustmentsService.create(
             service=self.service,
             checking_account=self.checking_account,
             amount=100,
@@ -193,7 +195,7 @@ class CurrencyTransactionServicesTests(TestCase):
             auto_reject_timedelta=timedelta(seconds=-1),
         )
 
-        rejecteds = TransactionsService.reject_all_outdated()
+        rejecteds = AdjustmentsService.reject_all_outdated()
         self.assertEqual(len(rejecteds), 2)
 
         transaction1.refresh_from_db()

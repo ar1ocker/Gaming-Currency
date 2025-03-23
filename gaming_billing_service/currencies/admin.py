@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.http import HttpRequest
 
 from .models import (
+    AdjustmentTransaction,
     CheckingAccount,
-    CurrencyTransaction,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
@@ -43,10 +43,10 @@ class ExchangeRuleAdmin(admin.ModelAdmin):
     list_filter = list_display
 
 
-@admin.register(CurrencyTransaction)
-class CurrencyTransactionAdmin(ReadOnlyAdmin):
-    change_form_template = "transactions/admin/change.html"
-    change_list_template = "transactions/admin/list.html"
+@admin.register(AdjustmentTransaction)
+class AdjustmentTransactionAdmin(ReadOnlyAdmin):
+    change_form_template = "adjustments/admin/change.html"
+    change_list_template = "adjustments/admin/list.html"
 
     search_fields = [
         "uuid",

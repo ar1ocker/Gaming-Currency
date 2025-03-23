@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Holder
-from currencies.services import AccountsService, TransactionsService
+from currencies.models import AdjustmentTransaction, CurrencyUnit, Holder
+from currencies.services import AccountsService, AdjustmentsService
 from currencies_api.models import ServiceHMAC
 from currencies_api.service_auth import hmac_service_auth
 from django.conf import settings
@@ -30,7 +30,7 @@ class TransactionCreateAPI(APIView):
             holder=serializer.validated_data["holder_id"], currency_unit=serializer.validated_data["unit_symbol"]
         )
 
-        transaction = TransactionsService.create(
+        transaction = AdjustmentsService.create(
             service=serviceHMAC.service,
             checking_account=account,
             amount=serializer.validated_data["amount"],
@@ -43,7 +43,7 @@ class TransactionCreateAPI(APIView):
 
 class TransactionConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=CurrencyTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
@@ -51,8 +51,8 @@ class TransactionConfirmAPI(APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        TransactionsService.confirm(
-            currency_transaction=serializer.validated_data["uuid"],
+        AdjustmentsService.confirm(
+            adjustment_transaction=serializer.validated_data["uuid"],
             status_description=serializer.validated_data["status_description"],
         )
 
@@ -61,7 +61,7 @@ class TransactionConfirmAPI(APIView):
 
 class TransactionRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=CurrencyTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
@@ -69,8 +69,8 @@ class TransactionRejectAPI(APIView):
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        TransactionsService.reject(
-            currency_transaction=serializer.validated_data["uuid"],
+        AdjustmentsService.reject(
+            adjustment_transaction=serializer.validated_data["uuid"],
             status_description=serializer.validated_data["status_description"],
         )
 

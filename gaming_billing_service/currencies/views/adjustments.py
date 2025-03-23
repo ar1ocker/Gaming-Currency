@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Service
-from currencies.services import AccountsService, HoldersService, TransactionsService
+from currencies.models import AdjustmentTransaction, CurrencyUnit, Service
+from currencies.services import AccountsService, AdjustmentsService, HoldersService
 from django import forms, views
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -11,9 +11,9 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 
 
-@method_decorator(permission_required("currencies.add_currencytransaction"), name="dispatch")
-class TransactionCreateView(views.View):
-    template = "transactions/create.html"
+@method_decorator(permission_required("currencies.add_adjustmenttransaction"), name="dispatch")
+class AdjustmentCreateView(views.View):
+    template = "adjustments/create.html"
 
     class Form(forms.Form):
         service = forms.ModelChoiceField(Service.objects.all())
@@ -47,50 +47,52 @@ class TransactionCreateView(views.View):
         auto_reject_timedelta = timedelta(seconds=form.cleaned_data["auto_reject_timedelta"])
 
         try:
-            transaction = TransactionsService.create(
+            transaction = AdjustmentsService.create(
                 service=service,
                 checking_account=checking_account,
                 amount=amount,
                 description=f"Create from admin site by {request.user.username}",
                 auto_reject_timedelta=auto_reject_timedelta,
             )
-        except TransactionsService.ValidationError as e:
+        except AdjustmentsService.ValidationError as e:
             form.add_error(None, e)
             return self.render_form(request, form)
 
         messages.info(request, "Transaction created")
-        return HttpResponseRedirect(reverse("admin:currencies_currencytransaction_change", args=[transaction.pk]))
+        return HttpResponseRedirect(reverse("admin:currencies_adjustmenttransaction_change", args=[transaction.pk]))
 
 
-@permission_required("currencies.change_currencytransaction")
-def transaction_confirm(request, object_pk):
+@permission_required("currencies.change_adjustmenttransaction")
+def adjustment_confirm(request, object_pk):
     try:
-        transaction = CurrencyTransaction.objects.get(pk=object_pk)
-        TransactionsService.confirm(
-            currency_transaction=transaction, status_description=f"Confirmed from admin site by {request.user.username}"
+        transaction = AdjustmentTransaction.objects.get(pk=object_pk)
+        AdjustmentsService.confirm(
+            adjustment_transaction=transaction,
+            status_description=f"Confirmed from admin site by {request.user.username}",
         )
-    except TransactionsService.ValidationError as e:
-        messages.error(request, f"Error on confirm currency transaction {e.message}")
-    except CurrencyTransaction.DoesNotExist:
-        messages.error(request, "Currency Transaction not found")
+    except AdjustmentsService.ValidationError as e:
+        messages.error(request, f"Error on confirm adjustment transaction {e.message}")
+    except AdjustmentTransaction.DoesNotExist:
+        messages.error(request, "Adjustment transaction not found")
     else:
         messages.info(request, "Transaction confirmed")
 
-    return HttpResponseRedirect(reverse("admin:currencies_currencytransaction_change", args=[object_pk]))
+    return HttpResponseRedirect(reverse("admin:currencies_adjustmenttransaction_change", args=[object_pk]))
 
 
-@permission_required("currencies.change_currencytransaction")
-def transaction_reject(request, object_pk):
+@permission_required("currencies.change_adjustmenttransaction")
+def adjustment_reject(request, object_pk):
     try:
-        transaction = CurrencyTransaction.objects.get(pk=object_pk)
-        TransactionsService.reject(
-            currency_transaction=transaction, status_description=f"Rejected from admin site by {request.user.username}"
+        transaction = AdjustmentTransaction.objects.get(pk=object_pk)
+        AdjustmentsService.reject(
+            adjustment_transaction=transaction,
+            status_description=f"Rejected from admin site by {request.user.username}",
         )
-    except TransactionsService.ValidationError as e:
-        messages.error(request, f"Error on reject currency transaction {e.message}")
-    except CurrencyTransaction.DoesNotExist:
-        messages.error(request, "Currency Transaction not found")
+    except AdjustmentsService.ValidationError as e:
+        messages.error(request, f"Error on reject adjustment transaction {e.message}")
+    except AdjustmentTransaction.DoesNotExist:
+        messages.error(request, "Adjustment transaction not found")
     else:
         messages.info(request, "Transaction rejected")
 
-    return HttpResponseRedirect(reverse("admin:currencies_currencytransaction_change", args=[object_pk]))
+    return HttpResponseRedirect(reverse("admin:currencies_adjustmenttransaction_change", args=[object_pk]))

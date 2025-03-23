@@ -1,13 +1,13 @@
 from django.urls import path
 
 from .views import (
+    AdjustmentCreateView,
     ExchangeCreateView,
-    TransactionCreateView,
     TransferCreateView,
+    adjustment_confirm,
+    adjustment_reject,
     exchange_confirm,
     exchange_reject,
-    transaction_confirm,
-    transaction_reject,
     transfer_confirm,
     transfer_reject,
 )
@@ -15,9 +15,9 @@ from .views import (
 app_name = "currencies"
 
 urlpatterns = [
-    path("transactions/create/", TransactionCreateView.as_view(), name="transaction_create"),
-    path("transactions/confirm/<str:object_pk>/", transaction_confirm, name="transaction_confirm"),
-    path("transactions/reject/<str:object_pk>/", transaction_reject, name="transaction_reject"),
+    path("adjustments/create/", AdjustmentCreateView.as_view(), name="adjustment_create"),
+    path("adjustments/confirm/<str:object_pk>/", adjustment_confirm, name="adjustment_confirm"),
+    path("adjustments/reject/<str:object_pk>/", adjustment_reject, name="adjustment_reject"),
     path("transfers/create/", TransferCreateView.as_view(), name="transfer_create"),
     path("transfers/confirm/<str:object_pk>/", transfer_confirm, name="transfer_confirm"),
     path("transfers/reject/<str:object_pk>/", transfer_reject, name="transfer_reject"),

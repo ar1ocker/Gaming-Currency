@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyTransaction, CurrencyUnit, Holder
+from currencies.models import AdjustmentTransaction, CurrencyUnit, Holder
 from currencies.services import AccountsService, TransfersService
 from currencies_api.models import ServiceHMAC
 from currencies_api.service_auth import hmac_service_auth
@@ -49,7 +49,7 @@ class TransferCreateAPI(APIView):
 
 class TransferConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=CurrencyTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
@@ -67,7 +67,7 @@ class TransferConfirmAPI(APIView):
 
 class TransferRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=CurrencyTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
         status_description = serializers.CharField()
 
     @hmac_service_auth

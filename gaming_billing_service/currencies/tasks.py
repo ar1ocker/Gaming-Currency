@@ -1,13 +1,13 @@
 from celery import shared_task
 from currencies.services import ExchangesService, TransfersService
 
-from .services import TransactionsService
+from .services import AdjustmentsService
 
 
 @shared_task
 def reject_outdated_currency_transactions():
 
-    rejecteds = TransactionsService.reject_all_outdated(status_description="Rejected by cron as outdated")
+    rejecteds = AdjustmentsService.reject_all_outdated(status_description="Rejected by cron as outdated")
 
     return [str(i.uuid) for i in rejecteds]
 
@@ -26,3 +26,8 @@ def reject_outdated_exchange_transactions():
     rejecteds = ExchangesService.reject_all_outdated(status_description="Rejected by cron as outdated")
 
     return [str(i.uuid) for i in rejecteds]
+
+
+@shared_task
+def collapse_all_old_transactions():
+    pass
