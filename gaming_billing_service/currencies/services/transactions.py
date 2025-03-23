@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from currencies.models import CheckingAccount, CurrencyTransaction, Service
@@ -85,3 +86,22 @@ class TransactionsService:
                 blocked_currency_transaction.checking_account.save()
 
         return blocked_currency_transaction
+
+    @classmethod
+    def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[CurrencyTransaction]:
+        now = timezone.now()
+
+        transactions = CurrencyTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
+
+        rejected = []
+        for transaction in transactions:
+            try:
+                rejected.append(cls.reject(currency_transaction=transaction, status_description=status_description))
+            except cls.ValidationError as e:
+                logging.error(
+                    f"Error on rejecting outdated transfer transactions, transaction {transaction.uuid}, error {str(e)}"
+                )
+
+            # TODO Ошибки сериализации?
+
+        return rejected

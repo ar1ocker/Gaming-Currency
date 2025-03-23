@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from currencies.models import (
@@ -127,3 +128,22 @@ class ExchangesService:
             from_checking_account.save()
 
         return blocked_exchange_transaction
+
+    @classmethod
+    def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[ExchangeTransaction]:
+        now = timezone.now()
+
+        transactions = ExchangeTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
+
+        rejected = []
+        for transaction in transactions:
+            try:
+                rejected.append(cls.reject(exchange_transaction=transaction, status_description=status_description))
+            except cls.ValidationError as e:
+                logging.error(
+                    f"Error on rejecting outdated transfer transactions, transaction {transaction.uuid}, error {str(e)}"
+                )
+
+            # TODO Ошибки сериализации?
+
+        return rejected

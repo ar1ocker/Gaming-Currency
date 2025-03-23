@@ -29,6 +29,19 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
+  gaming-billing-celery:
+    build: ../gaming_billing_service/
+    command: celery -A settings worker -l info -n gaming-billing-celery-worker@%h
+    depends_on:
+      - gaming-billing-migrations
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - only-lan-network
+    configs:
+      - source: gaming-billing
+        target: /app/config.toml
+
   gaming-billing:
     build: ../gaming_billing_service/
     command: "sh -c 'pip3 install debugpy -t /tmp && python3 /tmp/debugpy --wait-for-client --listen 0.0.0.0:5678 manage.py runserver 0.0.0.0:8000'"
@@ -56,19 +69,18 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
-  # gaming-billing-cron:
-  #   build: ../gaming_billing_service/
-  #   entrypoint: ""
-  #   command: ["python3", "manage.py", "cronloop", "-s", "300"]
-  #   stop_signal: SIGINT
-  #   restart: always
-  #   depends_on:
-  #     - gaming-billing
-  #   networks:
-  #     - only-lan-network
-  #   configs:
-  #     - source: gaming-billing
-  #       target: /app/config.toml
+  gaming-billing-celery-beats:
+    build: ../gaming_billing_service/
+    command: celery -A settings beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - gaming-billing-tests
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - only-lan-network
+    configs:
+      - source: gaming-billing
+        target: /app/config.toml
 
   db:
     image: postgres:15.4-bookworm
@@ -84,6 +96,16 @@ services:
       - only-lan-network
     env_file:
       - ./configs/postgres/postgres.env
+
+  rabbitmq:
+    image: "rabbitmq:alpine"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - only-lan-network
 
 volumes:
   postgres_value:
