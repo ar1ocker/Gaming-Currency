@@ -97,12 +97,12 @@ class TransfersService:
         transactions = TransferTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
 
         rejected = []
-        for transaction in transactions:
+        for transfer in transactions:
             try:
-                rejected.append(cls.reject(transfer_transaction=transaction, status_description=status_description))
+                rejected.append(cls.reject(transfer_transaction=transfer, status_description=status_description))
             except cls.ValidationError as e:
                 logging.error(
-                    f"Error on rejecting outdated transfer transactions, transaction {transaction.uuid}, error {str(e)}"
+                    f"Error on rejecting outdated transfer transactions, transaction {transfer.uuid}, error {str(e)}"
                 )
 
             # TODO Ошибки сериализации?

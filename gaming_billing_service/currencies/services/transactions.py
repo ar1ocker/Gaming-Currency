@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
-from typing import Mapping
 
 from currencies.models import (
     AdjustmentTransaction,

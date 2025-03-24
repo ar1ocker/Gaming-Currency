@@ -94,12 +94,12 @@ class AdjustmentsService:
         transactions = AdjustmentTransaction.objects.filter(status="PENDING", auto_reject_after__lt=now)
 
         rejected = []
-        for transaction in transactions:
+        for adjustment in transactions:
             try:
-                rejected.append(cls.reject(adjustment_transaction=transaction, status_description=status_description))
+                rejected.append(cls.reject(adjustment_transaction=adjustment, status_description=status_description))
             except cls.ValidationError as e:
                 logging.error(
-                    f"Error on rejecting outdated transfer transactions, transaction {transaction.uuid}, error {str(e)}"
+                    f"Error on rejecting outdated transfer transactions, transaction {adjustment.uuid}, error {str(e)}"
                 )
 
             # TODO Ошибки сериализации?
