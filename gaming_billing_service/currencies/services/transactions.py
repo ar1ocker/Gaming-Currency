@@ -29,30 +29,26 @@ class TransactionsService:
 
         # Cуммы для TransferTransaction (входящие и исходящие)
         transfer_sums_in = (
-            TransferTransaction.objects.filter(created_at__lt=cutoff_date)
-            .exclude(status="PENDING")
+            TransferTransaction.objects.filter(created_at__lt=cutoff_date, status="CONFIRMED")
             .values(checking_account=F("to_checking_account"))
             .annotate(total_amount=Sum("amount"))
         )
 
         transfer_sums_out = (
-            TransferTransaction.objects.filter(created_at__lt=cutoff_date)
-            .exclude(status="PENDING")
+            TransferTransaction.objects.filter(created_at__lt=cutoff_date, status="CONFIRMED")
             .values(checking_account=F("from_checking_account"))
             .annotate(total_amount=Sum("amount") * -1)  # Учитываем исходящие транзакции как отрицательные
         )
 
         # Cуммы для ExchangeTransaction (входящие и исходящие)
         exchange_sums_in = (
-            ExchangeTransaction.objects.filter(created_at__lt=cutoff_date)
-            .exclude(status="PENDING")
+            ExchangeTransaction.objects.filter(created_at__lt=cutoff_date, status="CONFIRMED")
             .values(checking_account=F("to_checking_account"))
             .annotate(total_amount=Sum("to_amount"))
         )
 
         exchange_sums_out = (
-            ExchangeTransaction.objects.filter(created_at__lt=cutoff_date)
-            .exclude(status="PENDING")
+            ExchangeTransaction.objects.filter(created_at__lt=cutoff_date, status="CONFIRMED")
             .values(checking_account=F("from_checking_account"))
             .annotate(total_amount=Sum("from_amount") * -1)  # Учитываем исходящие транзакции как отрицательные
         )
