@@ -70,10 +70,10 @@ class TransactionsTest(TestCase):
         self,
         *,
         count: int,
-        status: Literal["r", "c"],
+        status: Literal["p", "r", "c"],
         checking_account: CheckingAccount,
         amount: int,
-        created_at: datetime
+        created_at: datetime,
     ) -> list[AdjustmentTransaction]:
 
         ret_transactions = []
@@ -87,21 +87,24 @@ class TransactionsTest(TestCase):
             transaction.created_at = created_at
             transaction.save()
 
-            if status == "r":
-                ret_transactions.append(
-                    AdjustmentsService.reject(adjustment_transaction=transaction, status_description="")
-                )
-            else:
-                ret_transactions.append(
-                    AdjustmentsService.confirm(adjustment_transaction=transaction, status_description="")
-                )
+            match status:
+                case "p":
+                    continue
+                case "c":
+                    ret_transactions.append(
+                        AdjustmentsService.confirm(adjustment_transaction=transaction, status_description="")
+                    )
+                case "r":
+                    ret_transactions.append(
+                        AdjustmentsService.reject(adjustment_transaction=transaction, status_description="")
+                    )
 
         return ret_transactions
 
     def create_transfers(
         self,
         count: int,
-        status: Literal["r", "c"],
+        status: Literal["p", "r", "c"],
         from_account: CheckingAccount,
         to_account: CheckingAccount,
         amount: int,
@@ -122,14 +125,17 @@ class TransactionsTest(TestCase):
             transaction.created_at = created_at
             transaction.save()
 
-            if status == "r":
-                ret_transactions.append(
-                    TransfersService.reject(transfer_transaction=transaction, status_description="")
-                )
-            else:
-                ret_transactions.append(
-                    TransfersService.confirm(transfer_transaction=transaction, status_description="")
-                )
+            match status:
+                case "p":
+                    continue
+                case "c":
+                    ret_transactions.append(
+                        TransfersService.confirm(transfer_transaction=transaction, status_description="")
+                    )
+                case "r":
+                    ret_transactions.append(
+                        TransfersService.reject(transfer_transaction=transaction, status_description="")
+                    )
 
         return ret_transactions
 
@@ -137,13 +143,13 @@ class TransactionsTest(TestCase):
         self,
         *,
         count: int,
-        status: Literal["r", "c"],
+        status: Literal["p", "r", "c"],
         holder: Holder,
         exchange_rule: ExchangeRule,
         from_unit: CurrencyUnit,
         to_unit: CurrencyUnit,
         from_amount: int,
-        created_at: datetime
+        created_at: datetime,
     ) -> list[ExchangeTransaction]:
         ret_transactions = []
         for _ in range(count):
@@ -161,14 +167,17 @@ class TransactionsTest(TestCase):
             transaction.created_at = created_at
             transaction.save()
 
-            if status == "r":
-                ret_transactions.append(
-                    ExchangesService.reject(exchange_transaction=transaction, status_description="")
-                )
-            else:
-                ret_transactions.append(
-                    ExchangesService.confirm(exchange_transaction=transaction, status_description="")
-                )
+            match status:
+                case "p":
+                    continue
+                case "c":
+                    ret_transactions.append(
+                        ExchangesService.confirm(exchange_transaction=transaction, status_description="")
+                    )
+                case "r":
+                    ret_transactions.append(
+                        ExchangesService.reject(exchange_transaction=transaction, status_description="")
+                    )
 
         return ret_transactions
 
@@ -217,6 +226,14 @@ class TransactionsTest(TestCase):
             )
         )
 
+        pending_outdated_adjustments = self.create_adjustments(
+            count=3,
+            status="p",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=10,
+            created_at=self.old_datetime,
+        )
+
         TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
 
         self.refresh_all_accounts()
@@ -231,10 +248,10 @@ class TransactionsTest(TestCase):
                 adjustment.refresh_from_db()
 
         try:
-            for adjustment in not_outdated_adjustments:
+            for adjustment in chain(not_outdated_adjustments, pending_outdated_adjustments):
                 adjustment.refresh_from_db()
         except AdjustmentTransaction.DoesNotExist:
-            self.fail("Not outdated adjustments has been deleted!")
+            self.fail("Not outdated or pending adjustments has been deleted!")
 
         fake_transaction = self.get_first_adjustment(self.checking_account_unit_1_user_1)
 
@@ -309,3 +326,17 @@ class TransactionsTest(TestCase):
                 transfer.refresh_from_db()
         except TransferTransaction.DoesNotExist:
             self.fail("Not outdated transfer has been deleted!")
+
+        fake_transaction_user_1 = self.get_first_adjustment(self.checking_account_unit_1_user_1)
+
+        self.assertEqual(fake_transaction_user_1.amount, -900)
+        self.assertEqual(fake_transaction_user_1.status, "CONFIRMED")
+        self.assertIsNotNone(fake_transaction_user_1.closed_at)
+        self.assertIsNotNone(fake_transaction_user_1.status_description)
+
+        fake_transaction_user_2 = self.get_first_adjustment(self.checking_account_unit_1_user_2)
+
+        self.assertEqual(fake_transaction_user_2.amount, 900)
+        self.assertEqual(fake_transaction_user_2.status, "CONFIRMED")
+        self.assertIsNotNone(fake_transaction_user_2.closed_at)
+        self.assertIsNotNone(fake_transaction_user_2.status_description)
