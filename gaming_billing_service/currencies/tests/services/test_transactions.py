@@ -103,6 +103,7 @@ class TransactionsTest(TestCase):
 
     def create_transfers(
         self,
+        *,
         count: int,
         status: Literal["p", "r", "c"],
         from_account: CheckingAccount,
@@ -308,11 +309,20 @@ class TransactionsTest(TestCase):
             )
         )
 
+        pending_outdated_transfers = self.create_transfers(
+            count=3,
+            status="p",
+            from_account=self.checking_account_unit_1_user_1,
+            to_account=self.checking_account_unit_1_user_2,
+            amount=100,
+            created_at=self.old_datetime,
+        )
+
         TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
 
         self.refresh_all_accounts()
 
-        self.assertEqual(self.checking_account_unit_1_user_1.amount, 1001, "Amount on account has been changed")
+        self.assertEqual(self.checking_account_unit_1_user_1.amount, 701, "Amount on account has been changed")
         self.assertEqual(self.checking_account_unit_1_user_2.amount, 2999, "Amount on other account has been changed")
         self.assertEqual(self.checking_account_unit_2_user_1.amount, 0, "Amount on other account has been changed")
         self.assertEqual(self.checking_account_unit_2_user_2.amount, 0, "Amount on other account has been changed")
@@ -322,7 +332,7 @@ class TransactionsTest(TestCase):
                 transfer.refresh_from_db()
 
         try:
-            for transfer in not_outdated_transfers:
+            for transfer in chain(not_outdated_transfers, pending_outdated_transfers):
                 transfer.refresh_from_db()
         except TransferTransaction.DoesNotExist:
             self.fail("Not outdated transfer has been deleted!")
@@ -340,3 +350,104 @@ class TransactionsTest(TestCase):
         self.assertEqual(fake_transaction_user_2.status, "CONFIRMED")
         self.assertIsNotNone(fake_transaction_user_2.closed_at)
         self.assertIsNotNone(fake_transaction_user_2.status_description)
+
+    def test_remove_outdated_exchanged(self):
+        self.create_adjustments(
+            count=1, status="c", checking_account=self.checking_account_unit_1_user_1, amount=10000, created_at=self.now
+        )
+        self.create_adjustments(
+            count=1, status="c", checking_account=self.checking_account_unit_2_user_1, amount=10000, created_at=self.now
+        )
+
+        outdated_exchanges = self.create_exchanges(
+            count=3,
+            status="c",
+            holder=self.holder_1,
+            exchange_rule=self.exchange_rule,
+            from_unit=self.unit_1,
+            to_unit=self.unit_2,
+            from_amount=100,
+            created_at=self.old_datetime,
+        )  # для коллапсированной транзакции даст -300 для unit_1 и +3 у unit_2
+
+        outdated_exchanges.extend(
+            self.create_exchanges(
+                count=3,
+                status="r",
+                holder=self.holder_1,
+                exchange_rule=self.exchange_rule,
+                from_unit=self.unit_1,
+                to_unit=self.unit_2,
+                from_amount=100,
+                created_at=self.old_datetime,
+            )
+        )  # для коллапсированной транзакции не должно дать ничего, ибо reject
+
+        not_outdated_exchanges = self.create_exchanges(
+            count=3,
+            status="c",
+            holder=self.holder_1,
+            exchange_rule=self.exchange_rule,
+            from_unit=self.unit_1,
+            to_unit=self.unit_2,
+            from_amount=200,
+            created_at=self.now,
+        )  # для коллапсированной транзакции не должно дать ничего, ибо дата новее чем cutoff_date
+
+        not_outdated_exchanges.extend(
+            self.create_exchanges(
+                count=3,
+                status="r",
+                holder=self.holder_1,
+                exchange_rule=self.exchange_rule,
+                from_unit=self.unit_1,
+                to_unit=self.unit_2,
+                from_amount=200,
+                created_at=self.now,
+            )
+        )  # для коллапсированной транзакции не должно дать ничего, ибо reject и дата новее чем cutoff_date
+
+        pending_outdated_exchanges = self.create_exchanges(
+            count=3,
+            status="p",
+            holder=self.holder_1,
+            exchange_rule=self.exchange_rule,
+            from_unit=self.unit_1,
+            to_unit=self.unit_2,
+            from_amount=100,
+            created_at=self.old_datetime,
+        )  # для коллапсированной транзакции не должно дать ничего, хоть дата и старая, но транзакция pennding
+
+        TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
+
+        self.refresh_all_accounts()
+
+        # учитывается сумма и сколлапсированной транзакции и еще не сколлапсированной
+        self.assertEqual(self.checking_account_unit_1_user_1.amount, 8800, "Amount on account has been changed")
+        self.assertEqual(self.checking_account_unit_1_user_2.amount, 0, "Amount on other account has been changed")
+        self.assertEqual(self.checking_account_unit_2_user_1.amount, 10009, "Amount on account has been changed")
+        self.assertEqual(self.checking_account_unit_2_user_2.amount, 0, "Amount on other account has been changed")
+
+        for exchange in outdated_exchanges:
+            with self.assertRaises(ExchangeTransaction.DoesNotExist):
+                exchange.refresh_from_db()
+
+        try:
+            for exchange in chain(not_outdated_exchanges, pending_outdated_exchanges):
+                exchange.refresh_from_db()
+        except ExchangeTransaction.DoesNotExist:
+            self.fail("Not outdated or pending exchanges has been deleted!")
+
+        fake_transaction_unit_1 = self.get_first_adjustment(self.checking_account_unit_1_user_1)
+
+        self.assertEqual(fake_transaction_unit_1.amount, -300)
+        self.assertEqual(fake_transaction_unit_1.status, "CONFIRMED")
+        self.assertIsNotNone(fake_transaction_unit_1.closed_at)
+        self.assertIsNotNone(fake_transaction_unit_1.status_description)
+
+        fake_transaction_unit_2 = self.get_first_adjustment(self.checking_account_unit_2_user_1)
+
+        self.assertEqual(fake_transaction_unit_2.amount, 3)
+        self.assertEqual(fake_transaction_unit_2.status, "CONFIRMED")
+        self.assertIsNotNone(fake_transaction_unit_2.closed_at)
+        self.assertIsNotNone(fake_transaction_unit_2.status_description)
