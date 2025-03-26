@@ -1,6 +1,7 @@
 from datetime import timedelta
+from decimal import Decimal
 
-from currencies.models import CheckingAccount, CurrencyUnit, Service
+from currencies.models import CheckingAccount, CurrencyUnit, Service, TransferRule
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -20,6 +21,14 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         cls.service = Service.objects.create(name="servicename")
         cls.first_holder = HoldersService.get_or_create(holder_id="1", holder_type=holder_type)
         cls.second_holder = HoldersService.get_or_create(holder_id="2", holder_type=holder_type)
+
+        cls.transfer_rule = TransferRule.objects.create(
+            enabled=True,
+            name="transferrule",
+            unit=cls.currency_unit,
+            fee_percent=Decimal(0),
+            min_from_amount=Decimal(1),
+        )
 
         return super().setUpTestData()
 
@@ -47,6 +56,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         transfer = TransfersService.create(
             service=self.service,
+            transfer_rule=self.transfer_rule,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
             from_amount=70,
@@ -65,6 +75,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         TransfersService.create(
             service=self.service,
+            transfer_rule=self.transfer_rule,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
             from_amount=70,
@@ -80,6 +91,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         with self.assertRaises(TransfersService.ValidationError):
             TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=70,
@@ -92,6 +104,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         transfer = TransfersService.confirm(
             transfer_transaction=TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=70,
@@ -115,6 +128,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         transfer = TransfersService.reject(
             transfer_transaction=TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=70,
@@ -138,6 +152,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         rejected_transfer = TransfersService.reject(
             transfer_transaction=TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=70,
@@ -155,6 +170,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         rejected_transfer = TransfersService.confirm(
             transfer_transaction=TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=70,
@@ -174,18 +190,20 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)
         self.add_amount(diff_currency_account, 100)
 
-        with self.assertRaisesRegex(TransfersService.ValidationError, ".*different currency units.*"):
+        with self.assertRaisesRegex(TransfersService.ValidationError, "Transfer with unsuitable currency"):
             TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=diff_currency_account,
                 from_amount=50,
                 description="",
             )
 
-        with self.assertRaisesRegex(TransfersService.ValidationError, ".*different currency units.*"):
+        with self.assertRaisesRegex(TransfersService.ValidationError, "Transfer with unsuitable currency"):
             TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=diff_currency_account,
                 to_checking_account=self.one_checking_account,
                 from_amount=50,
@@ -198,6 +216,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         with self.assertRaisesRegex(TransfersService.ValidationError, ".*same account.*"):
             TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.one_checking_account,
                 from_amount=50,
@@ -205,11 +224,10 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             )
 
     def test_negative_amount_create(self):
-        with self.assertRaisesRegex(
-            AdjustmentsService.ValidationError, ".*Ensure this value is greater than or equal to 0.*"
-        ):
+        with self.assertRaisesRegex(AdjustmentsService.ValidationError, ".*from_amount < min_from_amount.*"):
             TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
                 from_amount=-50,
@@ -221,6 +239,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         transaction1 = TransfersService.create(
             service=self.service,
+            transfer_rule=self.transfer_rule,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
             from_amount=10,
@@ -230,6 +249,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         transaction2 = TransfersService.create(
             service=self.service,
+            transfer_rule=self.transfer_rule,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
             from_amount=10,

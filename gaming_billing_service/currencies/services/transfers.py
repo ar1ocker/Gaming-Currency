@@ -28,15 +28,18 @@ class TransfersService:
         transfer_rule: TransferRule,
         from_checking_account: CheckingAccount,
         to_checking_account: CheckingAccount,
-        from_amount: Decimal,
+        from_amount: Decimal | int,
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
     ) -> TransferTransaction:
         if not transfer_rule.enabled:
             raise ValidationError("Transfer is disabled")
 
-        from_amount = from_amount.quantize(Decimal(".0000"))
-        to_amount = (from_amount * (100 - transfer_rule.fee_percent)).quantize(Decimal("0.0000"))
+        if isinstance(from_amount, Decimal):
+            from_amount = from_amount.quantize(Decimal(".0000"))
+
+        # calculate fee percent from to_amount
+        to_amount = (from_amount - (from_amount * (transfer_rule.fee_percent / 100))).quantize(Decimal("0.0000"))
 
         if from_amount < transfer_rule.min_from_amount:
             raise ValidationError("from_amount < min_from_amount")
@@ -47,8 +50,11 @@ class TransfersService:
         if from_checking_account == to_checking_account:
             raise ValidationError("Transfer to between the same account")
 
-        if from_checking_account.currency_unit != to_checking_account.currency_unit:
-            raise ValidationError("Transfer with different currency units")
+        if (
+            transfer_rule.unit != from_checking_account.currency_unit
+            or transfer_rule.unit != to_checking_account.currency_unit
+        ):
+            raise ValidationError("Transfer with unsuitable currency")
 
         with transaction.atomic():
             blocked_from_checking_account = CheckingAccount.objects.get(pk=from_checking_account.pk)
@@ -61,6 +67,7 @@ class TransfersService:
 
             transfer_transaction = TransferTransaction(
                 service=service,
+                transfer_rule=transfer_rule,
                 from_checking_account=from_checking_account,
                 to_checking_account=to_checking_account,
                 from_amount=from_amount,

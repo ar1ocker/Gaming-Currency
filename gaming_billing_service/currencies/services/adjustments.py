@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 from currencies.models import AdjustmentTransaction, CheckingAccount, Service
 from currencies.utils import retry_on_serialization_error
@@ -20,10 +21,13 @@ class AdjustmentsService:
         *,
         service: Service,
         checking_account: CheckingAccount,
-        amount: int,
+        amount: Decimal | int,
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
     ) -> AdjustmentTransaction:
+        if isinstance(amount, Decimal):
+            amount = amount.quantize(Decimal(".0000"))
+
         with transaction.atomic():
             blocked_checking_account = CheckingAccount.objects.get(pk=checking_account.pk)
 

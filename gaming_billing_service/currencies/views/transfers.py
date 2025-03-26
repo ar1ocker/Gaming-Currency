@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyUnit, Service, TransferTransaction
+from currencies.models import Service, TransferRule, TransferTransaction
 from currencies.services import HoldersService, TransfersService
 from currencies.services.accounts import AccountsService
 from django import forms, views
@@ -18,7 +18,7 @@ class TransferCreateView(views.View):
 
     class Form(forms.Form):
         service = forms.ModelChoiceField(Service.objects.all())
-        unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
+        transfer_rule = forms.ModelChoiceField(TransferRule.objects.all())
         from_holder_id = forms.CharField()
         to_holder_id = forms.CharField()
         from_amount = forms.DecimalField(min_value=0)
@@ -46,11 +46,11 @@ class TransferCreateView(views.View):
             form.add_error("to_holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 
-        from_checking_account = AccountsService.get_or_create(
-            holder=from_holder, currency_unit=form.cleaned_data["unit"]
-        )
+        transfer_rule = form.cleaned_data["transfer_rule"]
 
-        to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=form.cleaned_data["unit"])
+        from_checking_account = AccountsService.get_or_create(holder=from_holder, currency_unit=transfer_rule.unit)
+
+        to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=transfer_rule.unit)
 
         service = form.cleaned_data["service"]
         from_amount = form.cleaned_data["from_amount"]
@@ -59,6 +59,7 @@ class TransferCreateView(views.View):
         try:
             transaction = TransfersService.create(
                 service=service,
+                transfer_rule=transfer_rule,
                 from_checking_account=from_checking_account,
                 to_checking_account=to_checking_account,
                 from_amount=from_amount,

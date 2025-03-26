@@ -1,6 +1,6 @@
 from uuid import uuid1
 
-from currencies.models import CurrencyUnit, Service, TransferTransaction
+from currencies.models import CurrencyUnit, Service, TransferRule, TransferTransaction
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -52,6 +52,12 @@ class TransferActionTest(TestCase):
         cls.holder2 = HoldersService.get_or_create(holder_id="321321", holder_type=holder_type)
         cls.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 
+        cls.transfer_rule = TransferRule(
+            enabled=True, name="transferrule", unit=cls.unit, fee_percent=0, min_from_amount=1
+        )
+        cls.transfer_rule.full_clean()
+        cls.transfer_rule.save()
+
         return super().setUpTestData()
 
     def assertMessages(self, response: HttpResponse, message: Message):
@@ -73,6 +79,7 @@ class TransferActionTest(TestCase):
 
         self.transfer = TransfersService.create(
             service=self.service,
+            transfer_rule=self.transfer_rule,
             from_checking_account=self.account1,
             to_checking_account=account2,
             from_amount=100,
@@ -91,10 +98,10 @@ class TransferActionTest(TestCase):
             reverse("currencies:transfer_create"),
             {
                 "service": self.service.pk,
-                "unit": self.unit.pk,
+                "transfer_rule": self.transfer_rule.pk,
                 "from_holder_id": self.holder1.holder_id,
                 "to_holder_id": self.holder2.holder_id,
-                "amount": 10,
+                "from_amount": 10,
                 "auto_reject_timedelta": 180,
             },
             follow=True,

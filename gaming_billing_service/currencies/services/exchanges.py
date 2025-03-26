@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 from currencies.models import (
     CurrencyUnit,
@@ -31,7 +32,7 @@ class ExchangesService:
         exchange_rule: ExchangeRule,
         from_unit: CurrencyUnit,
         to_unit: CurrencyUnit,
-        from_amount: int,
+        from_amount: Decimal | int,
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
     ):
@@ -49,6 +50,9 @@ class ExchangesService:
             is_forward_exchange = False
             rate = exchange_rule.reverse_rate
             min_amount = exchange_rule.min_second_amount
+
+        if isinstance(from_amount, Decimal):
+            from_amount = from_amount.quantize(Decimal(".0000"))
 
         if from_amount < min_amount:
             raise ValidationError("Списываемая сумма меньше минимальной {from_amount} < {min_amount}")

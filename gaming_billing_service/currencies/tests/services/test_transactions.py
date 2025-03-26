@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 from itertools import chain
 from typing import Literal
 
@@ -11,6 +12,7 @@ from currencies.models import (
     Holder,
     HolderType,
     Service,
+    TransferRule,
     TransferTransaction,
 )
 from currencies.services import (
@@ -35,6 +37,14 @@ class TransactionsTest(TestCase):
 
         cls.unit_1 = CurrencyUnit.objects.create(symbol="unit_1", measurement="unit_1_measurement")
         cls.unit_2 = CurrencyUnit.objects.create(symbol="unit_2", measurement="unit_2_measurement")
+
+        cls.transfer_rule = TransferRule.objects.create(
+            enabled=True,
+            name="transferrulename",
+            unit=cls.unit_1,
+            fee_percent=Decimal("0"),
+            min_from_amount=Decimal("1"),
+        )
 
         cls.exchange_rule = ExchangeRule.objects.create(
             enabled_forward=True,
@@ -72,7 +82,7 @@ class TransactionsTest(TestCase):
         count: int,
         status: Literal["p", "r", "c"],
         checking_account: CheckingAccount,
-        amount: int,
+        amount: Decimal | int,
         created_at: datetime,
     ) -> list[AdjustmentTransaction]:
 
@@ -108,7 +118,7 @@ class TransactionsTest(TestCase):
         status: Literal["p", "r", "c"],
         from_account: CheckingAccount,
         to_account: CheckingAccount,
-        amount: int,
+        amount: Decimal | int,
         created_at: datetime,
     ) -> list[TransferTransaction]:
         ret_transactions = []
@@ -116,6 +126,7 @@ class TransactionsTest(TestCase):
         for _ in range(count):
             transaction = TransfersService.create(
                 service=self.service,
+                transfer_rule=self.transfer_rule,
                 from_checking_account=from_account,
                 to_checking_account=to_account,
                 from_amount=amount,

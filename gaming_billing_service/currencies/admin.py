@@ -92,7 +92,8 @@ class TransferTransactionAdmin(ReadOnlyAdmin):
     list_display = [
         "uuid",
         "service__name",
-        "amount",
+        "from_amount",
+        "to_amount",
         "from_checking_account",
         "to_checking_account",
         "status",
