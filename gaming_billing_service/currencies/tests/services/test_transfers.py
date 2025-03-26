@@ -265,3 +265,48 @@ class CurrencyTransferTransactionServicesTests(TestCase):
 
         self.assertEqual(transaction1.status, "REJECTED")
         self.assertEqual(transaction2.status, "REJECTED")
+
+    def test_transfer_rule_disabled(self):
+        rule = TransferRule.objects.create(
+            enabled=False, name="test", unit=self.currency_unit, fee_percent=Decimal(0), min_from_amount=Decimal(0)
+        )
+
+        with self.assertRaisesMessage(TransfersService.ValidationError, "Transfer is disabled"):
+            TransfersService.create(
+                service=self.service,
+                transfer_rule=rule,
+                from_checking_account=self.one_checking_account,
+                to_checking_account=self.two_checking_account,
+                from_amount=10,
+                description="test",
+            )
+
+    def test_transfer_rule_small_to_amount(self):
+        rule = TransferRule.objects.create(
+            enabled=True, name="test", unit=self.currency_unit, fee_percent=Decimal("110"), min_from_amount=Decimal(0)
+        )
+
+        with self.assertRaisesMessage(TransfersService.ValidationError, "from_amount is too small, to_amount <= 0"):
+            TransfersService.create(
+                service=self.service,
+                transfer_rule=rule,
+                from_checking_account=self.one_checking_account,
+                to_checking_account=self.two_checking_account,
+                from_amount=10,
+                description="test",
+            )
+
+    def test_transfer_rule_small_from_amount(self):
+        rule = TransferRule.objects.create(
+            enabled=True, name="test", unit=self.currency_unit, fee_percent=Decimal("0"), min_from_amount=Decimal(100)
+        )
+
+        with self.assertRaisesMessage(TransfersService.ValidationError, "from_amount < min_from_amount"):
+            TransfersService.create(
+                service=self.service,
+                transfer_rule=rule,
+                from_checking_account=self.one_checking_account,
+                to_checking_account=self.two_checking_account,
+                from_amount=10,
+                description="test",
+            )
