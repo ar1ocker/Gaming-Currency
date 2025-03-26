@@ -88,6 +88,8 @@ class ExchangeRule(models.Model):
     enabled_forward = models.BooleanField(default=False)
     enabled_reverse = models.BooleanField(default=False)
 
+    name = models.CharField(max_length=255, unique=True)
+
     first_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="first_exchanges")  # ПК
     second_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="second_exchanges")  # КК
     forward_rate = models.DecimalField(max_digits=13, decimal_places=4)  # 100
@@ -113,7 +115,9 @@ class ExchangeRule(models.Model):
         )
 
     def __str__(self):
-        return f"{self.first_unit} по {self.forward_rate} за 1 {self.second_unit} / реверс {self.reverse_rate}"
+        return (
+            f"{self.name} {self.first_unit} по {self.forward_rate} за 1 {self.second_unit} / реверс {self.reverse_rate}"
+        )
 
     def clean(self):
         if self.first_unit == self.second_unit:
@@ -127,10 +131,6 @@ class ExchangeRule(models.Model):
     class Meta:
         verbose_name = "Правило обмена валюты"
         verbose_name_plural = "Правила обмена валют"
-
-        constraints = [
-            models.UniqueConstraint(fields=["first_unit", "second_unit"], name="unique_currency_unit_exchanges"),
-        ]
 
 
 class CheckingAccount(models.Model):

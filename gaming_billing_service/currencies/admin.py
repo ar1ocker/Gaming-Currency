@@ -46,6 +46,7 @@ class ExchangeRuleAdmin(admin.ModelAdmin):
     list_display = [
         "enabled_forward",
         "enabled_reverse",
+        "name",
         "first_unit",
         "second_unit",
         "forward_rate",
