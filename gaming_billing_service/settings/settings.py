@@ -1,9 +1,13 @@
 import sys
 from datetime import timedelta
+from decimal import ROUND_HALF_UP, getcontext
 from pathlib import Path
 
 import toml
 from django.db.backends.postgresql.psycopg_any import IsolationLevel
+
+getcontext().prec = 20
+getcontext().rounding = ROUND_HALF_UP
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

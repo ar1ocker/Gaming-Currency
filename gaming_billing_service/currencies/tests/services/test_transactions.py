@@ -118,7 +118,7 @@ class TransactionsTest(TestCase):
                 service=self.service,
                 from_checking_account=from_account,
                 to_checking_account=to_account,
-                amount=amount,
+                from_amount=amount,
                 description="",
             )
 

@@ -2,6 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -66,16 +67,34 @@ class CurrencyUnit(models.Model):
         verbose_name_plural = "Игровые валюты"
 
 
+class TransferRule(models.Model):
+    enabled = models.BooleanField(default=False)
+    name = models.CharField(max_length=255, unique=True)
+
+    unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE)
+
+    fee_percent = models.DecimalField(max_digits=6, decimal_places=1)
+
+    min_from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Правило перевода валюты"
+        verbose_name_plural = "Правила перевода валют"
+
+
 class ExchangeRule(models.Model):
     enabled_forward = models.BooleanField(default=False)
     enabled_reverse = models.BooleanField(default=False)
 
     first_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="first_exchanges")  # ПК
     second_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="second_exchanges")  # КК
-    forward_rate = models.PositiveIntegerField()  # 100
-    reverse_rate = models.PositiveIntegerField()  # 85
-    min_first_amount = models.PositiveIntegerField()  # 100
-    min_second_amount = models.PositiveIntegerField()  # 10
+    forward_rate = models.DecimalField(max_digits=13, decimal_places=4)  # 100
+    reverse_rate = models.DecimalField(max_digits=13, decimal_places=4)  # 85
+    min_first_amount = models.DecimalField(max_digits=13, decimal_places=4)  # 100
+    min_second_amount = models.DecimalField(max_digits=13, decimal_places=4)  # 10
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -118,7 +137,7 @@ class ExchangeRule(models.Model):
 class CheckingAccount(models.Model):
     holder = models.ForeignKey(Holder, on_delete=models.PROTECT, related_name="checking_accounts")
     currency_unit = models.ForeignKey(CurrencyUnit, on_delete=models.PROTECT)
-    amount = models.PositiveBigIntegerField()
+    amount = models.DecimalField(max_digits=13, decimal_places=4)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -171,7 +190,7 @@ class BaseTransaction(models.Model):
 
 class AdjustmentTransaction(BaseTransaction):
     checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="transactions")
-    amount = models.BigIntegerField()
+    amount = models.DecimalField(max_digits=13, decimal_places=4)
 
     def __str__(self):
         return (
@@ -185,13 +204,17 @@ class AdjustmentTransaction(BaseTransaction):
 
 
 class TransferTransaction(BaseTransaction):
+    transfer_rule = models.ForeignKey(TransferRule, on_delete=models.SET_NULL, null=True)
+
     from_checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="out_transfers")
     to_checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="in_transfers")
-    amount = models.PositiveBigIntegerField()
+
+    from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+    to_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
 
     def __str__(self):
         return (
-            f"Трансфер {self.amount} с {self.from_checking_account_id}"  # type: ignore _id adds by django
+            f"Трансфер {self.from_amount} с {self.from_checking_account_id}"  # type: ignore _id adds by django
             f" на {self.to_checking_account_id} / {self.status}"  # type: ignore _id adds by django
         )
 
@@ -214,8 +237,8 @@ class ExchangeTransaction(BaseTransaction):
         related_name="to_exchange_transactions",
     )
 
-    from_amount = models.IntegerField()
-    to_amount = models.IntegerField()
+    from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+    to_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
 
     def __str__(self):
         return "Обмен"

@@ -20,7 +20,7 @@ class ExchangeCreateView(views.View):
         exchange_rule = forms.ModelChoiceField(ExchangeRule.objects.all())
         from_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
         to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        from_amount = forms.IntegerField()
+        from_amount = forms.DecimalField(min_value=0)
         auto_reject_timedelta = forms.IntegerField(validators=[MinValueValidator(180)])
 
     def get(self, request) -> HttpResponse:

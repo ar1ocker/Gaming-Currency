@@ -49,14 +49,14 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             service=self.service,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
-            amount=70,
+            from_amount=70,
             description="test",
         )
 
         self.assertEqual(transfer.from_checking_account, self.one_checking_account)
         self.assertEqual(transfer.to_checking_account, self.two_checking_account)
 
-        self.assertEqual(transfer.amount, 70)
+        self.assertEqual(transfer.from_amount, 70)
         self.assertEqual(transfer.description, "test")
         self.assertIsNone(transfer.closed_at)
 
@@ -67,7 +67,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             service=self.service,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
-            amount=70,
+            from_amount=70,
             description="test",
         )
 
@@ -82,7 +82,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=70,
+                from_amount=70,
                 description="test",
             )
 
@@ -94,7 +94,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=70,
+                from_amount=70,
                 description="test",
             ),
             status_description="teststatus",
@@ -117,7 +117,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=70,
+                from_amount=70,
                 description="test",
             ),
             status_description="teststatus",
@@ -140,7 +140,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=70,
+                from_amount=70,
                 description="test",
             ),
             status_description="teststatus",
@@ -157,7 +157,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=70,
+                from_amount=70,
                 description="test",
             ),
             status_description="teststatus",
@@ -179,7 +179,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=diff_currency_account,
-                amount=50,
+                from_amount=50,
                 description="",
             )
 
@@ -188,7 +188,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=diff_currency_account,
                 to_checking_account=self.one_checking_account,
-                amount=50,
+                from_amount=50,
                 description="",
             )
 
@@ -200,7 +200,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.one_checking_account,
-                amount=50,
+                from_amount=50,
                 description="",
             )
 
@@ -212,7 +212,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 service=self.service,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                amount=-50,
+                from_amount=-50,
                 description="",
             )
 
@@ -223,7 +223,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             service=self.service,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
-            amount=10,
+            from_amount=10,
             description="test",
             auto_reject_timedelta=timedelta(seconds=-1),
         )
@@ -232,7 +232,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             service=self.service,
             from_checking_account=self.one_checking_account,
             to_checking_account=self.two_checking_account,
-            amount=10,
+            from_amount=10,
             description="test",
             auto_reject_timedelta=timedelta(seconds=-1),
         )

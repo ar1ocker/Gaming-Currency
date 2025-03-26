@@ -39,7 +39,7 @@ class TransferCreateAPI(APIView):
             service=serviceHMAC.service,
             from_checking_account=from_account,
             to_checking_account=to_account,
-            amount=serializer.validated_data["amount"],
+            from_amount=serializer.validated_data["amount"],
             description=serializer.validated_data["description"],
             auto_reject_timedelta=timedelta(seconds=serializer.validated_data["auto_reject_timeout"]),
         )

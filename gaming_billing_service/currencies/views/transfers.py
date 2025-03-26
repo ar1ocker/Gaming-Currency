@@ -21,7 +21,7 @@ class TransferCreateView(views.View):
         unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
         from_holder_id = forms.CharField()
         to_holder_id = forms.CharField()
-        amount = forms.IntegerField(min_value=1)
+        from_amount = forms.DecimalField(min_value=0)
         auto_reject_timedelta = forms.IntegerField(min_value=180)
 
     def render_form(self, request, form: forms.Form):
@@ -53,7 +53,7 @@ class TransferCreateView(views.View):
         to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=form.cleaned_data["unit"])
 
         service = form.cleaned_data["service"]
-        amount = form.cleaned_data["amount"]
+        from_amount = form.cleaned_data["from_amount"]
         auto_reject_timedelta = timedelta(seconds=form.cleaned_data["auto_reject_timedelta"])
 
         try:
@@ -61,7 +61,7 @@ class TransferCreateView(views.View):
                 service=service,
                 from_checking_account=from_checking_account,
                 to_checking_account=to_checking_account,
-                amount=amount,
+                from_amount=from_amount,
                 description=f"Created from admin site by {request.user.username}",
                 auto_reject_timedelta=auto_reject_timedelta,
             )

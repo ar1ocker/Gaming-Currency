@@ -10,6 +10,7 @@ from .models import (
     Holder,
     HolderType,
     Service,
+    TransferRule,
     TransferTransaction,
 )
 
@@ -23,6 +24,21 @@ class ReadOnlyAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request: HttpRequest, obj=...):
         return False
+
+
+@admin.register(TransferRule)
+class TransferRuleAdmin(admin.ModelAdmin):
+    list_display = [
+        "enabled",
+        "name",
+        "unit",
+        "fee_percent",
+        "min_from_amount",
+        "created_at",
+        "updated_at",
+    ]
+    list_display_links = list_display
+    list_filter = list_display
 
 
 @admin.register(ExchangeRule)

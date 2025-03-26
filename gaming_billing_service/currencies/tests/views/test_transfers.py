@@ -75,7 +75,7 @@ class TransferActionTest(TestCase):
             service=self.service,
             from_checking_account=self.account1,
             to_checking_account=account2,
-            amount=100,
+            from_amount=100,
             description="test description",
         )
 

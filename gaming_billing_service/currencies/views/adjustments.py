@@ -19,7 +19,7 @@ class AdjustmentCreateView(views.View):
         service = forms.ModelChoiceField(Service.objects.all())
         holder_id = forms.CharField()
         to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        amount = forms.IntegerField()
+        amount = forms.DecimalField()
         auto_reject_timedelta = forms.IntegerField(min_value=180)
 
     def render_form(self, request, form: forms.Form):

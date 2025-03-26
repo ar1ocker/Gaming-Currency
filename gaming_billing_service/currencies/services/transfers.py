@@ -1,7 +1,13 @@
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
-from currencies.models import CheckingAccount, Service, TransferTransaction
+from currencies.models import (
+    CheckingAccount,
+    Service,
+    TransferRule,
+    TransferTransaction,
+)
 from currencies.utils import retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -19,12 +25,25 @@ class TransfersService:
         cls,
         *,
         service: Service,
+        transfer_rule: TransferRule,
         from_checking_account: CheckingAccount,
         to_checking_account: CheckingAccount,
-        amount: int,
+        from_amount: Decimal,
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
     ) -> TransferTransaction:
+        if not transfer_rule.enabled:
+            raise ValidationError("Transfer is disabled")
+
+        from_amount = from_amount.quantize(Decimal(".0000"))
+        to_amount = (from_amount * (100 - transfer_rule.fee_percent)).quantize(Decimal("0.0000"))
+
+        if from_amount < transfer_rule.min_from_amount:
+            raise ValidationError("from_amount < min_from_amount")
+
+        if to_amount <= 0:
+            raise ValidationError("from_amount is too small, to_amount <= 0")
+
         if from_checking_account == to_checking_account:
             raise ValidationError("Transfer to between the same account")
 
@@ -34,17 +53,18 @@ class TransfersService:
         with transaction.atomic():
             blocked_from_checking_account = CheckingAccount.objects.get(pk=from_checking_account.pk)
 
-            if blocked_from_checking_account.amount < amount:
+            if blocked_from_checking_account.amount < from_amount:
                 raise ValidationError("Insufficient funds in the checking account")
 
-            blocked_from_checking_account.amount = F("amount") - amount
+            blocked_from_checking_account.amount = F("amount") - from_amount
             blocked_from_checking_account.save()
 
             transfer_transaction = TransferTransaction(
                 service=service,
                 from_checking_account=from_checking_account,
                 to_checking_account=to_checking_account,
-                amount=amount,
+                from_amount=from_amount,
+                to_amount=to_amount,
                 description=description,
                 auto_reject_after=timezone.now() + auto_reject_timedelta,
             )
@@ -66,7 +86,7 @@ class TransfersService:
 
             # Передаём валюту получателю
             to_checking_account = blocked_transfer_transaction.to_checking_account
-            to_checking_account.amount = F("amount") + blocked_transfer_transaction.amount
+            to_checking_account.amount = F("amount") + blocked_transfer_transaction.to_amount
 
             to_checking_account.save()
 
@@ -84,7 +104,7 @@ class TransfersService:
 
             # Возвращаем валюту отправителю
             from_checking_account = blocked_transfer_transaction.from_checking_account
-            from_checking_account.amount = F("amount") + blocked_transfer_transaction.amount
+            from_checking_account.amount = F("amount") + blocked_transfer_transaction.from_amount
 
             from_checking_account.save()
 
