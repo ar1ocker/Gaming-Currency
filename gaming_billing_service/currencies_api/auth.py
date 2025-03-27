@@ -9,7 +9,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework.validators import ValidationError
 
-from .models import ServiceHMAC
+from .models import ServiceAuth
 
 
 class TimestampRequestHMACValidator:
@@ -175,8 +175,8 @@ def hmac_service_auth(func):
             raise AuthenticationFailed("Service not found")
 
         try:
-            service = ServiceHMAC.objects.get(service__name=service_header)
-        except ServiceHMAC.DoesNotExist:
+            service = ServiceAuth.objects.get(service__name=service_header)
+        except ServiceAuth.DoesNotExist:
             raise AuthenticationFailed("Service not found")
 
         if not service.enabled:
