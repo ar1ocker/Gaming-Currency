@@ -27,4 +27,5 @@ jobs:
           pip install -r gaming_billing_service/requirements.txt
       - name: Run Tests
         run: |
+          cd gaming_billing_service
           python manage.py test
