@@ -17,7 +17,7 @@ class AccountsService:
             return None
 
     @classmethod
-    def list(cls, *, filters=None):
+    def list(cls, *, filters: dict[str, str] | None = None):
         filters = filters or {}
 
         queryset = CheckingAccount.objects.all()
@@ -26,6 +26,12 @@ class AccountsService:
 
 
 class AccountsFilter(django_filters.FilterSet):
+    holder_type = django_filters.CharFilter(field_name="holder__holder_type__name")
+    holder_id = django_filters.CharFilter(field_name="holder__holder_id")
+    currency_unit = django_filters.CharFilter(field_name="currency_unit__symbol")
+    amount = django_filters.RangeFilter()
+    created_at = django_filters.DateTimeFromToRangeFilter()
+
     class Meta:
         model = CheckingAccount
         fields = (

@@ -2,6 +2,7 @@ from currencies.models import CurrencyUnit, HolderType
 from currencies.services import AccountsService, HoldersService, HoldersTypeService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import ServiceAuth
+from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from currencies_api.services import (
     AccountsPermissionsService,
     HoldersPermissionsService,
@@ -53,3 +54,42 @@ class CheckingAccountDetailAPI(APIView):
                 return Response({"error": "Account not found"}, status=status.HTTP_404_NOT_FOUND)
 
         return Response(self.OutputSerializer(account).data)
+
+
+class CheckingAccountListAPI(APIView):
+    class Pagination(LimitOffsetPagination):
+        default_limit = 1
+
+    class FilterSerializer(serializers.Serializer):
+        holder_type = serializers.CharField(required=False)
+        holder_id = serializers.CharField(required=False)
+        currency_unit = serializers.CharField(required=False)
+        amount_min = serializers.IntegerField(required=False)
+        amount_max = serializers.IntegerField(required=False)
+        created_at_after = serializers.DateField(required=False)
+        created_at_before = serializers.DateField(required=False)
+
+    class OutputSerializer(serializers.Serializer):
+        holder_id = serializers.CharField(source="holder.holder_id")
+        currency_unit = serializers.CharField(source="currency_unit.symbol")
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+        created_at = serializers.DateTimeField()
+
+    @hmac_service_auth
+    def get(self, request, service_auth: ServiceAuth):
+        AccountsPermissionsService.enforce_access(permissions=service_auth.permissions)
+
+        filter_serializer = self.FilterSerializer(data=request.query_params)
+        filter_serializer.is_valid(raise_exception=True)
+
+        accounts = AccountsService.list(
+            filters=filter_serializer.validated_data,  # type: ignore
+        ).select_related("holder", "currency_unit")
+
+        return get_paginated_response(
+            pagination_class=self.Pagination,
+            serializer_class=self.OutputSerializer,
+            queryset=accounts,
+            request=request,
+            view=self,
+        )

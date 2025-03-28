@@ -5,6 +5,7 @@ from currencies.models import AdjustmentTransaction, CurrencyUnit, Holder
 from currencies.services import AccountsService, AdjustmentsService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import ServiceAuth
+from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from currencies_api.services import AdjustmentsPermissionsService
 from django.conf import settings
 from rest_framework import serializers, status
@@ -99,3 +100,48 @@ class AdjustmentRejectAPI(APIView):
         )
 
         return Response(status=status.HTTP_200_OK)
+
+
+class AdjustmentListAPI(APIView):
+    class Pagination(LimitOffsetPagination):
+        pass
+
+    class FilterSerializer(serializers.Serializer):
+        service = serializers.CharField(required=False)
+        status = serializers.CharField(required=False)
+        holder = serializers.CharField(required=False)
+        currency_unit = serializers.CharField(required=False)
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
+        created_at_after = serializers.DateField(required=False)
+        created_at_before = serializers.DateField(required=False)
+        closed_at_after = serializers.DateField(required=False)
+        closed_at_before = serializers.DateField(required=False)
+
+    class OutputSerializer(serializers.Serializer):
+        service = serializers.CharField(source="service.name")
+        status = serializers.CharField()
+        holder_id = serializers.CharField(source="checking_account.holder.holder_id")
+        unit = serializers.CharField(source="checking_account.currency_unit.symbol")
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+        created_at = serializers.DateTimeField()
+        closed_at = serializers.DateTimeField()
+        auto_reject_after = serializers.DateTimeField()
+
+    @hmac_service_auth
+    def get(self, request, service_auth: ServiceAuth):
+        AdjustmentsPermissionsService.enforce_access(permissions=service_auth.permissions)
+
+        filter_serializer = self.FilterSerializer(data=request.query_params)
+        filter_serializer.is_valid(raise_exception=True)
+
+        adjustments = AdjustmentsService.list(
+            filters=filter_serializer.validated_data,  # type: ignore
+        ).select_related("service", "checking_account__holder", "checking_account__currency_unit")
+
+        return get_paginated_response(
+            pagination_class=self.Pagination,
+            serializer_class=self.OutputSerializer,
+            queryset=adjustments,
+            request=request,
+            view=self,
+        )

@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 from decimal import Decimal
 
+import django_filters
 from currencies.models import AdjustmentTransaction, CheckingAccount, Service
 from currencies.utils import retry_on_serialization_error
 from django.conf import settings
@@ -109,3 +110,25 @@ class AdjustmentsService:
             # TODO Ошибки сериализации?
 
         return rejected
+
+    @classmethod
+    def list(cls, *, filters: dict[str, str] | None = None):
+        filters = filters or {}
+
+        queryset = AdjustmentTransaction.objects.all()
+
+        return AdjustmentsFilter(data=filters, queryset=queryset).qs
+
+
+class AdjustmentsFilter(django_filters.FilterSet):
+    service = django_filters.CharFilter(field_name="service__name")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
+    holder = django_filters.CharFilter(field_name="checking_account__holder__holder_id")
+    currency_unit = django_filters.CharFilter(field_name="currency_unit__symbol")
+    amount = django_filters.RangeFilter()
+    created_at = django_filters.DateTimeFromToRangeFilter()
+    closed_at = django_filters.DateTimeFromToRangeFilter()
+
+    class Meta:
+        model = AdjustmentTransaction
+        fields = ["service", "status", "holder", "currency_unit", "amount", "created_at", "closed_at"]
