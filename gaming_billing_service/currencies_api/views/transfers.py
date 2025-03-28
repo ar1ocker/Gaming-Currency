@@ -5,7 +5,7 @@ from currencies.models import Holder, TransferRule, TransferTransaction
 from currencies.services import AccountsService, TransfersService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import ServiceAuth
-from currencies_api.services.permissions import TransfersPermissionsService
+from currencies_api.services import TransfersPermissionsService
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -16,13 +16,17 @@ class TransferCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
         from_holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
         to_holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
-        transfer_rule = serializers.SlugRelatedField(queryset=TransferRule.objects.select_related("unit").all())
-        amount = serializers.IntegerField()
+        transfer_rule = serializers.SlugRelatedField(
+            queryset=TransferRule.objects.select_related("unit").all(), slug_field="name"
+        )
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
         description = serializers.CharField()
         auto_reject_timeout = serializers.IntegerField(min_value=1, default=settings.DEFAULT_AUTO_REJECT_TIMEOUT)
 
     class OutputSerializer(serializers.Serializer):
         uuid = serializers.UUIDField()
+        status = serializers.CharField()
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
     def post(self, request, service_auth: ServiceAuth):

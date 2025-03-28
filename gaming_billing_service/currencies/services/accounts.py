@@ -1,3 +1,4 @@
+import django_filters
 from currencies.models import CheckingAccount, CurrencyUnit, Holder
 
 
@@ -14,3 +15,22 @@ class AccountsService:
             return CheckingAccount.objects.get(holder=holder, currency_unit=currency_unit)
         except CheckingAccount.DoesNotExist:
             return None
+
+    @classmethod
+    def list(cls, *, filters=None):
+        filters = filters or {}
+
+        queryset = CheckingAccount.objects.all()
+
+        return AccountsFilter(data=filters, queryset=queryset).qs
+
+
+class AccountsFilter(django_filters.FilterSet):
+    class Meta:
+        model = CheckingAccount
+        fields = (
+            "holder",
+            "currency_unit",
+            "amount",
+            "created_at",
+        )

@@ -175,7 +175,7 @@ def hmac_service_auth(func):
             raise AuthenticationFailed("Service not found")
 
         try:
-            service = ServiceAuth.objects.get(service__name=service_header)
+            service = ServiceAuth.objects.select_related("service").get(service__name=service_header)
         except ServiceAuth.DoesNotExist:
             raise AuthenticationFailed("Service not found")
 

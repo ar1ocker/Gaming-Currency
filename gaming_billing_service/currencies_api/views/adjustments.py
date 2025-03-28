@@ -22,6 +22,8 @@ class AdjustmentCreateAPI(APIView):
 
     class OutputSerializer(serializers.Serializer):
         uuid = serializers.UUIDField()
+        status = serializers.CharField()
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
     def post(self, request, service_auth: ServiceAuth):

@@ -29,7 +29,7 @@ BASE_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = ["django_celery_results", "django_celery_beat"]
+THIRD_PARTY_APPS = ["django_celery_results", "django_celery_beat", "django_filters"]
 
 DEBUG_MIDDLEWARE = []
 DEBUG_APPS = []
