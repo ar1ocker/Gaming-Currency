@@ -69,8 +69,14 @@ class ExchangesService:
                 raise ValidationError("Reverse exchange is disabled")
 
         with transaction.atomic():
-            from_account = AccountsService.get_or_create(holder=holder, currency_unit=from_unit)
-            to_account = AccountsService.get_or_create(holder=holder, currency_unit=to_unit)
+            from_account = AccountsService.get(holder=holder, currency_unit=from_unit)
+            to_account = AccountsService.get(holder=holder, currency_unit=to_unit)
+
+            if from_account is None:
+                raise ValidationError("From checking account not found")
+
+            if to_account is None:
+                raise ValidationError("To checking account not found")
 
             if from_account.amount < from_amount:
                 raise ValidationError("Insufficient funds in the 'from' checking account")
