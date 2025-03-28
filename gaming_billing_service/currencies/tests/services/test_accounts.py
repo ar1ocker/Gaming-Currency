@@ -22,3 +22,8 @@ class CheckingAccountServicesTests(TestCase):
             AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit),
             AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit),
         )
+
+    def test_get(self):
+        AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)
+
+        self.assertIsNotNone(AccountsService.get(holder=self.holder, currency_unit=self.currency_unit))
