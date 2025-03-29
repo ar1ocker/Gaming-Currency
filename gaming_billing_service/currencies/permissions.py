@@ -1,3 +1,4 @@
+import decimal
 from decimal import Decimal
 
 from django.core.exceptions import PermissionDenied
@@ -49,7 +50,7 @@ class BasePermission:
     max_amount_key: str = "max_amount"
 
     @classmethod
-    def _check_root(cls, *, permissions: dict):
+    def _is_root(cls, *, permissions: dict):
         try:
             return permissions[cls.root_key] is True
         except KeyError:
@@ -58,36 +59,44 @@ class BasePermission:
     @classmethod
     def _check_access(cls, *, permissions: dict):
         try:
-            return permissions[cls.section_key][cls.enabled_key] is True
-        except KeyError:
-            return False
+            if permissions[cls.section_key][cls.enabled_key] is not True:
+                raise PermissionDenied(f"{cls.verbose_name}: Access is disabled")
+        except KeyError as e:
+            raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
 
     @classmethod
     def enforce_access(cls, *, permissions: dict):
-        if cls._check_root(permissions=permissions):
-            return True
+        if cls._is_root(permissions=permissions):
+            return
 
-        if not cls._check_access(permissions=permissions):
-            raise PermissionDenied(f"{cls.verbose_name}: Access is disabled")
+        cls._check_access(permissions=permissions)
 
     @classmethod
     def enforce_amount(cls, *, permissions: dict, amount: Decimal | int):
-        cls.enforce_access(permissions=permissions)
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
 
         try:
             create_section = permissions[cls.section_key][cls.create_key]
 
-            max_amount = create_section[cls.max_amount_key]
-            min_amount = create_section[cls.min_amount_key]
+            max_amount = Decimal(create_section[cls.max_amount_key])
+            min_amount = Decimal(create_section[cls.min_amount_key])
 
             if not (min_amount < amount < max_amount):
                 raise PermissionDenied(f"{cls.verbose_name}: Amount is out of range")
         except KeyError as e:
             raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
+        except (TypeError, decimal.InvalidOperation):
+            raise PermissionDenied(f"{cls.verbose_name}: Error in min_amount or in max_amount permission")
 
     @classmethod
     def enforce_create(cls, *, permissions: dict):
-        cls.enforce_access(permissions=permissions)
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
 
         try:
             create_section = permissions[cls.section_key][cls.create_key]
@@ -99,7 +108,10 @@ class BasePermission:
 
     @classmethod
     def enforce_confirm(cls, *, permissions: dict, service_name: str):
-        cls.enforce_access(permissions=permissions)
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
 
         try:
             confirm_section = permissions[cls.section_key][cls.confirm_key]
@@ -115,7 +127,10 @@ class BasePermission:
 
     @classmethod
     def enforce_reject(cls, *, permissions: dict, service_name: str):
-        cls.enforce_access(permissions=permissions)
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
 
         try:
             reject_section = permissions[cls.section_key][cls.reject_key]
