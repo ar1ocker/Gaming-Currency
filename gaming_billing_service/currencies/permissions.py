@@ -30,6 +30,8 @@ class BasePermission:
     }
     """  # noqa: E501
 
+    PermissionDenied = PermissionDenied
+
     verbose_name: str = ""
 
     section_key: str = ""

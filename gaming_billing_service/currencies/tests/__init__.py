@@ -1,3 +1,4 @@
+from .permissions.test_permissions import *  # noqa
 from .services.test_accounts import *  # noqa
 from .services.test_adjustments import *  # noqa
 from .services.test_exchanges import *  # noqa
