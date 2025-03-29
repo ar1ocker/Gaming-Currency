@@ -2,11 +2,11 @@ from datetime import timedelta
 from decimal import Decimal
 
 from currencies.models import AdjustmentTransaction, CurrencyUnit, Holder
+from currencies.permissions import AdjustmentsPermissionsService
 from currencies.services import AccountsService, AdjustmentsService
 from currencies_api.auth import hmac_service_auth
-from currencies_api.models import ServiceAuth
+from currencies_api.models import CurrencyServiceAuth
 from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
-from currencies_api.services import AdjustmentsPermissionsService
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -27,8 +27,7 @@ class AdjustmentCreateAPI(APIView):
         amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        AdjustmentsPermissionsService.enforce_create(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -39,7 +38,8 @@ class AdjustmentCreateAPI(APIView):
         description: str = serializer.validated_data["description"]  # type: ignore
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
-        AdjustmentsPermissionsService.enforce_amount(permissions=service_auth.permissions, amount=amount)
+        AdjustmentsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        AdjustmentsPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=amount)
 
         account = AccountsService.get(holder=holder, currency_unit=unit)
         if account is None:
@@ -58,18 +58,23 @@ class AdjustmentCreateAPI(APIView):
 
 class AdjustmentConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(
+            queryset=AdjustmentTransaction.objects.select_related("service").all()
+        )
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        AdjustmentsPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         adjustment: AdjustmentTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        AdjustmentsPermissionsService.enforce_confirm(
+            permissions=service_auth.service.permissions, service_name=adjustment.service.name
+        )
 
         AdjustmentsService.confirm(
             adjustment_transaction=adjustment,
@@ -81,18 +86,23 @@ class AdjustmentConfirmAPI(APIView):
 
 class AdjustmentRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=AdjustmentTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(
+            queryset=AdjustmentTransaction.objects.select_related("service").all()
+        )
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        AdjustmentsPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         adjustment: AdjustmentTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        AdjustmentsPermissionsService.enforce_reject(
+            permissions=service_auth.service.permissions, service_name=adjustment.service.name
+        )
 
         AdjustmentsService.reject(
             adjustment_transaction=adjustment,
@@ -128,8 +138,8 @@ class AdjustmentListAPI(APIView):
         auto_reject_after = serializers.DateTimeField()
 
     @hmac_service_auth
-    def get(self, request, service_auth: ServiceAuth):
-        AdjustmentsPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def get(self, request, service_auth: CurrencyServiceAuth):
+        AdjustmentsPermissionsService.enforce_access(permissions=service_auth.service.permissions)
 
         filter_serializer = self.FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)

@@ -9,7 +9,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework.validators import ValidationError
 
-from .models import ServiceAuth
+from .models import CurrencyServiceAuth
 
 
 class TimestampRequestHMACValidator:
@@ -175,22 +175,22 @@ def hmac_service_auth(func):
             raise AuthenticationFailed("Service not found")
 
         try:
-            service = ServiceAuth.objects.select_related("service").get(service__name=service_header)
-        except ServiceAuth.DoesNotExist:
+            service_auth = CurrencyServiceAuth.objects.select_related("service").get(service__name=service_header)
+        except CurrencyServiceAuth.DoesNotExist:
             raise AuthenticationFailed("Service not found")
 
-        if not service.enabled:
+        if not service_auth.service.enabled:
             raise AuthenticationFailed("Service disabled")
 
         if settings.ENABLE_HMAC_VALIDATION:
             validator = None
-            if service.is_battlemetrics:
+            if service_auth.is_battlemetrics:
                 validator = BattlemetricsRequestHMACValidator(
                     signature_header=settings.HMAC_SIGNATURE_HEADER,
                     signature_regex=settings.BATTLEMETRICS_SIGNATURE_REGEX,
                     timestamp_regex=settings.BATTLEMETRICS_TIMESTAMP_REGEX,
                     timestamp_deviation=settings.HMAC_TIMESTAMP_DEVIATION,
-                    secret_key=service.key,
+                    secret_key=service_auth.key,
                     hash_type=settings.HMAC_HASH_TYPE,
                 )
             else:
@@ -198,7 +198,7 @@ def hmac_service_auth(func):
                     signature_header=settings.HMAC_SIGNATURE_HEADER,
                     timestamp_header=settings.HMAC_TIMESTAMP_HEADER,
                     timestamp_deviation=settings.HMAC_TIMESTAMP_DEVIATION,
-                    secret_key=service.key,
+                    secret_key=service_auth.key,
                     hash_type=settings.HMAC_HASH_TYPE,
                 )
 
@@ -207,6 +207,6 @@ def hmac_service_auth(func):
             except ValidationError as e:
                 raise AuthenticationFailed(e.detail)
 
-        return func(self, request, service, *args, **kwargs)
+        return func(self, request, service_auth, *args, **kwargs)
 
     return wrapper

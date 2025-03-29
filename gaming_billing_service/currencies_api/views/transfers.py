@@ -2,10 +2,10 @@ from datetime import timedelta
 from decimal import Decimal
 
 from currencies.models import Holder, TransferRule, TransferTransaction
+from currencies.permissions import TransfersPermissionsService
 from currencies.services import AccountsService, TransfersService
 from currencies_api.auth import hmac_service_auth
-from currencies_api.models import ServiceAuth
-from currencies_api.services import TransfersPermissionsService
+from currencies_api.models import CurrencyServiceAuth
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -29,8 +29,7 @@ class TransferCreateAPI(APIView):
         amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        TransfersPermissionsService.enforce_create(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -42,7 +41,8 @@ class TransferCreateAPI(APIView):
         description: str = serializer.validated_data["description"]  # type: ignore
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
-        TransfersPermissionsService.enforce_amount(permissions=service_auth.permissions, amount=amount)
+        TransfersPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        TransfersPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=amount)
 
         from_account = AccountsService.get(holder=from_holder, currency_unit=transfer_rule.unit)
         if from_account is None:
@@ -82,18 +82,21 @@ class TransferCreateAPI(APIView):
 
 class TransferConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=TransferTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=TransferTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        TransfersPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         transfer: TransferTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        TransfersPermissionsService.enforce_confirm(
+            permissions=service_auth.service.permissions, service_name=transfer.service.name
+        )
 
         TransfersService.confirm(
             transfer_transaction=transfer,
@@ -109,14 +112,17 @@ class TransferRejectAPI(APIView):
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        TransfersPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         transfer: TransferTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        TransfersPermissionsService.enforce_reject(
+            permissions=service_auth.service.permissions, service_name=transfer.service.name
+        )
 
         TransfersService.reject(
             transfer_transaction=transfer,

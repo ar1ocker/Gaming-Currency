@@ -2,10 +2,10 @@ from datetime import timedelta
 from decimal import Decimal
 
 from currencies.models import CurrencyUnit, ExchangeRule, ExchangeTransaction, Holder
+from currencies.permissions import ExchangesPermissionsService
 from currencies.services import ExchangesService
 from currencies_api.auth import hmac_service_auth
-from currencies_api.models import ServiceAuth
-from currencies_api.services.permissions import ExchangesPermissionsService
+from currencies_api.models import CurrencyServiceAuth
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -29,8 +29,7 @@ class ExchangeCreateAPI(APIView):
         to_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        ExchangesPermissionsService.enforce_create(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -43,7 +42,8 @@ class ExchangeCreateAPI(APIView):
         description: str = serializer.validated_data["description"]  # type: ignore
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
-        ExchangesPermissionsService.enforce_amount(permissions=service_auth.permissions, amount=from_amount)
+        ExchangesPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        ExchangesPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=from_amount)
 
         exchange = ExchangesService.create(
             service=service_auth.service,
@@ -61,18 +61,21 @@ class ExchangeCreateAPI(APIView):
 
 class ExchangeConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        ExchangesPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         exchange: ExchangeTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        ExchangesPermissionsService.enforce_confirm(
+            permissions=service_auth.service.permissions, service_name=exchange.service.name
+        )
 
         ExchangesService.confirm(exchange_transaction=exchange, status_description=status_description)
 
@@ -81,18 +84,21 @@ class ExchangeConfirmAPI(APIView):
 
 class ExchangeRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
-        uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.all())
+        uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: ServiceAuth):
-        ExchangesPermissionsService.enforce_access(permissions=service_auth.permissions)
+    def post(self, request, service_auth: CurrencyServiceAuth):
 
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         exchange: ExchangeTransaction = serializer.validated_data["uuid"]  # type: ignore
         status_description: str = serializer.validated_data["status_description"]  # type: ignore
+
+        ExchangesPermissionsService.enforce_reject(
+            permissions=service_auth.service.permissions, service_name=exchange.service.name
+        )
 
         ExchangesService.reject(exchange_transaction=exchange, status_description=status_description)
 

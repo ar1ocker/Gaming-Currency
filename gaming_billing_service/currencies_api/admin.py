@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from .models import ServiceAuth
+from .models import CurrencyServiceAuth
 
 
-@admin.register(ServiceAuth)
-class ServiceHMACAdmin(admin.ModelAdmin):
-    list_display = ["service", "enabled", "is_battlemetrics"]
+@admin.register(CurrencyServiceAuth)
+class ServiceAuthAdmin(admin.ModelAdmin):
+    list_display = ["service", "is_battlemetrics"]
