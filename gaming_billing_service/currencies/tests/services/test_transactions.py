@@ -6,12 +6,12 @@ from typing import Literal
 from currencies.models import (
     AdjustmentTransaction,
     CheckingAccount,
+    CurrencyService,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
     Holder,
     HolderType,
-    Service,
     TransferRule,
     TransferTransaction,
 )
@@ -30,7 +30,7 @@ from django.utils import timezone
 class TransactionsTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.service = Service.objects.create(name="test")
+        cls.service = CurrencyService.objects.create(name="test")
         cls.holder_type = HolderType.get_default()
         cls.holder_1 = HoldersService.get_or_create(holder_id="test", holder_type=cls.holder_type)
         cls.holder_2 = HoldersService.get_or_create(holder_id="test2", holder_type=cls.holder_type)

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from currencies.models import (
     CheckingAccount,
-    Service,
+    CurrencyService,
     TransferRule,
     TransferTransaction,
 )
@@ -24,7 +24,7 @@ class TransfersService:
     def create(
         cls,
         *,
-        service: Service,
+        service: CurrencyService,
         transfer_rule: TransferRule,
         from_checking_account: CheckingAccount,
         to_checking_account: CheckingAccount,

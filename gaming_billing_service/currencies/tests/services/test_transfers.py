@@ -1,7 +1,12 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from currencies.models import CheckingAccount, CurrencyUnit, Service, TransferRule
+from currencies.models import (
+    CheckingAccount,
+    CurrencyService,
+    CurrencyUnit,
+    TransferRule,
+)
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -18,7 +23,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         holder_type = HoldersTypeService.get_default()
 
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
-        cls.service = Service.objects.create(name="servicename")
+        cls.service = CurrencyService.objects.create(name="servicename")
         cls.first_holder = HoldersService.get_or_create(holder_id="1", holder_type=holder_type)
         cls.second_holder = HoldersService.get_or_create(holder_id="2", holder_type=holder_type)
 

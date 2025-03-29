@@ -1,6 +1,11 @@
 from uuid import uuid1
 
-from currencies.models import CurrencyUnit, Service, TransferRule, TransferTransaction
+from currencies.models import (
+    CurrencyService,
+    CurrencyUnit,
+    TransferRule,
+    TransferTransaction,
+)
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -46,7 +51,7 @@ class TransferActionTest(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
 
-        cls.service = Service.objects.create(name="test_service")
+        cls.service = CurrencyService.objects.create(name="test_service")
         holder_type = HoldersTypeService.get_default()
         cls.holder1 = HoldersService.get_or_create(holder_id="123123", holder_type=holder_type)
         cls.holder2 = HoldersService.get_or_create(holder_id="321321", holder_type=holder_type)

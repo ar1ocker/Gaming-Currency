@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import AdjustmentTransaction, CurrencyUnit, Service
+from currencies.models import AdjustmentTransaction, CurrencyService, CurrencyUnit
 from currencies.services import AccountsService, AdjustmentsService, HoldersService
 from django import forms, views
 from django.contrib import messages
@@ -16,7 +16,7 @@ class AdjustmentCreateView(views.View):
     template = "adjustments/create.html"
 
     class Form(forms.Form):
-        service = forms.ModelChoiceField(Service.objects.all())
+        service = forms.ModelChoiceField(CurrencyService.objects.all())
         holder_id = forms.CharField()
         to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
         amount = forms.DecimalField()

@@ -7,6 +7,7 @@ from currencies.models import (
     ExchangeTransaction,
     TransferTransaction,
 )
+from currencies.services import CurrencyServicesService
 from currencies.utils import retry_on_serialization_error
 from django.db import transaction
 from django.db.models import F, Sum
@@ -76,6 +77,7 @@ class TransactionsService:
             for account_id, total_amount in total_amounts.items():
                 AdjustmentTransaction.objects.create(
                     description="The amount of old collapsed transactions",
+                    service=CurrencyServicesService.get_default(),
                     status="CONFIRMED",
                     status_description="Confirmed without real change amount in checking account",
                     auto_reject_after=closed_date,

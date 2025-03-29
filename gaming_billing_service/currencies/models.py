@@ -7,8 +7,10 @@ from django.db import models
 from django.utils import timezone
 
 
-class Service(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+class CurrencyService(models.Model):
+    name = models.SlugField(max_length=100, unique=True)
+    enabled = models.BooleanField(default=False)
+    permissions = models.JSONField(default=dict)
 
     def __str__(self):
         return self.name
@@ -156,7 +158,7 @@ class BaseTransaction(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4)
 
-    service = models.ForeignKey(Service, on_delete=models.PROTECT, null=True, blank=True)
+    service = models.ForeignKey(CurrencyService, on_delete=models.PROTECT)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUSES, default="PENDING")
     status_description = models.TextField(blank=True)

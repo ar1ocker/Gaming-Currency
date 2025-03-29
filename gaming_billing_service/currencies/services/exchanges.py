@@ -3,11 +3,11 @@ from datetime import timedelta
 from decimal import Decimal
 
 from currencies.models import (
+    CurrencyService,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
     Holder,
-    Service,
 )
 from currencies.utils import retry_on_serialization_error
 from django.conf import settings
@@ -27,7 +27,7 @@ class ExchangesService:
     def create(
         cls,
         *,
-        service: Service,
+        service: CurrencyService,
         holder: Holder,
         exchange_rule: ExchangeRule,
         from_unit: CurrencyUnit,

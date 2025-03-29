@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyUnit, Service
+from currencies.models import CurrencyService, CurrencyUnit
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -16,7 +16,7 @@ class CurrencyTransactionServicesTests(TestCase):
         holder_type = HoldersTypeService.get_default()
 
         cls.holder = HoldersService.get_or_create(holder_id="test", holder_type=holder_type)
-        cls.service = Service.objects.create(name="servicename")
+        cls.service = CurrencyService.objects.create(name="servicename")
         cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
 
         return super().setUpTestData()

@@ -1,6 +1,6 @@
 from uuid import uuid1
 
-from currencies.models import AdjustmentTransaction, CurrencyUnit, Service
+from currencies.models import AdjustmentTransaction, CurrencyService, CurrencyUnit
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -44,7 +44,7 @@ class TransactionActionTest(TestCase):
     def setUpTestData(cls) -> None:
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
-        cls.service = Service.objects.create(name="test_service")
+        cls.service = CurrencyService.objects.create(name="test_service")
         cls.holder = HoldersService.get_or_create(holder_id="123123", holder_type=HoldersTypeService.get_default())
 
         return super().setUpTestData()

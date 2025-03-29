@@ -4,12 +4,12 @@ from django.http import HttpRequest
 from .models import (
     AdjustmentTransaction,
     CheckingAccount,
+    CurrencyService,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
     Holder,
     HolderType,
-    Service,
     TransferRule,
     TransferTransaction,
 )
@@ -165,6 +165,6 @@ class HolderTypeAdmin(admin.ModelAdmin):
     list_display = ["name"]
 
 
-@admin.register(Service)
+@admin.register(CurrencyService)
 class ServiceAdmin(admin.ModelAdmin):
     list_display: list[str] = ["name"]

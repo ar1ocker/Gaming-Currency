@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from currencies.models import Service, TransferRule, TransferTransaction
+from currencies.models import CurrencyService, TransferRule, TransferTransaction
 from currencies.services import HoldersService, TransfersService
 from currencies.services.accounts import AccountsService
 from django import forms, views
@@ -17,7 +17,7 @@ class TransferCreateView(views.View):
     template = "transfers/create.html"
 
     class Form(forms.Form):
-        service = forms.ModelChoiceField(Service.objects.all())
+        service = forms.ModelChoiceField(CurrencyService.objects.all())
         transfer_rule = forms.ModelChoiceField(TransferRule.objects.all())
         from_holder_id = forms.CharField()
         to_holder_id = forms.CharField()

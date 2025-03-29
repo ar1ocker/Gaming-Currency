@@ -1,6 +1,11 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyUnit, ExchangeRule, ExchangeTransaction, Service
+from currencies.models import (
+    CurrencyService,
+    CurrencyUnit,
+    ExchangeRule,
+    ExchangeTransaction,
+)
 from currencies.services import ExchangesService, HoldersService
 from django import forms, views
 from django.contrib import messages
@@ -15,7 +20,7 @@ from django.utils.decorators import method_decorator
 @method_decorator(permission_required("currencies.add_exchangetransaction"), name="dispatch")
 class ExchangeCreateView(views.View):
     class Form(forms.Form):
-        service = forms.ModelChoiceField(Service.objects.all())
+        service = forms.ModelChoiceField(CurrencyService.objects.all())
         holder_id = forms.CharField()
         exchange_rule = forms.ModelChoiceField(ExchangeRule.objects.all())
         from_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
