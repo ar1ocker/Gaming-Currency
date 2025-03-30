@@ -16,7 +16,6 @@ config = toml.load(BASE_DIR / "config.toml")
 SECRET_KEY = config["DJANGO"]["SECRET_KEY"]
 
 DEBUG = config["DJANGO"]["DEBUG"]
-ENABLE_HMAC_VALIDATION = config["HMAC"]["ENABLE"]
 
 ALLOWED_HOSTS = config["DJANGO"]["ALLOWED_HOSTS"]
 
@@ -148,6 +147,10 @@ DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: DEBUG,
     "PROFILER_MAX_DEPTH": 10,
 }
+
+# HMAC
+ENABLE_HMAC_VALIDATION = config["HMAC"]["ENABLE"]
+SERVICE_HEADER = "X-SERVICE"
 
 BATTLEMETRICS_SIGNATURE_REGEX = r"(?<=s=)\w+(?=,|\Z)"
 BATTLEMETRICS_TIMESTAMP_REGEX = r"(?<=t=)[\w\-:.+]+(?=,|\Z)"

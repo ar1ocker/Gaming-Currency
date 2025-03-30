@@ -169,10 +169,10 @@ class BattlemetricsRequestHMACValidator:
 def hmac_service_auth(func):
     @wraps(func)
     def wrapper(self, request, *args, **kwargs):
-        service_header = request.headers.get("X-SERVICE")
+        service_header = request.headers.get(settings.SERVICE_HEADER)
 
         if not service_header:
-            raise AuthenticationFailed("Service not found")
+            raise AuthenticationFailed("Service header not found")
 
         try:
             service_auth = CurrencyServiceAuth.objects.select_related("service").get(service__name=service_header)
