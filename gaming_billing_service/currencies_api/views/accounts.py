@@ -25,7 +25,9 @@ class CheckingAccountDetailAPI(APIView):
         created_at = serializers.DateTimeField()
 
     @hmac_service_auth
-    def post(self, request, service_auth: CurrencyServiceAuth):
+    def get(self, request, service_auth: CurrencyServiceAuth):
+        AccountsPermissionsService.enforce_access(permissions=service_auth.service.permissions)
+
         serializer = self.InputSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
@@ -46,8 +48,6 @@ class CheckingAccountDetailAPI(APIView):
 
             if holder is None:
                 return Response({"error": "Holder not found"}, status=status.HTTP_404_NOT_FOUND)
-
-            AccountsPermissionsService.enforce_access(permissions=service_auth.service.permissions)
 
             account = AccountsService.get(holder=holder, currency_unit=unit_symbol)
             if account is None:
