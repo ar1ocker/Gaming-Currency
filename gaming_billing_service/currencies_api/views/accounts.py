@@ -19,7 +19,7 @@ class CheckingAccountDetailAPI(APIView):
         create_if_not_exists = serializers.BooleanField(default=False)
 
     class OutputSerializer(serializers.Serializer):
-        holder_id = serializers.CharField()
+        holder_id = serializers.CharField(source="holder.holder_id")
         currency_unit = serializers.CharField(source="currency_unit.symbol")
         amount = serializers.DecimalField(max_digits=13, decimal_places=4)
         created_at = serializers.DateTimeField()
