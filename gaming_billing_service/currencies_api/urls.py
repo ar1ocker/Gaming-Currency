@@ -8,10 +8,15 @@ from .views.adjustments import (
     AdjustmentRejectAPI,
 )
 from .views.exchanges import ExchangeConfirmAPI, ExchangeCreateAPI, ExchangeRejectAPI
+from .views.holders import HolderCreateAPI, HolderDetailAPI, HolderListAPI
 from .views.transfers import TransferConfirmAPI, TransferCreateAPI, TransferRejectAPI
 from .views.units import CurrencyUnitsListAPI
 
 urlpatterns = [
+    path("holders/", HolderListAPI.as_view(), name="holders_list"),
+    path("holders/detail/", HolderDetailAPI.as_view(), name="holders_detail"),
+    path("holders/create/", HolderCreateAPI.as_view(), name="holders_create"),
+    #
     path("accounts/", CheckingAccountListAPI.as_view(), name="checking_accounts_list"),
     path("accounts/detail/", CheckingAccountDetailAPI.as_view(), name="checking_accounts_detail"),
     #
