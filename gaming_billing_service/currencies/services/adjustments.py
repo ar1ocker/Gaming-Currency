@@ -126,8 +126,8 @@ class AdjustmentsFilter(django_filters.FilterSet):
     holder = django_filters.CharFilter(field_name="checking_account__holder__holder_id")
     currency_unit = django_filters.CharFilter(field_name="currency_unit__symbol")
     amount = django_filters.RangeFilter()
-    created_at = django_filters.DateTimeFromToRangeFilter()
-    closed_at = django_filters.DateTimeFromToRangeFilter()
+    created_at = django_filters.IsoDateTimeFromToRangeFilter()
+    closed_at = django_filters.IsoDateTimeFromToRangeFilter()
 
     class Meta:
         model = AdjustmentTransaction

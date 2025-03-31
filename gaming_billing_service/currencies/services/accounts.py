@@ -32,7 +32,7 @@ class AccountsFilter(django_filters.FilterSet):
     holder_id = django_filters.CharFilter(field_name="holder__holder_id")
     currency_unit = django_filters.CharFilter(field_name="currency_unit__symbol")
     amount = django_filters.RangeFilter()
-    created_at = django_filters.DateTimeFromToRangeFilter()
+    created_at = django_filters.IsoDateTimeFromToRangeFilter()
 
     class Meta:
         model = CheckingAccount
