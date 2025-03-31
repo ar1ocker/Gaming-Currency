@@ -425,3 +425,18 @@ class PermissionAutoRejectTests(TestCase):
             "test_verbose: Error in min_auto_reject or in max_auto_reject permission",
         ):
             TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=20)
+
+    def test_auto_reject_when_root_is_true(self):
+        permissions = {
+            "root": True,
+            "test_section": {
+                "enabled": True,
+                "create": {
+                    "enabled": True,
+                    "max_auto_reject": 30,
+                    "min_auto_reject": {},
+                },
+            },
+        }
+
+        TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=50000)
