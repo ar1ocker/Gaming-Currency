@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from currencies.models import CheckingAccount, CurrencyUnit
+from currencies.models import CheckingAccount, CurrencyUnit, Holder
 from currencies.services import (
     AccountsService,
     CurrencyServicesService,
@@ -45,11 +45,13 @@ class CheckingAccountDetailTest(APITestCase):
             content_type="application/json",
         )
 
+        data: dict = response.data  # type: ignore
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["holder_id"], self.holder.holder_id)
-        self.assertEqual(response.data["currency_unit"], self.currency_unit_1.symbol)
-        self.assertEqual(Decimal(response.data["amount"]), Decimal("0.0000"))
-        self.assertTrue("created_at" in response.data)
+        self.assertEqual(data["holder_id"], self.holder.holder_id)
+        self.assertEqual(data["currency_unit"], self.currency_unit_1.symbol)
+        self.assertEqual(Decimal(data["amount"]), Decimal("0.0000"))
+        self.assertTrue("created_at" in data)
 
     def test_get_or_create_detail(self):
         response = self.client.get(
@@ -64,11 +66,14 @@ class CheckingAccountDetailTest(APITestCase):
             content_type="application/json",
         )
 
+        data: dict = response.data  # type: ignore
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["holder_id"], self.holder.holder_id)
-        self.assertEqual(response.data["currency_unit"], self.currency_unit_2.symbol)
-        self.assertEqual(Decimal(response.data["amount"]), Decimal("0.0000"))
-        self.assertTrue("created_at" in response.data)
+        self.assertEqual(data["holder_id"], self.holder.holder_id)
+        self.assertEqual(data["currency_unit"], self.currency_unit_2.symbol)
+        self.assertEqual(Decimal(data["amount"]), Decimal("0.0000"))
+        self.assertTrue("created_at" in data)
+
         self.assertEqual(CheckingAccount.objects.count(), 2)
 
     def test_get_with_no_access_permissions(self):
@@ -86,8 +91,10 @@ class CheckingAccountDetailTest(APITestCase):
             content_type="application/json",
         )
 
+        data: dict = response.data  # type: ignore
+
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Missing required permission" in response.data["detail"])
+        self.assertTrue("Missing required permission" in data["detail"])
 
     def test_get_or_create_with_no_create_permissions(self):
         self.service.permissions = dict(
@@ -114,7 +121,65 @@ class CheckingAccountDetailTest(APITestCase):
             content_type="application/json",
         )
 
+        data: dict = response.data  # type: ignore
+
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Creating is disabled" in response.data["detail"], response.data)
+        self.assertTrue("Creating is disabled" in data["detail"], data)
 
         self.assertEqual(CheckingAccount.objects.count(), 1)
+
+    def test_get_or_create_with_no_holders_create_permissions(self):
+        self.service.permissions = dict(
+            accounts=dict(
+                enabled=True,
+                create=dict(enabled=True),
+            ),
+            holders=dict(
+                enabled=True,
+                create=dict(enabled=False),
+            ),
+        )
+        self.service.save()
+
+        response = self.client.get(
+            reverse("checking_accounts_detail"),
+            data=dict(
+                holder_id=self.holder.holder_id,
+                holder_type=self.holder_type.name,
+                unit_symbol=self.currency_unit_2.symbol,
+                create_if_not_exists=True,
+            ),
+            headers={settings.SERVICE_HEADER: self.service.name},
+            content_type="application/json",
+        )
+
+        data: dict = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue("Creating is disabled" in data["detail"], data)
+
+        self.assertEqual(CheckingAccount.objects.count(), 1)
+
+    def test_get_or_create_with_default_holder_type(self):
+        response = self.client.get(
+            reverse("checking_accounts_detail"),
+            data=dict(
+                holder_id="new_holder_id",
+                unit_symbol=self.currency_unit_2.symbol,  # unit 2
+                create_if_not_exists=True,
+            ),
+            headers={settings.SERVICE_HEADER: self.service.name},
+            content_type="application/json",
+        )
+
+        data: dict = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["holder_id"], "new_holder_id")
+        self.assertEqual(data["holder_type"], HoldersTypeService.get_default().name)
+        self.assertEqual(data["currency_unit"], self.currency_unit_2.symbol)
+        self.assertEqual(Decimal(data["amount"]), Decimal("0.0000"))
+        self.assertTrue("created_at" in data)
+
+        self.assertEqual(CheckingAccount.objects.count(), 2)
+        self.assertEqual(Holder.objects.count(), 2)

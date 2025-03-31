@@ -1,1 +1,1 @@
-from .views import *  # noqa
+from .views.accounts import *  # noqa
