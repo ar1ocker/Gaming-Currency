@@ -1,3 +1,4 @@
+import django_filters
 from currencies.models import Holder, HolderType
 
 
@@ -18,6 +19,14 @@ class HoldersService:
         except Holder.DoesNotExist:
             return None
 
+    @classmethod
+    def list(cls, *, filters: dict[str, str] | None = None):
+        filters = filters or {}
+
+        queryset = Holder.objects.all()
+
+        return HoldersFilter(data=filters, queryset=queryset).qs
+
 
 class HoldersTypeService:
     @classmethod
@@ -30,3 +39,12 @@ class HoldersTypeService:
     @classmethod
     def get_default(cls):
         return HolderType.get_default()
+
+
+class HoldersFilter(django_filters.FilterSet):
+    holder_type = django_filters.CharFilter(field_name="holder_type__name")
+    created_at = django_filters.DateTimeFromToRangeFilter()
+
+    class Meta:
+        model = Holder
+        fields = ("holder_id", "holder_type", "created_at")
