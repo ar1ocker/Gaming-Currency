@@ -19,10 +19,12 @@ class CheckingAccountDetailAPI(APIView):
         create_if_not_exists = serializers.BooleanField(default=False)
 
     class OutputSerializer(serializers.Serializer):
+        holder_enabled = serializers.BooleanField(source="holder.enabled")
         holder_id = serializers.CharField(source="holder.holder_id")
-        currency_unit = serializers.CharField(source="currency_unit.symbol")
-        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
-        created_at = serializers.DateTimeField()
+        holder_type = serializers.CharField(source="holder.holder_type.name")
+        currency_unit = serializers.CharField(source="account.currency_unit.symbol")
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4, source="account.amount")
+        created_at = serializers.DateTimeField(source="account.created_at")
 
     @hmac_service_auth
     def get(self, request, service_auth: CurrencyServiceAuth):
@@ -43,7 +45,6 @@ class CheckingAccountDetailAPI(APIView):
             holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type)
             account = AccountsService.get_or_create(holder=holder, currency_unit=unit_symbol)
         else:
-
             holder = HoldersService.get(holder_id=holder_id, holder_type=holder_type)
 
             if holder is None:
@@ -53,7 +54,7 @@ class CheckingAccountDetailAPI(APIView):
             if account is None:
                 return Response({"error": "Account not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response(self.OutputSerializer(account).data)
+        return Response(self.OutputSerializer(dict(account=account, holder=holder)).data)
 
 
 class CheckingAccountListAPI(APIView):
@@ -70,7 +71,9 @@ class CheckingAccountListAPI(APIView):
         created_at_before = serializers.DateField(required=False)
 
     class OutputSerializer(serializers.Serializer):
+        holder_enabled = serializers.BooleanField(source="holder.enabled")
         holder_id = serializers.CharField(source="holder.holder_id")
+        holder_type = serializers.CharField(source="holder.holder_type.name")
         currency_unit = serializers.CharField(source="currency_unit.symbol")
         amount = serializers.DecimalField(max_digits=13, decimal_places=4)
         created_at = serializers.DateTimeField()
@@ -82,9 +85,13 @@ class CheckingAccountListAPI(APIView):
         filter_serializer = self.FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)
 
-        accounts = AccountsService.list(
-            filters=filter_serializer.validated_data,  # type: ignore
-        ).select_related("holder", "currency_unit")
+        accounts = (
+            AccountsService.list(
+                filters=filter_serializer.validated_data,  # type: ignore
+            )
+            .select_related("holder__holder_type", "currency_unit")
+            .order_by("-created_at")
+        )
 
         return get_paginated_response(
             pagination_class=self.Pagination,
