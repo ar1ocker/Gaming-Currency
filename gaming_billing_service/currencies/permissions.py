@@ -49,6 +49,9 @@ class BasePermission:
     min_amount_key: str = "min_amount"
     max_amount_key: str = "max_amount"
 
+    min_auto_reject: str = "min_auto_reject"
+    max_auto_reject: str = "max_auto_reject"
+
     @classmethod
     def _is_root(cls, *, permissions: dict):
         try:
@@ -143,6 +146,26 @@ class BasePermission:
 
         except KeyError as e:
             raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
+
+    @classmethod
+    def enforce_auto_reject_timeout(cls, *, permissions: dict, auto_reject: int):
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
+
+        try:
+            create_section = permissions[cls.section_key][cls.create_key]
+
+            max_auto_reject = create_section[cls.max_auto_reject]
+            min_auto_reject = create_section[cls.min_auto_reject]
+
+            if not (min_auto_reject < auto_reject < max_auto_reject):
+                raise PermissionDenied(f"{cls.verbose_name}: Auto reject timeout is out of range")
+        except KeyError as e:
+            raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
+        except TypeError:
+            raise PermissionDenied(f"{cls.verbose_name}: Error in min_auto_reject or in max_auto_reject permission")
 
 
 class AdjustmentsPermissionsService(BasePermission):

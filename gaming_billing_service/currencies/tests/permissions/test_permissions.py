@@ -358,3 +358,70 @@ class PermissionRejectTests(TestCase):
         }
 
         TestPermissionsClass.enforce_reject(permissions=permissions, service_name="some_random")
+
+
+class PermissionAutoRejectTests(TestCase):
+    def test_auto_reject_timeout_valid(self):
+        permissions = {
+            "test_section": {
+                "enabled": True,
+                "create": {
+                    "enabled": True,
+                    "max_auto_reject": 100,
+                    "min_auto_reject": 50,
+                },
+            }
+        }
+
+        TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=56)
+
+    def test_auto_reject_timeout_invalid(self):
+        permissions = {
+            "test_section": {
+                "enabled": True,
+                "create": {
+                    "enabled": True,
+                    "max_auto_reject": 100,
+                    "min_auto_reject": 60,
+                },
+            }
+        }
+
+        with self.assertRaisesRegex(TestPermissionsClass.PermissionDenied, ".*out of range.*"):
+            TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=0)
+
+    def test_auto_reject_timeout_max_trash(self):
+        permissions = {
+            "test_section": {
+                "enabled": True,
+                "create": {
+                    "enabled": True,
+                    "max_auto_reject": "trash",
+                    "min_auto_reject": 10,
+                },
+            }
+        }
+
+        with self.assertRaisesMessage(
+            TestPermissionsClass.PermissionDenied,
+            "test_verbose: Error in min_auto_reject or in max_auto_reject permission",
+        ):
+            TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=20)
+
+    def test_auto_reject_timeout_min_trash(self):
+        permissions = {
+            "test_section": {
+                "enabled": True,
+                "create": {
+                    "enabled": True,
+                    "max_auto_reject": 30,
+                    "min_auto_reject": {},
+                },
+            }
+        }
+
+        with self.assertRaisesMessage(
+            TestPermissionsClass.PermissionDenied,
+            "test_verbose: Error in min_auto_reject or in max_auto_reject permission",
+        ):
+            TestPermissionsClass.enforce_auto_reject_timeout(permissions=permissions, auto_reject=20)
