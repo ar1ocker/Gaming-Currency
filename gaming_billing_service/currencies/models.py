@@ -49,6 +49,8 @@ class Holder(models.Model):
     )
     info = models.JSONField(default=dict, null=True, blank=True)
 
+    created_at = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return f"Держатель {self.holder_type}:{self.holder_id}"
 
