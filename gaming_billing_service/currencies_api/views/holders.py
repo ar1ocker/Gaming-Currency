@@ -71,8 +71,8 @@ class HolderListAPI(APIView):
 
     class FilterSerializer(serializers.Serializer):
         holder_type = serializers.CharField(required=False)
-        created_at_after = serializers.DateField(required=False)
-        created_at_before = serializers.DateField(required=False)
+        created_at_after = serializers.DateTimeField(required=False)
+        created_at_before = serializers.DateTimeField(required=False)
 
     class OutputSerializer(serializers.Serializer):
         enabled = serializers.BooleanField()
