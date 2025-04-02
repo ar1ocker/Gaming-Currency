@@ -1,13 +1,13 @@
-from currencies.models import HolderType
-from currencies.services import HoldersService, HoldersTypeService
+from currencies.services import HoldersService
+from currencies.test_factories import HoldersTypeTestFactory
 from django.test import TestCase
 
 
 class HolderServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.holder_type1 = HoldersTypeService.get_default()
-        cls.holder_type2 = HolderType.objects.create(name="testholernameunique")
+        cls.holder_type1 = HoldersTypeTestFactory()
+        cls.holder_type2 = HoldersTypeTestFactory()
 
         return super().setUpTestData()
 

@@ -1,12 +1,12 @@
 from decimal import Decimal
 
-from currencies.models import CheckingAccount, CurrencyUnit, Holder
+from currencies.models import CheckingAccount, Holder
 from currencies.services import (
     AccountsService,
     CurrencyServicesService,
-    HoldersService,
     HoldersTypeService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.models import CurrencyServiceAuth
 from django.conf import settings
 from django.test import override_settings
@@ -27,9 +27,9 @@ class CheckingAccountDetailTest(APITestCase):
 
         cls.holder_type = HoldersTypeService.get_default()
 
-        cls.holder = HoldersService.get_or_create(holder_id="test", holder_type=cls.holder_type)
-        cls.currency_unit_1 = CurrencyUnit.objects.create(symbol="ppg", measurement="popugai")
-        cls.currency_unit_2 = CurrencyUnit.objects.create(symbol="ppg2", measurement="abrakadabra")
+        cls.holder = HoldersTestFactory.create()
+        cls.currency_unit_1 = CurrencyUnitsTestFactory.create()
+        cls.currency_unit_2 = CurrencyUnitsTestFactory.create()
 
         cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)
 

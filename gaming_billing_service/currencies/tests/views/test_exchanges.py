@@ -1,18 +1,13 @@
 from uuid import uuid1
 
-from currencies.models import (
-    CurrencyService,
-    CurrencyUnit,
-    ExchangeRule,
-    ExchangeTransaction,
-)
+from currencies.models import ExchangeRule, ExchangeTransaction
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
+    CurrencyServicesService,
     ExchangesService,
-    HoldersService,
-    HoldersTypeService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.base import Message
@@ -50,11 +45,10 @@ class ExchangesActionTests(TestCase):
     def setUpTestData(cls) -> None:
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
-        cls.service = CurrencyService.objects.create(name="test service")
-        holder_type = HoldersTypeService.get_default()
-        cls.holder = HoldersService.get_or_create(holder_id="holderidtest", holder_type=holder_type)
-        cls.unit1 = CurrencyUnit.objects.create(symbol="ppg", measurement="popugi")
-        cls.unit2 = CurrencyUnit.objects.create(symbol="uppg", measurement="ultra popugi")
+        cls.service = CurrencyServicesService.get_default()
+        cls.holder = HoldersTestFactory()
+        cls.unit1 = CurrencyUnitsTestFactory()
+        cls.unit2 = CurrencyUnitsTestFactory()
 
         cls.checking_account1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit1)
         cls.checking_account2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit2)

@@ -1,18 +1,13 @@
 from uuid import uuid1
 
-from currencies.models import (
-    CurrencyService,
-    CurrencyUnit,
-    TransferRule,
-    TransferTransaction,
-)
+from currencies.models import TransferRule, TransferTransaction
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
-    HoldersService,
-    HoldersTypeService,
+    CurrencyServicesService,
     TransfersService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.base import Message
@@ -51,19 +46,16 @@ class TransferActionTest(TestCase):
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
 
-        cls.service = CurrencyService.objects.create(name="test_service")
-        holder_type = HoldersTypeService.get_default()
-        cls.holder1 = HoldersService.get_or_create(holder_id="123123", holder_type=holder_type)
-        cls.holder2 = HoldersService.get_or_create(holder_id="321321", holder_type=holder_type)
-        cls.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
+        cls.service = CurrencyServicesService.get_default()
+        cls.holder1 = HoldersTestFactory()
+        cls.holder2 = HoldersTestFactory()
+        cls.unit = CurrencyUnitsTestFactory()
 
         cls.transfer_rule = TransferRule(
             enabled=True, name="transferrule", unit=cls.unit, fee_percent=0, min_from_amount=1
         )
         cls.transfer_rule.full_clean()
         cls.transfer_rule.save()
-
-        return super().setUpTestData()
 
     def assertMessages(self, response: HttpResponse, message: Message):
         msgs = list(messages.get_messages(response.wsgi_request))

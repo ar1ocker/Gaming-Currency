@@ -1,12 +1,12 @@
 from uuid import uuid1
 
-from currencies.models import AdjustmentTransaction, CurrencyService, CurrencyUnit
+from currencies.models import AdjustmentTransaction
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
-    HoldersService,
-    HoldersTypeService,
+    CurrencyServicesService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.base import Message
@@ -44,8 +44,8 @@ class TransactionActionTest(TestCase):
     def setUpTestData(cls) -> None:
         cls.uuid = uuid1()
         cls.superuser = User.objects.create_superuser("root", "email@example.com", "pass")
-        cls.service = CurrencyService.objects.create(name="test_service")
-        cls.holder = HoldersService.get_or_create(holder_id="123123", holder_type=HoldersTypeService.get_default())
+        cls.service = CurrencyServicesService.get_default()
+        cls.holder = HoldersTestFactory()
 
         return super().setUpTestData()
 
@@ -56,7 +56,7 @@ class TransactionActionTest(TestCase):
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
 
-        self.unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
+        self.unit = CurrencyUnitsTestFactory()
         self.account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit)
 
         self.transaction = AdjustmentsService.create(

@@ -1,10 +1,9 @@
-from currencies.models import CurrencyUnit
 from currencies.services import (
     AccountsService,
     CurrencyServicesService,
-    HoldersService,
     HoldersTypeService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.models import CurrencyServiceAuth
 from django.conf import settings
 from django.test import override_settings
@@ -25,9 +24,9 @@ class CheckingAccountListTest(APITestCase):
 
         cls.holder_type = HoldersTypeService.get_default()
 
-        cls.holder = HoldersService.get_or_create(holder_id="test", holder_type=cls.holder_type)
-        cls.currency_unit_1 = CurrencyUnit.objects.create(symbol="ppg", measurement="popugai")
-        cls.currency_unit_2 = CurrencyUnit.objects.create(symbol="ppg2", measurement="abrakadabra")
+        cls.holder = HoldersTestFactory()
+        cls.currency_unit_1 = CurrencyUnitsTestFactory()
+        cls.currency_unit_2 = CurrencyUnitsTestFactory()
 
         cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)
 
@@ -38,7 +37,7 @@ class CheckingAccountListTest(APITestCase):
         data = response.data  # type: ignore
 
         self.assertEqual(len(data["results"]), 1)
-        self.assertEqual(data["results"][0]["holder_id"], "test")
+        self.assertEqual(data["results"][0]["holder_id"], self.holder.holder_id)
 
     def test_list_many(self):
         AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit_2)
@@ -50,7 +49,7 @@ class CheckingAccountListTest(APITestCase):
         data = response.data  # type: ignore
 
         self.assertEqual(len(data["results"]), 2)
-        self.assertEqual(data["results"][0]["holder_id"], "test")
+        self.assertEqual(data["results"][0]["holder_id"], self.holder.holder_id)
 
     def test_list_without_permissions(self):
         self.service.permissions = dict(

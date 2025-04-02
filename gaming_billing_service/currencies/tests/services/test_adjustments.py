@@ -1,23 +1,20 @@
 from datetime import timedelta
 
-from currencies.models import CurrencyService, CurrencyUnit
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
-    HoldersService,
-    HoldersTypeService,
+    CurrencyServicesService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.test import TestCase
 
 
 class CurrencyTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        holder_type = HoldersTypeService.get_default()
-
-        cls.holder = HoldersService.get_or_create(holder_id="test", holder_type=holder_type)
-        cls.service = CurrencyService.objects.create(name="servicename")
-        cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
+        cls.holder = HoldersTestFactory()
+        cls.service = CurrencyServicesService.get_default()
+        cls.currency_unit = CurrencyUnitsTestFactory()
 
         return super().setUpTestData()
 

@@ -1,31 +1,24 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from currencies.models import (
-    CheckingAccount,
-    CurrencyService,
-    CurrencyUnit,
-    TransferRule,
-)
+from currencies.models import CheckingAccount, CurrencyUnit, TransferRule
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
-    HoldersService,
-    HoldersTypeService,
+    CurrencyServicesService,
     TransfersService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.test import TestCase
 
 
 class CurrencyTransferTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        holder_type = HoldersTypeService.get_default()
-
-        cls.currency_unit = CurrencyUnit.objects.create(symbol="ppg", measurement="попугаи")
-        cls.service = CurrencyService.objects.create(name="servicename")
-        cls.first_holder = HoldersService.get_or_create(holder_id="1", holder_type=holder_type)
-        cls.second_holder = HoldersService.get_or_create(holder_id="2", holder_type=holder_type)
+        cls.currency_unit = CurrencyUnitsTestFactory()
+        cls.service = CurrencyServicesService.get_default()
+        cls.first_holder = HoldersTestFactory()
+        cls.second_holder = HoldersTestFactory()
 
         cls.transfer_rule = TransferRule.objects.create(
             enabled=True,

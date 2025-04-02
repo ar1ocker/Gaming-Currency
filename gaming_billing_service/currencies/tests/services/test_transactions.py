@@ -6,23 +6,22 @@ from typing import Literal
 from currencies.models import (
     AdjustmentTransaction,
     CheckingAccount,
-    CurrencyService,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
     Holder,
-    HolderType,
     TransferRule,
     TransferTransaction,
 )
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
+    CurrencyServicesService,
     ExchangesService,
-    HoldersService,
     TransactionsService,
     TransfersService,
 )
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.test import TestCase
 from django.utils import timezone
 
@@ -30,13 +29,12 @@ from django.utils import timezone
 class TransactionsTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.service = CurrencyService.objects.create(name="test")
-        cls.holder_type = HolderType.get_default()
-        cls.holder_1 = HoldersService.get_or_create(holder_id="test", holder_type=cls.holder_type)
-        cls.holder_2 = HoldersService.get_or_create(holder_id="test2", holder_type=cls.holder_type)
+        cls.service = CurrencyServicesService.get_default()
+        cls.holder_1 = HoldersTestFactory()
+        cls.holder_2 = HoldersTestFactory()
 
-        cls.unit_1 = CurrencyUnit.objects.create(symbol="unit_1", measurement="unit_1_measurement")
-        cls.unit_2 = CurrencyUnit.objects.create(symbol="unit_2", measurement="unit_2_measurement")
+        cls.unit_1 = CurrencyUnitsTestFactory()
+        cls.unit_2 = CurrencyUnitsTestFactory()
 
         cls.transfer_rule = TransferRule.objects.create(
             enabled=True,
