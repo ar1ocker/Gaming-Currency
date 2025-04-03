@@ -39,6 +39,9 @@ class AdjustmentCreateAPI(APIView):
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
         AdjustmentsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        AdjustmentsPermissionsService.enforce_auto_reject_timeout(
+            permissions=service_auth.service.permissions, auto_reject=auto_reject_timeout
+        )
         AdjustmentsPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=amount)
 
         account = AccountsService.get(holder=holder, currency_unit=unit)
