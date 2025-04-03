@@ -1,15 +1,20 @@
-from typing import TYPE_CHECKING
 import uuid
+from typing import TYPE_CHECKING
+
+from currencies.models import CurrencyService
+from currencies.services import (
+    AccountsService,
+    AdjustmentsService,
+    CurrencyServicesService,
+)
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies_api.test_factories import CurrencyServiceAuthFactory
 from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
-from currencies.services import CurrencyServicesService, AccountsService, AdjustmentsService
-from currencies_api.test_factories import CurrencyServiceAuthFactory
-from currencies.test_factories import HoldersTestFactory, CurrencyUnitsTestFactory
-from currencies.models import CurrencyService
 
 if TYPE_CHECKING:
-    from currencies.models import Holder, CurrencyUnit
+    from currencies.models import CurrencyUnit, Holder
 
 
 class AdjustmentRejectAPITest(TestCase):
@@ -47,7 +52,7 @@ class AdjustmentRejectAPITest(TestCase):
     def assemble_auth_headers(self, *, service: CurrencyService):
         return {settings.SERVICE_HEADER: service.name}
 
-    def test_valid_reject(self):
+    def test_valid_reject_from_root(self):
         service = self.create_service_with_permissions(permissions=dict(root=True))
 
         response = self.client.post(
@@ -60,6 +65,36 @@ class AdjustmentRejectAPITest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+        self.pending_transaction.refresh_from_db()
+        self.assertEqual(self.pending_transaction.status, "REJECTED")
+
+    def test_valid_reject(self):
+        service = self.create_service_with_permissions(
+            permissions=dict(
+                adjustments=dict(
+                    enabled=True,
+                    reject=dict(
+                        enabled=True,
+                        services=[self.service.name],
+                    ),
+                ),
+            )
+        )
+
+        response = self.client.post(
+            self.reject_reverse_path,
+            data=dict(
+                uuid=self.pending_transaction.uuid,
+                status_description="test_status",
+            ),
+            headers=self.assemble_auth_headers(service=service),
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.pending_transaction.refresh_from_db()
+        self.assertEqual(self.pending_transaction.status, "REJECTED")
 
     def test_uuid_not_found(self):
         service = self.create_service_with_permissions(permissions=dict(root=True))
@@ -78,3 +113,89 @@ class AdjustmentRejectAPITest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual("Validation error", data["message"], data)
         self.assertIn("object does not exist", str(data["extra"]["fields"]["uuid"]), data["extra"]["fields"]["uuid"])
+
+    def test_permissions_disabled(self):
+        service = self.create_service_with_permissions(
+            permissions=dict(
+                adjustments=dict(
+                    enabled=False,  # FAIL
+                ),
+            )
+        )
+
+        response = self.client.post(
+            self.reject_reverse_path,
+            data=dict(
+                uuid=self.pending_transaction.uuid,
+                status_description="test_status",
+            ),
+            headers=self.assemble_auth_headers(service=service),
+        )
+
+        data: dict = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual("adjustments: Access is disabled", data["message"], data)
+
+        self.pending_transaction.refresh_from_db()
+        self.assertEqual(self.pending_transaction.status, "PENDING")
+
+    def test_permissions_reject_disabled(self):
+        service = self.create_service_with_permissions(
+            permissions=dict(
+                adjustments=dict(
+                    enabled=True,
+                    reject=dict(
+                        enabled=False,  # FAIL
+                        services=[self.service.name],
+                    ),
+                ),
+            )
+        )
+
+        response = self.client.post(
+            self.reject_reverse_path,
+            data=dict(
+                uuid=self.pending_transaction.uuid,
+                status_description="test_status",
+            ),
+            headers=self.assemble_auth_headers(service=service),
+        )
+
+        data: dict = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual("adjustments: Reject is disabled", data["message"], data)
+
+        self.pending_transaction.refresh_from_db()
+        self.assertEqual(self.pending_transaction.status, "PENDING")
+
+    def test_permissions_service_not_in_reject(self):
+        service = self.create_service_with_permissions(
+            permissions=dict(
+                adjustments=dict(
+                    enabled=True,
+                    reject=dict(
+                        enabled=True,
+                        services=[],  # FAIL
+                    ),
+                ),
+            )
+        )
+
+        response = self.client.post(
+            self.reject_reverse_path,
+            data=dict(
+                uuid=self.pending_transaction.uuid,
+                status_description="test_status",
+            ),
+            headers=self.assemble_auth_headers(service=service),
+        )
+
+        data: dict = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual("adjustments: No access to reject the transaction from another service", data["message"], data)
+
+        self.pending_transaction.refresh_from_db()
+        self.assertEqual(self.pending_transaction.status, "PENDING")
