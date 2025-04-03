@@ -34,7 +34,7 @@ class ExchangesService:
         to_unit: CurrencyUnit,
         from_amount: Decimal | int,
         description: str,
-        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
+        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEDELTA,
     ):
         if from_unit not in exchange_rule.units:
             raise ValidationError("from_unit is not in units")

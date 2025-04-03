@@ -20,7 +20,7 @@ class ExchangeCreateAPI(APIView):
         to_unit = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
         from_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
         description = serializers.CharField()
-        auto_reject_timeout = serializers.IntegerField(min_value=1, default=settings.DEFAULT_AUTO_REJECT_TIMEOUT)
+        auto_reject_timeout = serializers.IntegerField(min_value=1, default=settings.DEFAULT_AUTO_REJECT_SECONDS)
 
     class OutputSerializer(serializers.Serializer):
         uuid = serializers.UUIDField()

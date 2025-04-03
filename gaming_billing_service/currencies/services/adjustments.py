@@ -24,7 +24,7 @@ class AdjustmentsService:
         checking_account: CheckingAccount,
         amount: Decimal | int,
         description: str,
-        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
+        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEDELTA,
     ) -> AdjustmentTransaction:
         if isinstance(amount, Decimal):
             amount = amount.quantize(Decimal(".0000"))

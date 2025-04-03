@@ -30,7 +30,7 @@ class TransfersService:
         to_checking_account: CheckingAccount,
         from_amount: Decimal | int,
         description: str,
-        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEOUT,
+        auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEDELTA,
     ) -> TransferTransaction:
         if not transfer_rule.enabled:
             raise ValidationError("Transfer is disabled")
