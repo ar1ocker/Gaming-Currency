@@ -94,7 +94,7 @@ class CheckingAccountDetailTest(APITestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Missing required permission" in data["detail"])
+        self.assertTrue("Missing required permission" in data["message"], data)
 
     def test_get_or_create_with_no_create_permissions(self):
         self.service.permissions = dict(
@@ -124,7 +124,7 @@ class CheckingAccountDetailTest(APITestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Creating is disabled" in data["detail"], data)
+        self.assertTrue("Creating is disabled" in data["message"], data)
 
         self.assertEqual(CheckingAccount.objects.count(), 1)
 
@@ -156,7 +156,7 @@ class CheckingAccountDetailTest(APITestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Creating is disabled" in data["detail"], data)
+        self.assertIn("Creating is disabled", data["message"], data)
 
         self.assertEqual(CheckingAccount.objects.count(), 1)
 

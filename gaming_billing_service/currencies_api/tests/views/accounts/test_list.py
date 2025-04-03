@@ -66,4 +66,4 @@ class CheckingAccountListTest(APITestCase):
         data = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403)
-        self.assertTrue("Access is disabled" in data["detail"], data)
+        self.assertIn("Access is disabled", data["message"], data)

@@ -183,7 +183,7 @@ class AdjustmentCreateAPITest(TestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403, data)
-        self.assertIn("Access is disabled", data["detail"], data)
+        self.assertIn("Access is disabled", data["message"], data)
         self.assertEqual(AdjustmentsService.list().count(), 0)
 
     def test_create_permission_not_pass(self):
@@ -216,7 +216,7 @@ class AdjustmentCreateAPITest(TestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403, data)
-        self.assertIn("Creating is disabled", data["detail"], data)
+        self.assertIn("Creating is disabled", data["message"], data)
         self.assertEqual(AdjustmentsService.list().count(), 0)
 
     def test_amount_permission_not_pass(self):
@@ -249,7 +249,7 @@ class AdjustmentCreateAPITest(TestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403, data)
-        self.assertIn("Amount is out of range", data["detail"], data)
+        self.assertIn("Amount is out of range", data["message"], data)
         self.assertEqual(AdjustmentsService.list().count(), 0)
 
     def test_auto_reject_permission_not_pass(self):
@@ -282,5 +282,5 @@ class AdjustmentCreateAPITest(TestCase):
         data: dict = response.data  # type: ignore
 
         self.assertEqual(response.status_code, 403, data)
-        self.assertIn("Auto reject timeout is out of range", data["detail"], data)
+        self.assertIn("Auto reject timeout is out of range", data["message"], data)
         self.assertEqual(AdjustmentsService.list().count(), 0)
