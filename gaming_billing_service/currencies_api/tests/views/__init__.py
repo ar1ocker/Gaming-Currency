@@ -3,3 +3,4 @@ from .accounts.test_list import *  # noqa
 from .adjustments.test_confirm import *  # noqa
 from .adjustments.test_create import *  # noqa
 from .adjustments.test_reject import *  # noqa
+from .adjustments.test_list import *  # noqa
