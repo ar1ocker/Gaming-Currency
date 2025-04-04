@@ -42,6 +42,9 @@ class TransferCreateAPI(APIView):
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
         TransfersPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        TransfersPermissionsService.enforce_auto_reject_timeout(
+            permissions=service_auth.service.permissions, auto_reject=auto_reject_timeout
+        )
         TransfersPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=amount)
 
         from_account = AccountsService.get(holder=from_holder, currency_unit=transfer_rule.unit)
