@@ -10,13 +10,14 @@ from currencies.services import (
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthFactory
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 if TYPE_CHECKING:
     from currencies.models import CurrencyUnit, Holder
 
 
+@override_settings(ENABLE_HMAC_VALIDATION=False)
 class AdjustmentConfirmAPITest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:

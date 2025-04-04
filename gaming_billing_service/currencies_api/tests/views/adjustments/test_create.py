@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from currencies.test_factories import HoldersTestFactory, CurrencyUnitsTestFactory
 from currencies.services import CurrencyServicesService, AccountsService
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from currencies.models import Holder, CurrencyUnit
 
 
+@override_settings(ENABLE_HMAC_VALIDATION=False)
 class AdjustmentCreateAPITest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
