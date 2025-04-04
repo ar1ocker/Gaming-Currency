@@ -43,6 +43,9 @@ class ExchangeCreateAPI(APIView):
         auto_reject_timeout: int = serializer.validated_data["auto_reject_timeout"]  # type: ignore
 
         ExchangesPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        ExchangesPermissionsService.enforce_auto_reject_timeout(
+            permissions=service_auth.service.permissions, auto_reject=auto_reject_timeout
+        )
         ExchangesPermissionsService.enforce_amount(permissions=service_auth.service.permissions, amount=from_amount)
 
         exchange = ExchangesService.create(
