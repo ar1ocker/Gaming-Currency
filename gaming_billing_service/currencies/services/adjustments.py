@@ -29,6 +29,9 @@ class AdjustmentsService:
         if isinstance(amount, Decimal):
             amount = amount.quantize(Decimal(".0000"))
 
+        if amount == 0:
+            raise ValidationError({"amount": "The amount cannot be zero"})
+
         with transaction.atomic():
             blocked_checking_account = CheckingAccount.objects.get(pk=checking_account.pk)
 

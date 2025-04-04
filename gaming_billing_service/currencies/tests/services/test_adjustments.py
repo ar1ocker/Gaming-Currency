@@ -46,6 +46,12 @@ class CurrencyTransactionServicesTests(TestCase):
                 service=self.service, checking_account=self.checking_account, amount=-100, description=""
             )
 
+    def test_zero_amount_error(self):
+        with self.assertRaises(AdjustmentsService.ValidationError):
+            AdjustmentsService.create(
+                service=self.service, checking_account=self.checking_account, amount=0, description=""
+            )
+
     def test_positive_transaction_not_change_account_amount(self):
         AdjustmentsService.create(
             service=self.service, checking_account=self.checking_account, amount=100, description=""
