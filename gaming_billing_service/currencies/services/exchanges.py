@@ -51,8 +51,10 @@ class ExchangesService:
             rate = exchange_rule.reverse_rate
             min_amount = exchange_rule.min_second_amount
 
-        if isinstance(from_amount, Decimal):
-            from_amount = from_amount.quantize(Decimal(".0000"))
+        if isinstance(from_amount, int):
+            from_amount = Decimal(from_amount)
+
+        from_amount = from_amount.quantize(Decimal(".0000"))
 
         if from_amount < min_amount:
             raise ValidationError("Списываемая сумма меньше минимальной {from_amount} < {min_amount}")
@@ -85,7 +87,7 @@ class ExchangesService:
             from_account.save()
 
             if is_forward_exchange:
-                to_amount = from_amount // rate
+                to_amount = from_amount / rate
             else:
                 to_amount = from_amount * rate
 
@@ -97,7 +99,7 @@ class ExchangesService:
                 from_checking_account=from_account,
                 to_checking_account=to_account,
                 from_amount=from_amount,
-                to_amount=to_amount,
+                to_amount=to_amount.quantize(Decimal("0.0000")),
             )
 
             exchange_transaction.full_clean()
