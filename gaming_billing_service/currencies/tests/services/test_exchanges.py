@@ -29,6 +29,7 @@ class ExchangesServiceTests(TestCase):
         self.checking_account_unit2 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit2)
 
         self.exchange_rule = ExchangeRule.objects.create(
+            name="test",
             enabled_forward=True,
             enabled_reverse=True,
             first_unit=self.unit1,
@@ -307,6 +308,43 @@ class ExchangesServiceTests(TestCase):
 
         self.assertEqual(exchange_transaction1.status, "REJECTED")
         self.assertEqual(exchange_transaction2.status, "REJECTED")
+
+    def test_validate_decimal_operations(self):
+        exchange_rule = ExchangeRule.objects.create(
+            name="test2",
+            enabled_forward=True,
+            enabled_reverse=True,
+            first_unit=self.unit1,
+            second_unit=self.unit2,
+            forward_rate=Decimal("10.5"),
+            reverse_rate=Decimal("5.3"),
+            min_first_amount=Decimal(0),
+            min_second_amount=Decimal(0),
+        )
+
+        exchange = ExchangesService.create(
+            service=self.service,
+            holder=self.holder,
+            exchange_rule=exchange_rule,
+            from_unit=self.unit1,
+            to_unit=self.unit2,
+            from_amount=Decimal("21"),
+            description="",
+        )
+
+        self.assertEqual(exchange.to_amount, Decimal("2"))
+
+        reverse_exchange = ExchangesService.create(
+            service=self.service,
+            holder=self.holder,
+            exchange_rule=exchange_rule,
+            from_unit=self.unit2,
+            to_unit=self.unit1,
+            from_amount=Decimal("2.35"),
+            description="",
+        )
+
+        self.assertEqual(reverse_exchange.to_amount, Decimal("12.455"))
 
 
 class ExchangeServiceListTests(TestCase):
