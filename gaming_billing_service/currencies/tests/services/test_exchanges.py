@@ -1,6 +1,7 @@
 from datetime import timedelta
+from decimal import Decimal
 
-from currencies.models import CurrencyUnit, ExchangeRule
+from currencies.models import CurrencyService, CurrencyUnit, ExchangeRule
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -32,10 +33,10 @@ class ExchangesServiceTests(TestCase):
             enabled_reverse=True,
             first_unit=self.unit1,
             second_unit=self.unit2,
-            forward_rate=10,
-            reverse_rate=5,
-            min_first_amount=20,
-            min_second_amount=10,
+            forward_rate=Decimal(10),
+            reverse_rate=Decimal(5),
+            min_first_amount=Decimal(20),
+            min_second_amount=Decimal(10),
         )
 
         AdjustmentsService.confirm(
@@ -306,3 +307,161 @@ class ExchangesServiceTests(TestCase):
 
         self.assertEqual(exchange_transaction1.status, "REJECTED")
         self.assertEqual(exchange_transaction2.status, "REJECTED")
+
+
+class ExchangeServiceListTests(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.service_1 = CurrencyService.objects.create(name="service_test_1")
+        cls.service_2 = CurrencyService.objects.create(name="service_test_2")
+
+        cls.holder_1 = HoldersTestFactory()
+        cls.holder_2 = HoldersTestFactory()
+
+        cls.unit_1 = CurrencyUnitsTestFactory()
+        cls.unit_2 = CurrencyUnitsTestFactory()
+
+        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
+        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
+        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
+        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+
+        cls.add_amount(
+            accounts=(
+                cls.account_holder_1_unit_1,
+                cls.account_holder_1_unit_2,
+                cls.account_holder_2_unit_1,
+                cls.account_holder_2_unit_2,
+            )
+        )
+
+        cls.exchange_rule = ExchangeRule.objects.create(
+            enabled_forward=True,
+            enabled_reverse=True,
+            first_unit=cls.unit_1,
+            second_unit=cls.unit_2,
+            forward_rate=Decimal(10),
+            reverse_rate=Decimal(5),
+            min_first_amount=Decimal(1),
+            min_second_amount=Decimal(1),
+        )
+
+        ExchangesService.create(
+            service=cls.service_1,
+            holder=cls.holder_1,
+            exchange_rule=cls.exchange_rule,
+            from_unit=cls.unit_1,
+            to_unit=cls.unit_2,
+            from_amount=10,
+            description="exchange pending holder 1",
+        )
+
+        ExchangesService.create(
+            service=cls.service_1,
+            holder=cls.holder_2,
+            exchange_rule=cls.exchange_rule,
+            from_unit=cls.unit_1,
+            to_unit=cls.unit_2,
+            from_amount=10,
+            description="exchange pending holder 2",
+        )
+
+        ExchangesService.confirm(
+            exchange_transaction=ExchangesService.create(
+                service=cls.service_1,
+                holder=cls.holder_1,
+                exchange_rule=cls.exchange_rule,
+                from_unit=cls.unit_1,
+                to_unit=cls.unit_2,
+                from_amount=100,
+                description="exchange confirmed holder 2",
+            ),
+            status_description="",
+        )
+
+        ExchangesService.confirm(
+            exchange_transaction=ExchangesService.create(
+                service=cls.service_1,
+                holder=cls.holder_2,
+                exchange_rule=cls.exchange_rule,
+                from_unit=cls.unit_1,
+                to_unit=cls.unit_2,
+                from_amount=100,
+                description="exchange confirmed holder 2",
+            ),
+            status_description="",
+        )
+
+        ExchangesService.reject(
+            exchange_transaction=ExchangesService.create(
+                service=cls.service_1,
+                holder=cls.holder_1,
+                exchange_rule=cls.exchange_rule,
+                from_unit=cls.unit_2,
+                to_unit=cls.unit_1,
+                from_amount=300,
+                description="exchange rejected",
+            ),
+            status_description="",
+        )
+
+        ExchangesService.reject(
+            exchange_transaction=ExchangesService.create(
+                service=cls.service_2,
+                holder=cls.holder_1,
+                exchange_rule=cls.exchange_rule,
+                from_unit=cls.unit_2,
+                to_unit=cls.unit_1,
+                from_amount=300,
+                description="exchange rejected service 2",
+            ),
+            status_description="",
+        )
+
+    @classmethod
+    def add_amount(cls, *, accounts: list | tuple, amount=1000):
+        for account in accounts:
+            AdjustmentsService.confirm(
+                adjustment_transaction=AdjustmentsService.create(
+                    service=cls.service_1, checking_account=account, amount=amount, description=""
+                ),
+                status_description="",
+            )
+
+    def test_list_all(self):
+        all_exchanges = ExchangesService.list()
+
+        self.assertEqual(all_exchanges.count(), 6)
+
+    def test_list_pending(self):
+        pending_exchanges = ExchangesService.list(filters=dict(status="Pending"))
+
+        self.assertEqual(pending_exchanges.count(), 2)
+
+    def test_list_rejected(self):
+        rejected_exchanges = ExchangesService.list(filters=dict(status="REJECTED"))
+
+        self.assertEqual(rejected_exchanges.count(), 2)
+        for exchange in rejected_exchanges:
+            self.assertEqual(exchange.status, "REJECTED")
+
+    def test_list_confirmed(self):
+        confirmed_exchanges = ExchangesService.list(filters=dict(status="CONFIRMED"))
+
+        self.assertEqual(confirmed_exchanges.count(), 2)
+        for exchange in confirmed_exchanges:
+            self.assertEqual(exchange.status, "CONFIRMED")
+
+    def test_list_service_2(self):
+        exchanges = ExchangesService.list(filters=dict(service="service_test_2"))
+
+        self.assertEqual(exchanges.count(), 1)
+
+        self.assertEqual(exchanges[0].service.name, "service_test_2")
+
+    def test_list_holder_2(self):
+        exchanges = ExchangesService.list(filters=dict(holder=self.holder_2.holder_id))
+
+        self.assertEqual(exchanges.count(), 2)
+        for exchange in exchanges:
+            self.assertEqual(exchange.from_checking_account.holder.holder_id, self.holder_2.holder_id)

@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-
+import django_filters
 from .accounts import AccountsService
 
 
@@ -159,3 +159,40 @@ class ExchangesService:
             # TODO Ошибки сериализации?
 
         return rejected
+
+    @classmethod
+    def list(cls, *, filters: dict[str, str] | None = None):
+        filters = filters or {}
+
+        queryset = ExchangeTransaction.objects.all()
+
+        return ExchangesFilter(data=filters, queryset=queryset).qs
+
+
+class ExchangesFilter(django_filters.FilterSet):
+    service = django_filters.CharFilter(field_name="service__name")
+    status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
+    holder = django_filters.CharFilter(field_name="from_checking_account__holder__holder_id")
+    created_at = django_filters.IsoDateTimeFromToRangeFilter()
+    closed_at = django_filters.IsoDateTimeFromToRangeFilter()
+
+    exchange_rule = django_filters.CharFilter(field_name="exchange_rule__name")
+
+    from_amount = django_filters.RangeFilter()
+    to_amount = django_filters.RangeFilter()
+    from_unit = django_filters.CharFilter(field_name="from_checking_account__currency_unit__symbol")
+    to_unit = django_filters.CharFilter(field_name="to_checking_account__currency_unit__symbol")
+
+    class Meta:
+        model = ExchangeTransaction
+        fields = [
+            "service",
+            "status",
+            "created_at",
+            "closed_at",
+            "exchange_rule",
+            "from_checking_account",
+            "to_checking_account",
+            "from_amount",
+            "to_amount",
+        ]

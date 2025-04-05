@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid1
 
 from currencies.models import ExchangeRule, ExchangeTransaction
@@ -58,10 +59,10 @@ class ExchangesActionTests(TestCase):
             enabled_reverse=True,
             first_unit=cls.unit1,
             second_unit=cls.unit2,
-            forward_rate=100,
-            reverse_rate=100,
-            min_first_amount=1,
-            min_second_amount=1,
+            forward_rate=Decimal(100),
+            reverse_rate=Decimal(100),
+            min_first_amount=Decimal(1),
+            min_second_amount=Decimal(1),
         )
         return super().setUpTestData()
 
