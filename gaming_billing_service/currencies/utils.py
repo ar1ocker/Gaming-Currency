@@ -2,6 +2,7 @@ import logging
 from functools import wraps
 
 from django.db import OperationalError
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +36,10 @@ def retry_on_serialization_error(max_retries=3):
         return wrapper
 
     return decorator
+
+
+def format_decimal(decimal: Decimal) -> str:
+    s = format(decimal, "f")
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    return s

@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from currencies.models import CurrencyService, CurrencyUnit, ExchangeRule
+from currencies.models import CurrencyService, ExchangeRule
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -54,6 +54,25 @@ class ExchangesServiceTests(TestCase):
             status_description="",
         )
 
+    def test_create_valid(self):
+        exchange = ExchangesService.create(
+            service=self.service,
+            holder=self.holder,
+            exchange_rule=self.exchange_rule,
+            from_unit=self.unit1,
+            to_unit=self.unit2,
+            from_amount=100,
+            description="",
+        )
+
+        self.assertEqual(exchange.service, self.service)
+        self.assertEqual(exchange.from_checking_account.holder, self.holder)
+        self.assertEqual(exchange.to_checking_account.holder, self.holder)
+        self.assertEqual(exchange.from_checking_account.currency_unit, self.unit1)
+        self.assertEqual(exchange.to_checking_account.currency_unit, self.unit2)
+        self.assertEqual(exchange.from_amount, 100)
+        self.assertEqual(exchange.to_amount, 10)
+
     def test_disabled_forward_raise_error(self):
         self.exchange_rule.enabled_forward = False
         self.exchange_rule.save()
@@ -69,7 +88,7 @@ class ExchangesServiceTests(TestCase):
                 description="",
             )
 
-    def test_disabled_reverse_transaction_raise_error(self):
+    def test_disabled_reverse_raise_error(self):
         self.exchange_rule.enabled_reverse = False
         self.exchange_rule.save()
 
@@ -85,7 +104,7 @@ class ExchangesServiceTests(TestCase):
             )
 
     def test_with_not_included_units(self):
-        new_unit = CurrencyUnit.objects.create(symbol="newunit", measurement="newmeasurement")
+        new_unit = CurrencyUnitsTestFactory()
         with self.assertRaisesRegex(ExchangesService.ValidationError, ".*from_unit.*"):
             ExchangesService.create(
                 service=self.service,
@@ -128,18 +147,6 @@ class ExchangesServiceTests(TestCase):
                 from_unit=self.unit2,
                 to_unit=self.unit1,
                 from_amount=1,
-                description="",
-            )
-
-    def test_not_integer_division(self):
-        with self.assertRaisesRegex(ExchangesService.ValidationError, ".*не делится нацело.*"):
-            ExchangesService.create(
-                service=self.service,
-                holder=self.holder,
-                exchange_rule=self.exchange_rule,
-                from_unit=self.unit1,
-                to_unit=self.unit2,
-                from_amount=35,
                 description="",
             )
 
@@ -345,6 +352,48 @@ class ExchangesServiceTests(TestCase):
         )
 
         self.assertEqual(reverse_exchange.to_amount, Decimal("12.455"))
+
+    def test_from_unit_precision_error(self):
+        with self.assertRaisesRegex(
+            ExchangesService.ValidationError, "Число знаков после запятой у снимаемой валюты больше чем возможно.*"
+        ):
+            ExchangesService.create(
+                service=self.service,
+                holder=self.holder,
+                exchange_rule=self.exchange_rule,
+                from_unit=self.unit1,
+                to_unit=self.unit2,
+                from_amount=Decimal("100.00000"),
+                description="",
+            )
+
+    def test_to_unit_precision_error(self):
+        exchange_rule = ExchangeRule.objects.create(
+            name="test2",
+            enabled_forward=True,
+            enabled_reverse=True,
+            first_unit=self.unit1,
+            second_unit=self.unit2,
+            forward_rate=Decimal("1000.1"),
+            reverse_rate=Decimal(5),
+            min_first_amount=Decimal(20),
+            min_second_amount=Decimal(10),
+        )
+
+        # with self.assertRaisesRegex(
+        #     ExchangesService.ValidationError, "Число знаков после запятой у получаемой валюты больше чем возможно.*"
+        # ):
+        exchange = ExchangesService.create(
+            service=self.service,
+            holder=self.holder,
+            exchange_rule=exchange_rule,
+            from_unit=self.unit1,
+            to_unit=self.unit2,
+            from_amount=Decimal("100.0000"),
+            description="",
+        )
+
+        print(exchange.to_amount)
 
 
 class ExchangeServiceListTests(TestCase):

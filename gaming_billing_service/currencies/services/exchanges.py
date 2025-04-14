@@ -9,7 +9,7 @@ from currencies.models import (
     ExchangeTransaction,
     Holder,
 )
-from currencies.utils import retry_on_serialization_error
+from currencies.utils import format_decimal, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -36,39 +36,50 @@ class ExchangesService:
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEDELTA,
     ):
+        if isinstance(from_amount, int):
+            from_amount = Decimal(from_amount)
+
         if from_unit not in exchange_rule.units:
             raise ValidationError("from_unit is not in units")
 
         if to_unit not in exchange_rule.units:
             raise ValidationError("to_unit is not in units")
 
-        if exchange_rule.first_unit == from_unit:
+        if exchange_rule.first_unit == from_unit:  # forward exchange
             is_forward_exchange = True
             rate = exchange_rule.forward_rate
             min_amount = exchange_rule.min_first_amount
+
+            if not exchange_rule.enabled_forward:
+                raise ValidationError("Forward exchange is disabled")
+
         else:
             is_forward_exchange = False
             rate = exchange_rule.reverse_rate
             min_amount = exchange_rule.min_second_amount
 
-        if isinstance(from_amount, int):
-            from_amount = Decimal(from_amount)
+            if not exchange_rule.enabled_reverse:
+                raise ValidationError("Reverse exchange is disabled")
 
-        from_amount = from_amount.quantize(Decimal(".0000"))
+        if abs(from_amount.as_tuple().exponent) > from_unit.precision:  # type: ignore
+            raise ValidationError(
+                f"Число знаков после запятой у снимаемой валюты больше чем возможно: {from_amount},"
+                f" максимальная точность {from_unit.precision}"
+            )
 
         if from_amount < min_amount:
             raise ValidationError("Списываемая сумма меньше минимальной {from_amount} < {min_amount}")
 
         if is_forward_exchange:
-            if not exchange_rule.enabled_forward:
-                raise ValidationError("Forward exchange is disabled")
+            to_amount = from_amount / rate
+        else:
+            to_amount = from_amount * rate
 
-            if from_amount % rate != 0:
-                raise ValidationError("Сумма не делится нацело (без остатка) на ставку {from_amount} % {rate} != 0")
-
-        else:  # is reverse exchange
-            if not exchange_rule.enabled_reverse:
-                raise ValidationError("Reverse exchange is disabled")
+        if abs(to_amount.as_tuple().exponent) > to_unit.precision:  # type: ignore
+            raise ValidationError(
+                f"Число знаков после запятой у получаемой валюты больше чем возможно: {to_amount},"
+                f" максимальная точность {to_unit.precision}"
+            )
 
         with transaction.atomic():
             from_account = AccountsService.get(holder=holder, currency_unit=from_unit)
@@ -86,11 +97,6 @@ class ExchangesService:
             from_account.amount = F("amount") - from_amount
             from_account.save()
 
-            if is_forward_exchange:
-                to_amount = from_amount / rate
-            else:
-                to_amount = from_amount * rate
-
             exchange_transaction = ExchangeTransaction(
                 service=service,
                 description=description,
@@ -99,7 +105,7 @@ class ExchangesService:
                 from_checking_account=from_account,
                 to_checking_account=to_account,
                 from_amount=from_amount,
-                to_amount=to_amount.quantize(Decimal("0.0000")),
+                to_amount=to_amount,
             )
 
             exchange_transaction.full_clean()

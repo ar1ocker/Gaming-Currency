@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from currencies.models import CheckingAccount, CurrencyUnit, TransferRule
+from currencies.models import CheckingAccount, TransferRule
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -183,7 +183,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
     def test_transfer_with_different_currency_units(self):
         self.add_amount(self.one_checking_account, 100)
 
-        currency_unit = CurrencyUnit.objects.create(symbol="sln", measurement="слоны")
+        currency_unit = CurrencyUnitsTestFactory()
 
         diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)
         self.add_amount(diff_currency_account, 100)
