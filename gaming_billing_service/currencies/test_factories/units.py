@@ -9,3 +9,4 @@ class CurrencyUnitsTestFactory(DjangoModelFactory):
 
     symbol = Sequence(lambda n: f"currency_unit_{n}")
     measurement = Sequence(lambda n: f"currency_measurement_{n}")
+    precision = 4

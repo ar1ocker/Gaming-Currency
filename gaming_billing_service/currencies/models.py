@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -62,6 +62,7 @@ class Holder(models.Model):
 class CurrencyUnit(models.Model):
     symbol = models.CharField(max_length=10, unique=True)
     measurement = models.CharField(max_length=50)
+    precision = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
 
     def __str__(self):
         return f"Игровая валюта {self.symbol}"
