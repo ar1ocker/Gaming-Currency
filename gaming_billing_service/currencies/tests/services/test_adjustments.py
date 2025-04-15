@@ -5,6 +5,7 @@ from currencies.services import (
     AdjustmentsService,
     CurrencyServicesService,
 )
+from decimal import Decimal
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from django.test import TestCase
 
@@ -206,3 +207,14 @@ class CurrencyTransactionServicesTests(TestCase):
 
         self.assertEqual(transaction1.status, "REJECTED")
         self.assertEqual(transaction2.status, "REJECTED")
+
+    def test_amount_precision_raise_error(self):
+        with self.assertRaisesRegex(
+            AdjustmentsService.ValidationError, "Число знаков после запятой у валюты больше чем возможно.*"
+        ):
+            AdjustmentsService.create(
+                service=self.service,
+                checking_account=self.checking_account,
+                amount=Decimal("100.00001"),
+                description="",
+            )

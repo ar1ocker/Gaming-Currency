@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import django_filters
 from currencies.models import AdjustmentTransaction, CheckingAccount, CurrencyService
-from currencies.utils import retry_on_serialization_error
+from currencies.utils import get_decimal_places, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -26,14 +26,24 @@ class AdjustmentsService:
         description: str,
         auto_reject_timedelta: timedelta = settings.DEFAULT_AUTO_REJECT_TIMEDELTA,
     ) -> AdjustmentTransaction:
-        if isinstance(amount, Decimal):
-            amount = amount.quantize(Decimal(".0000"))
+        if isinstance(amount, int):
+            amount = Decimal(amount)
+
+        amount = amount.normalize()
 
         if amount == 0:
             raise ValidationError({"amount": "The amount cannot be zero"})
 
         with transaction.atomic():
-            blocked_checking_account = CheckingAccount.objects.get(pk=checking_account.pk)
+            blocked_checking_account = CheckingAccount.objects.select_related("currency_unit").get(
+                pk=checking_account.pk
+            )
+
+            if get_decimal_places(amount) > blocked_checking_account.currency_unit.precision:
+                raise ValidationError(
+                    f"Число знаков после запятой у валюты больше чем возможно: {amount},"
+                    f" максимальная точность {blocked_checking_account.currency_unit.precision}"
+                )
 
             # Когда мы тратим валюту (amount < 0) - выводим валюту со счета сразу, чтобы заблокировать её трату до
             # подтверждения транзакции или же вернуть её при отмене транзакции
