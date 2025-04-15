@@ -28,8 +28,8 @@ class AdjustmentsService:
     ) -> AdjustmentTransaction:
         if isinstance(amount, int):
             amount = Decimal(amount)
-
-        amount = amount.normalize()
+        else:
+            amount = amount.normalize()
 
         if amount == 0:
             raise ValidationError({"amount": "The amount cannot be zero"})
