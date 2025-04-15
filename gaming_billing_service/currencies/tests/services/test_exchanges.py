@@ -374,26 +374,24 @@ class ExchangesServiceTests(TestCase):
             enabled_reverse=True,
             first_unit=self.unit1,
             second_unit=self.unit2,
-            forward_rate=Decimal("1000.1"),
+            forward_rate=Decimal("10.1"),
             reverse_rate=Decimal(5),
             min_first_amount=Decimal(20),
             min_second_amount=Decimal(10),
         )
 
-        # with self.assertRaisesRegex(
-        #     ExchangesService.ValidationError, "Число знаков после запятой у получаемой валюты больше чем возможно.*"
-        # ):
-        exchange = ExchangesService.create(
-            service=self.service,
-            holder=self.holder,
-            exchange_rule=exchange_rule,
-            from_unit=self.unit1,
-            to_unit=self.unit2,
-            from_amount=Decimal("100.0000"),
-            description="",
-        )
-
-        print(exchange.to_amount)
+        with self.assertRaisesRegex(
+            ExchangesService.ValidationError, "Число знаков после запятой у получаемой валюты больше чем возможно.*"
+        ):
+            ExchangesService.create(
+                service=self.service,
+                holder=self.holder,
+                exchange_rule=exchange_rule,
+                from_unit=self.unit1,
+                to_unit=self.unit2,
+                from_amount=100,
+                description="",
+            )
 
 
 class ExchangeServiceListTests(TestCase):
