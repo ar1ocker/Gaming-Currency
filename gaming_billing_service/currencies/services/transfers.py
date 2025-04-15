@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta
-from decimal import Decimal
+from decimal import Decimal, ROUND_DOWN
 
 from currencies.models import (
     CheckingAccount,
@@ -8,7 +8,7 @@ from currencies.models import (
     TransferRule,
     TransferTransaction,
 )
-from currencies.utils import retry_on_serialization_error
+from currencies.utils import retry_on_serialization_error, get_decimal_places
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -35,26 +35,35 @@ class TransfersService:
         if not transfer_rule.enabled:
             raise ValidationError("Transfer is disabled")
 
-        if isinstance(from_amount, Decimal):
-            from_amount = from_amount.quantize(Decimal(".0000"))
-
-        # calculate fee percent from to_amount
-        to_amount = (from_amount - (from_amount * (transfer_rule.fee_percent / 100))).quantize(Decimal("0.0000"))
-
-        if from_amount < transfer_rule.min_from_amount:
-            raise ValidationError("from_amount < min_from_amount")
-
-        if to_amount <= 0:
-            raise ValidationError("from_amount is too small, to_amount <= 0")
-
-        if from_checking_account == to_checking_account:
-            raise ValidationError("Transfer to between the same account")
-
         if (
             transfer_rule.unit != from_checking_account.currency_unit
             or transfer_rule.unit != to_checking_account.currency_unit
         ):
             raise ValidationError("Transfer with unsuitable currency")
+
+        if from_checking_account == to_checking_account:
+            raise ValidationError("Transfer to between the same account")
+
+        if from_amount < transfer_rule.min_from_amount:
+            raise ValidationError("from_amount < min_from_amount")
+
+        if isinstance(from_amount, int):
+            from_amount = Decimal(from_amount)
+        else:
+            from_amount = from_amount.normalize()
+
+        if get_decimal_places(from_amount) > transfer_rule.unit.precision:
+            raise ValidationError(
+                f"Число знаков после запятой у валюты источника больше чем возможно: {from_amount},"
+                f" максимальная точность {transfer_rule.unit.precision}"
+            )
+
+        # calculate fee percent from to_amount
+        to_amount = (from_amount - (from_amount * (transfer_rule.fee_percent / 100))).normalize()
+        to_amount = to_amount.quantize(Decimal("0." + "0" * transfer_rule.unit.precision), rounding=ROUND_DOWN)
+
+        if to_amount <= 0:
+            raise ValidationError("from_amount is too small, to_amount <= 0")
 
         with transaction.atomic():
             blocked_from_checking_account = CheckingAccount.objects.get(pk=from_checking_account.pk)

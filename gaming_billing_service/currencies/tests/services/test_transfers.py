@@ -308,3 +308,18 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 from_amount=10,
                 description="test",
             )
+
+    def test_from_amount_precision_error(self):
+        self.add_amount(self.one_checking_account, 100)
+
+        with self.assertRaisesRegex(
+            TransfersService.ValidationError, "Число знаков после запятой у валюты источника больше чем возможно.*"
+        ):
+            TransfersService.create(
+                service=self.service,
+                transfer_rule=self.transfer_rule,
+                from_checking_account=self.one_checking_account,
+                to_checking_account=self.two_checking_account,
+                from_amount=Decimal("50.00001"),
+                description="test",
+            )
