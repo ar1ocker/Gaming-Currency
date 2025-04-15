@@ -38,8 +38,8 @@ class ExchangesService:
     ):
         if isinstance(from_amount, int):
             from_amount = Decimal(from_amount)
-
-        from_amount = from_amount.normalize()
+        else:
+            from_amount = from_amount.normalize()
 
         if from_unit not in exchange_rule.units:
             raise ValidationError("from_unit is not in units")
