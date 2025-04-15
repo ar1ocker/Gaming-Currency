@@ -43,3 +43,7 @@ def format_decimal(decimal: Decimal) -> str:
     if "." in s:
         s = s.rstrip("0").rstrip(".")
     return s
+
+
+def get_decimal_precision(decimal: Decimal) -> int:
+    return abs(decimal.normalize().as_tuple().exponent)  # type: ignore
