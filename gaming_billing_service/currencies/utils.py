@@ -45,5 +45,10 @@ def format_decimal(decimal: Decimal) -> str:
     return s
 
 
-def get_decimal_precision(decimal: Decimal) -> int:
-    return abs(decimal.normalize().as_tuple().exponent)  # type: ignore
+def get_decimal_places(decimal: Decimal) -> int:
+    places: int = decimal.normalize().as_tuple().exponent  # type: ignore
+
+    if places > 0:
+        return 0
+
+    return abs(places)
