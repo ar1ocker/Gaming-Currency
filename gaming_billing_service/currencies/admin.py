@@ -145,7 +145,7 @@ class CheckingAccountAdmin(admin.ModelAdmin):
 
 @admin.register(CurrencyUnit)
 class CurrencyUnitAdmin(admin.ModelAdmin):
-    list_display = ["id", "symbol", "measurement"]
+    list_display = ["id", "symbol", "measurement", "precision"]
 
 
 @admin.register(Holder)
