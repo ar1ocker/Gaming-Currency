@@ -9,7 +9,7 @@ from currencies.models import (
     ExchangeTransaction,
     Holder,
 )
-from currencies.utils import retry_on_serialization_error
+from currencies.utils import retry_on_serialization_error, get_decimal_places
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -39,6 +39,8 @@ class ExchangesService:
         if isinstance(from_amount, int):
             from_amount = Decimal(from_amount)
 
+        from_amount = from_amount.normalize()
+
         if from_unit not in exchange_rule.units:
             raise ValidationError("from_unit is not in units")
 
@@ -61,7 +63,7 @@ class ExchangesService:
             if not exchange_rule.enabled_reverse:
                 raise ValidationError("Reverse exchange is disabled")
 
-        if abs(from_amount.as_tuple().exponent) > from_unit.precision:  # type: ignore
+        if get_decimal_places(from_amount) > from_unit.precision:
             raise ValidationError(
                 f"Число знаков после запятой у снимаемой валюты больше чем возможно: {from_amount},"
                 f" максимальная точность {from_unit.precision}"
@@ -75,7 +77,7 @@ class ExchangesService:
         else:
             to_amount = from_amount * rate
 
-        if abs(to_amount.as_tuple().exponent) > to_unit.precision:  # type: ignore
+        if get_decimal_places(to_amount) > to_unit.precision:
             raise ValidationError(
                 f"Число знаков после запятой у получаемой валюты больше чем возможно: {to_amount},"
                 f" максимальная точность {to_unit.precision}"

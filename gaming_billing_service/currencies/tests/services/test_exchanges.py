@@ -363,7 +363,7 @@ class ExchangesServiceTests(TestCase):
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit1,
                 to_unit=self.unit2,
-                from_amount=Decimal("100.00000"),
+                from_amount=Decimal("100.00001"),
                 description="",
             )
 
