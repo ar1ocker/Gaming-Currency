@@ -38,11 +38,11 @@ def retry_on_serialization_error(max_retries=3):
     return decorator
 
 
-def format_decimal(decimal: Decimal) -> str:
-    s = format(decimal, "f")
-    if "." in s:
-        s = s.rstrip("0").rstrip(".")
-    return s
+def format_decimal(decimal_value: Decimal) -> str:
+    formatted_text = format(decimal_value, "f")
+    if "." in formatted_text:
+        formatted_text = formatted_text.rstrip("0").rstrip(".")
+    return formatted_text
 
 
 def get_decimal_places(decimal: Decimal) -> int:
