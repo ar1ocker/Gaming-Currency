@@ -9,7 +9,7 @@ from currencies.models import (
     ExchangeTransaction,
     Holder,
 )
-from currencies.utils import format_decimal, retry_on_serialization_error
+from currencies.utils import retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
