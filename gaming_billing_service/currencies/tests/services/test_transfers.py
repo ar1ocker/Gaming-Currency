@@ -38,6 +38,8 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             holder=self.second_holder, currency_unit=self.currency_unit
         )
 
+        self.add_amount(self.one_checking_account, 100)
+
     def add_amount(self, checking_account: CheckingAccount, amount: int):
         return AdjustmentsService.confirm(
             adjustment_transaction=AdjustmentsService.create(
@@ -50,8 +52,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         )
 
     def test_transfer_create(self):
-        self.add_amount(self.one_checking_account, 100)
-
         transfer = TransfersService.create(
             service=self.service,
             transfer_rule=self.transfer_rule,
@@ -69,8 +69,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         self.assertIsNone(transfer.closed_at)
 
     def test_takes_currency_from_source(self):
-        self.add_amount(self.one_checking_account, 100)
-
         TransfersService.create(
             service=self.service,
             transfer_rule=self.transfer_rule,
@@ -92,13 +90,11 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 transfer_rule=self.transfer_rule,
                 from_checking_account=self.one_checking_account,
                 to_checking_account=self.two_checking_account,
-                from_amount=70,
+                from_amount=170,
                 description="test",
             )
 
     def test_transfer_confirm(self):
-        self.add_amount(self.one_checking_account, 100)
-
         transfer = TransfersService.confirm(
             transfer_transaction=TransfersService.create(
                 service=self.service,
@@ -121,8 +117,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         self.assertEqual(self.two_checking_account.amount, 70)
 
     def test_transfer_reject(self):
-        self.add_amount(self.one_checking_account, 100)
-
         transfer = TransfersService.reject(
             transfer_transaction=TransfersService.create(
                 service=self.service,
@@ -145,8 +139,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
         self.assertEqual(self.two_checking_account.amount, 0)
 
     def test_transfer_confirm_rejected_error(self):
-        self.add_amount(self.one_checking_account, 100)
-
         rejected_transfer = TransfersService.reject(
             transfer_transaction=TransfersService.create(
                 service=self.service,
@@ -163,8 +155,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             TransfersService.confirm(transfer_transaction=rejected_transfer, status_description="")
 
     def test_error_transfer_confirm_rejected_error(self):
-        self.add_amount(self.one_checking_account, 100)
-
         rejected_transfer = TransfersService.confirm(
             transfer_transaction=TransfersService.create(
                 service=self.service,
@@ -181,8 +171,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             TransfersService.reject(transfer_transaction=rejected_transfer, status_description="")
 
     def test_transfer_with_different_currency_units(self):
-        self.add_amount(self.one_checking_account, 100)
-
         currency_unit = CurrencyUnitsTestFactory()
 
         diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)
@@ -209,8 +197,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             )
 
     def test_transfer_to_same_account(self):
-        self.add_amount(self.one_checking_account, 100)
-
         with self.assertRaisesRegex(TransfersService.ValidationError, ".*same account.*"):
             TransfersService.create(
                 service=self.service,
@@ -233,8 +219,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             )
 
     def test_reject_outdated(self):
-        self.add_amount(self.one_checking_account, 100)
-
         transaction1 = TransfersService.create(
             service=self.service,
             transfer_rule=self.transfer_rule,
@@ -310,8 +294,6 @@ class CurrencyTransferTransactionServicesTests(TestCase):
             )
 
     def test_from_amount_precision_error(self):
-        self.add_amount(self.one_checking_account, 100)
-
         with self.assertRaisesRegex(
             TransfersService.ValidationError, "Число знаков после запятой у валюты источника больше чем возможно.*"
         ):
