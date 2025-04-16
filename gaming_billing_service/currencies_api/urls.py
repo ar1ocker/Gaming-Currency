@@ -7,7 +7,7 @@ from .views.adjustments import (
     AdjustmentListAPI,
     AdjustmentRejectAPI,
 )
-from .views.exchanges import ExchangeConfirmAPI, ExchangeCreateAPI, ExchangeRejectAPI
+from .views.exchanges import ExchangeConfirmAPI, ExchangeCreateAPI, ExchangeRejectAPI, ExchangesListAPI
 from .views.holders import HolderCreateAPI, HolderDetailAPI, HolderListAPI
 from .views.transfers import TransferConfirmAPI, TransferCreateAPI, TransferRejectAPI
 from .views.units import CurrencyUnitsListAPI
@@ -31,6 +31,7 @@ urlpatterns = [
     path("transfers/confirm/", TransferConfirmAPI.as_view(), name="transfers_confirm"),
     path("transfers/reject/", TransferRejectAPI.as_view(), name="transfers_reject"),
     #
+    path("exchanges/", ExchangesListAPI.as_view(), name="exchanges_list"),
     path("exchanges/create/", ExchangeCreateAPI.as_view(), name="exchanges_create"),
     path("exchanges/confirm/", ExchangeConfirmAPI.as_view(), name="exchanges_confirm"),
     path("exchanges/reject/", ExchangeRejectAPI.as_view(), name="exchanges_reject"),
