@@ -7,6 +7,6 @@ class CurrencyUnitsTestFactory(DjangoModelFactory):
     class Meta:
         model = CurrencyUnit
 
-    symbol = Sequence(lambda n: f"currency_unit_{n}")
+    symbol = Sequence(lambda n: f"cu_{n}")
     measurement = Sequence(lambda n: f"currency_measurement_{n}")
     precision = 4

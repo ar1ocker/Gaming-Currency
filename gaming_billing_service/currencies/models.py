@@ -60,8 +60,8 @@ class Holder(models.Model):
 
 
 class CurrencyUnit(models.Model):
-    symbol = models.CharField(max_length=10, unique=True)
-    measurement = models.CharField(max_length=50)
+    symbol = models.CharField(max_length=30, unique=True)
+    measurement = models.CharField(max_length=100)
     precision = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
 
     def __str__(self):
