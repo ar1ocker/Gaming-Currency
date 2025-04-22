@@ -6,11 +6,11 @@ from currencies.permissions import ExchangesPermissionsService
 from currencies.services import ExchangesService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import CurrencyServiceAuth
+from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 
 
 class ExchangeCreateAPI(APIView):
@@ -125,6 +125,8 @@ class ExchangesListAPI(APIView):
 
         exchange_rule = serializers.CharField(required=False)
 
+        exchange_rule_null = serializers.BooleanField(required=False)
+
         from_amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
         to_amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
         from_unit = serializers.CharField(required=False)
@@ -152,7 +154,7 @@ class ExchangesListAPI(APIView):
         filter_serializer = self.FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)
 
-        adjustments = ExchangesService.list(
+        exchanges = ExchangesService.list(
             filters=filter_serializer.validated_data,  # type: ignore
         ).select_related(
             "service",
@@ -165,7 +167,7 @@ class ExchangesListAPI(APIView):
         return get_paginated_response(
             pagination_class=self.Pagination,
             serializer_class=self.OutputSerializer,
-            queryset=adjustments,
+            queryset=exchanges,
             request=request,
             view=self,
         )
