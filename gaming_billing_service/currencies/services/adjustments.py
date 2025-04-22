@@ -137,7 +137,7 @@ class AdjustmentsFilter(django_filters.FilterSet):
     service = django_filters.CharFilter(field_name="service__name")
     status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
     holder = django_filters.CharFilter(field_name="checking_account__holder__holder_id")
-    currency_unit = django_filters.CharFilter(field_name="currency_unit__symbol")
+    currency_unit = django_filters.CharFilter(field_name="checking_account__currency_unit__symbol")
     amount = django_filters.RangeFilter()
     created_at = django_filters.IsoDateTimeFromToRangeFilter()
     closed_at = django_filters.IsoDateTimeFromToRangeFilter()
