@@ -1,16 +1,21 @@
 from datetime import timedelta
+from decimal import Decimal
 
+from currencies.models import CurrencyService, CurrencyUnit, Holder
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
     CurrencyServicesService,
 )
-from decimal import Decimal
-from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies.test_factories import (
+    CurrencyServicesTestFactory,
+    CurrencyUnitsTestFactory,
+    HoldersTestFactory,
+)
 from django.test import TestCase
 
 
-class CurrencyTransactionServicesTests(TestCase):
+class AdjustmentTransactionServicesTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.holder = HoldersTestFactory()
@@ -218,3 +223,91 @@ class CurrencyTransactionServicesTests(TestCase):
                 amount=Decimal("100.00001"),
                 description="",
             )
+
+
+class AdjustmentListServiceTests(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.service_1: CurrencyService = CurrencyServicesTestFactory()
+        cls.service_2: CurrencyService = CurrencyServicesTestFactory()
+
+        cls.holder_1: Holder = HoldersTestFactory()
+        cls.holder_2: Holder = HoldersTestFactory()
+
+        cls.unit_1: CurrencyUnit = CurrencyUnitsTestFactory()
+        cls.unit_2: CurrencyUnit = CurrencyUnitsTestFactory()
+
+        cls.account_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
+        cls.account_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
+
+        cls.account_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
+        cls.account_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+
+        cls.pending_adjustments = [
+            AdjustmentsService.create(
+                service=cls.service_1, checking_account=cls.account_1_unit_1, amount=100, description=""
+            )
+            for _ in range(3)
+        ]
+
+        cls.rejected_adjustments = [
+            AdjustmentsService.reject(
+                adjustment_transaction=AdjustmentsService.create(
+                    service=cls.service_2, checking_account=cls.account_2_unit_1, amount=1000, description=""
+                ),
+                status_description="",
+            )
+            for _ in range(3)
+        ]
+
+        cls.confirmed_adjustments = [
+            AdjustmentsService.confirm(
+                adjustment_transaction=AdjustmentsService.create(
+                    service=cls.service_1, checking_account=cls.account_2_unit_2, amount=10, description=""
+                ),
+                status_description="",
+            )
+            for _ in range(3)
+        ]
+
+    def test_list_service(self):
+        service_1_adjustments = AdjustmentsService.list(filters=dict(service=self.service_1.name))
+
+        self.assertEqual(service_1_adjustments.count(), 6)
+
+        for adjustment in service_1_adjustments:
+            self.assertEqual(adjustment.service.name, self.service_1.name)
+
+    def test_list_status(self):
+        confirmed = AdjustmentsService.list(filters=dict(status="confirmed"))
+
+        self.assertEqual(confirmed.count(), 3)
+
+        for adjustment in confirmed:
+            self.assertEqual(adjustment.status, "CONFIRMED")
+
+    def test_list_holder(self):
+        adjustments_with_holders_1 = AdjustmentsService.list(filters=dict(holder=self.holder_1.holder_id))
+
+        self.assertEqual(adjustments_with_holders_1.count(), 3)
+
+        for adjustment in adjustments_with_holders_1:
+            self.assertEqual(adjustment.checking_account.holder.holder_id, self.holder_1.holder_id)
+
+    def test_list_unit(self):
+        adjustments_with_unit_1 = AdjustmentsService.list(filters=dict(currency_unit=self.unit_1.symbol))
+
+        self.assertEqual(adjustments_with_unit_1.count(), 6)
+
+        for adjustment in adjustments_with_unit_1:
+            self.assertEqual(adjustment.checking_account.currency_unit.symbol, self.unit_1.symbol)
+
+    def test_list_amount(self):
+        adjustments_with_amount_100 = AdjustmentsService.list(
+            filters=dict(amount_min=Decimal("99"), amount_max=Decimal("101"))
+        )
+
+        self.assertEqual(adjustments_with_amount_100.count(), 3)
+
+        for adjustment in adjustments_with_amount_100:
+            self.assertEqual(adjustment.amount, 100)

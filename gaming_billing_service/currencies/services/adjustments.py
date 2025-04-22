@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 from decimal import Decimal
+from typing import Any
 
 import django_filters
 from currencies.models import AdjustmentTransaction, CheckingAccount, CurrencyService
@@ -8,7 +9,7 @@ from currencies.utils import get_decimal_places, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, QuerySet
 from django.utils import timezone
 
 
@@ -125,7 +126,7 @@ class AdjustmentsService:
         return rejected
 
     @classmethod
-    def list(cls, *, filters: dict[str, str] | None = None):
+    def list(cls, *, filters: dict[str, Any] | None = None) -> QuerySet[AdjustmentTransaction]:
         filters = filters or {}
 
         queryset = AdjustmentTransaction.objects.all()
