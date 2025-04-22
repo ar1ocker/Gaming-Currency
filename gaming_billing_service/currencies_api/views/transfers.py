@@ -6,6 +6,7 @@ from currencies.permissions import TransfersPermissionsService
 from currencies.services import AccountsService, TransfersService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import CurrencyServiceAuth
+from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from django.conf import settings
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -133,3 +134,69 @@ class TransferRejectAPI(APIView):
         )
 
         return Response(status=status.HTTP_200_OK)
+
+
+class TransfersListAPI(APIView):
+    class Pagination(LimitOffsetPagination):
+        pass
+
+    class FilterSerializer(serializers.Serializer):
+        service = serializers.CharField(required=False)
+        status = serializers.CharField(required=False)
+        created_at_after = serializers.DateTimeField(required=False)
+        created_at_before = serializers.DateTimeField(required=False)
+        closed_at_after = serializers.DateTimeField(required=False)
+        closed_at_before = serializers.DateTimeField(required=False)
+
+        transfer_rule = serializers.CharField(required=False)
+
+        transfer_rule_null = serializers.BooleanField(required=False)
+
+        from_holder = serializers.CharField(required=False)
+        to_holder = serializers.CharField(required=False)
+
+        from_amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
+        to_amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
+        unit = serializers.CharField(required=False)
+
+    class OutputSerializer(serializers.Serializer):
+        service = serializers.CharField(source="service.name")
+        status = serializers.CharField()
+        created_at = serializers.DateTimeField()
+        closed_at = serializers.DateTimeField()
+        auto_reject_after = serializers.DateTimeField()
+
+        from_holder = serializers.CharField(source="from_checking_account.holder.holder_id")
+        to_holder = serializers.CharField(source="to_checking_account.holder.holder_id")
+
+        transfer_rule = serializers.CharField(source="transfer_rule.name", default=None)
+
+        from_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+        to_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+
+        unit = serializers.CharField(source="from_checking_account.currency_unit.symbol")
+
+    @hmac_service_auth
+    def get(self, request, service_auth: CurrencyServiceAuth):
+        TransfersPermissionsService.enforce_access(permissions=service_auth.service.permissions)
+
+        filter_serializer = self.FilterSerializer(data=request.query_params)
+        filter_serializer.is_valid(raise_exception=True)
+
+        transfers = TransfersService.list(
+            filters=filter_serializer.validated_data,  # type: ignore
+        ).select_related(
+            "service",
+            "from_checking_account__holder",
+            "to_checking_account__holder",
+            "transfer_rule",
+            "from_checking_account__currency_unit",
+        )
+
+        return get_paginated_response(
+            pagination_class=self.Pagination,
+            serializer_class=self.OutputSerializer,
+            queryset=transfers,
+            request=request,
+            view=self,
+        )
