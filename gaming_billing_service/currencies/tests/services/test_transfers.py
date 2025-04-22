@@ -8,7 +8,11 @@ from currencies.services import (
     CurrencyServicesService,
     TransfersService,
 )
-from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies.test_factories import (
+    CurrencyServicesTestFactory,
+    CurrencyUnitsTestFactory,
+    HoldersTestFactory,
+)
 from django.test import TestCase
 
 
@@ -305,3 +309,189 @@ class CurrencyTransferTransactionServicesTests(TestCase):
                 from_amount=Decimal("50.00001"),
                 description="test",
             )
+
+
+class TransferTransactionListTests(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.service_1 = CurrencyServicesTestFactory()
+        cls.service_2 = CurrencyServicesTestFactory()
+
+        cls.holder_1 = HoldersTestFactory()
+        cls.holder_2 = HoldersTestFactory()
+
+        cls.unit_1 = CurrencyUnitsTestFactory()
+        cls.unit_2 = CurrencyUnitsTestFactory()
+
+        cls.transfer_rule_unit_1 = TransferRule.objects.create(
+            enabled=True,
+            name="rule_unit_1",
+            unit=cls.unit_1,
+            fee_percent=Decimal(0),
+            min_from_amount=Decimal(1),
+        )
+
+        cls.transfer_rule_unit_2 = TransferRule.objects.create(
+            enabled=True,
+            name="rule_unit_2",
+            unit=cls.unit_2,
+            fee_percent=Decimal(50),
+            min_from_amount=Decimal(1),
+        )
+
+        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
+        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
+        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
+        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+
+        cls.add_amount(
+            accounts=(
+                cls.account_holder_1_unit_1,
+                cls.account_holder_1_unit_2,
+                cls.account_holder_2_unit_1,
+                cls.account_holder_2_unit_2,
+            )
+        )
+
+        cls.pending_transfers = [
+            TransfersService.create(
+                service=cls.service_1,
+                transfer_rule=cls.transfer_rule_unit_1,
+                from_checking_account=cls.account_holder_1_unit_1,
+                to_checking_account=cls.account_holder_2_unit_1,
+                from_amount=100,
+                description="",
+            )
+            for _ in range(3)
+        ]
+
+        cls.confirmed_transfers = [
+            TransfersService.confirm(
+                transfer_transaction=TransfersService.create(
+                    service=cls.service_2,
+                    transfer_rule=cls.transfer_rule_unit_2,
+                    from_checking_account=cls.account_holder_2_unit_2,
+                    to_checking_account=cls.account_holder_1_unit_2,
+                    from_amount=1000,
+                    description="",
+                ),
+                status_description="",
+            )
+            for _ in range(3)
+        ]
+
+        cls.rejected_transfers = [
+            TransfersService.reject(
+                transfer_transaction=TransfersService.create(
+                    service=cls.service_1,
+                    transfer_rule=cls.transfer_rule_unit_1,
+                    from_checking_account=cls.account_holder_1_unit_1,
+                    to_checking_account=cls.account_holder_2_unit_1,
+                    from_amount=10,
+                    description="",
+                ),
+                status_description="",
+            )
+            for _ in range(3)
+        ]
+
+        cls.transfer_rule_deleted = TransferRule.objects.create(
+            enabled=True,
+            name="rule_unit_3",
+            unit=cls.unit_1,
+            fee_percent=Decimal(0),
+            min_from_amount=Decimal(1),
+        )
+
+        cls.tranfer_with_deleted_rule = TransfersService.create(
+            service=cls.service_1,
+            transfer_rule=cls.transfer_rule_deleted,
+            from_checking_account=cls.account_holder_1_unit_1,
+            to_checking_account=cls.account_holder_2_unit_1,
+            from_amount=1,
+            description="",
+        )
+
+        cls.transfer_rule_deleted.delete()
+
+    @classmethod
+    def add_amount(cls, *, accounts: list | tuple, amount=100000):
+        for account in accounts:
+            AdjustmentsService.confirm(
+                adjustment_transaction=AdjustmentsService.create(
+                    service=cls.service_1, checking_account=account, amount=amount, description=""
+                ),
+                status_description="",
+            )
+
+    def test_list_service(self):
+        service_1_transfers = TransfersService.list(filters=dict(service=self.service_1.name))
+
+        self.assertEqual(service_1_transfers.count(), 7)
+
+        for transfer in service_1_transfers:
+            self.assertEqual(transfer.service.name, self.service_1.name)
+
+    def test_list_status(self):
+        rejected_transfers = TransfersService.list(filters=dict(status="rejected"))
+
+        self.assertEqual(rejected_transfers.count(), 3)
+
+        for transfer in rejected_transfers:
+            self.assertEqual(transfer.status, "REJECTED")
+
+    def test_list_transfer_rule(self):
+        transfer_rule_2_transfers = TransfersService.list(filters=dict(transfer_rule=self.transfer_rule_unit_2.name))
+
+        self.assertEqual(transfer_rule_2_transfers.count(), 3)
+
+        for transfer in transfer_rule_2_transfers:
+            self.assertEqual(transfer.transfer_rule.name, self.transfer_rule_unit_2.name)  # type: ignore
+
+    def test_list_from_holder(self):
+        from_holder_2_transfers = TransfersService.list(filters=dict(from_holder=self.holder_2.holder_id))
+
+        self.assertEqual(from_holder_2_transfers.count(), 3)
+
+        for transfer in from_holder_2_transfers:
+            self.assertEqual(transfer.from_checking_account.holder.holder_id, self.holder_2.holder_id)
+
+    def test_list_to_holder(self):
+        to_holder_2_transfers = TransfersService.list(filters=dict(to_holder=self.holder_2.holder_id))
+
+        self.assertEqual(to_holder_2_transfers.count(), 7)
+
+        for transfer in to_holder_2_transfers:
+            self.assertEqual(transfer.to_checking_account.holder.holder_id, self.holder_2.holder_id)
+
+    def test_list_from_amount(self):
+        from_1000_amount_transfers = TransfersService.list(
+            filters=dict(from_amount_min=Decimal(1000), from_amount_max=Decimal(1000))
+        )
+
+        self.assertEqual(from_1000_amount_transfers.count(), 3)
+
+        for transfer in from_1000_amount_transfers:
+            self.assertEqual(transfer.from_amount, Decimal(1000))
+
+    def test_list_to_amount(self):
+        to_500_amount_transfers = TransfersService.list(
+            filters=dict(to_amount_min=Decimal(500), to_amount_max=Decimal(500))
+        )
+
+        self.assertEqual(to_500_amount_transfers.count(), 3)
+
+        for transfer in to_500_amount_transfers:
+            self.assertEqual(transfer.to_amount, Decimal(500))
+
+    def test_list_unit(self):
+        unit_1_transfers = TransfersService.list(filters=dict(unit=self.unit_1.symbol))
+
+        self.assertEqual(unit_1_transfers.count(), 7)
+
+        for transfer in unit_1_transfers:
+            self.assertEqual(transfer.from_checking_account.currency_unit.symbol, self.unit_1.symbol)
+
+    def test_list_transfer_rule_none(self):
+        # TODO ADD TEST TRANSFER NONE
+        pass
