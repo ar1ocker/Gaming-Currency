@@ -8,3 +8,6 @@ class HoldersTypeTestFactory(DjangoModelFactory):
         model = HolderType
 
     name = Sequence(lambda n: f"holder_type_{n}")
+
+    def __new__(cls, *args, **kwargs) -> HolderType:
+        return super().__new__(*args, **kwargs)
