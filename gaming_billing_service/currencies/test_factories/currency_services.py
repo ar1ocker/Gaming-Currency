@@ -10,3 +10,6 @@ class CurrencyServicesTestFactory(DjangoModelFactory):
     name = Sequence(lambda n: f"service_{n}")
     enabled = True
     permissions = {"root": True}
+
+    def __new__(cls, *args, **kwargs) -> CurrencyService:
+        return super().__new__(*args, **kwargs)

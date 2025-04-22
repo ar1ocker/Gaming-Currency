@@ -11,3 +11,6 @@ class HoldersTestFactory(DjangoModelFactory):
     enabled = True
     holder_id = Sequence(lambda n: f"holder_id_{n}")
     holder_type = LazyFunction(HoldersTypeService.get_default)
+
+    def __new__(cls, *args, **kwargs) -> Holder:
+        return super().__new__(*args, **kwargs)
