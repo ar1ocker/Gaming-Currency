@@ -164,6 +164,8 @@ class TransferFilter(django_filters.FilterSet):
 
     transfer_rule = django_filters.CharFilter(field_name="transfer_rule__name")
 
+    transfer_rule_null = django_filters.BooleanFilter(field_name="transfer_rule", lookup_expr="isnull")
+
     from_holder = django_filters.CharFilter(field_name="from_checking_account__holder__holder_id")
     to_holder = django_filters.CharFilter(field_name="to_checking_account__holder__holder_id")
 
