@@ -1,20 +1,21 @@
 import logging
 from datetime import timedelta
-from decimal import Decimal, ROUND_DOWN
+from decimal import ROUND_DOWN, Decimal
+from typing import Any
 
+import django_filters
 from currencies.models import (
     CheckingAccount,
     CurrencyService,
     TransferRule,
     TransferTransaction,
 )
-from currencies.utils import retry_on_serialization_error, get_decimal_places
+from currencies.utils import get_decimal_places, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, QuerySet
 from django.utils import timezone
-import django_filters
 
 
 class TransfersService:
@@ -147,7 +148,7 @@ class TransfersService:
         return rejected
 
     @classmethod
-    def list(cls, *, filters: dict[str, str] | None = None):
+    def list(cls, *, filters: dict[str, Any] | None = None) -> QuerySet[TransferTransaction]:
         filters = filters or {}
 
         queryset = TransferTransaction.objects.all()
@@ -158,11 +159,13 @@ class TransfersService:
 class TransferFilter(django_filters.FilterSet):
     service = django_filters.CharFilter(field_name="service__name")
     status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
-    holder = django_filters.CharFilter(field_name="from_checking_account__holder__holder_id")
     created_at = django_filters.IsoDateTimeFromToRangeFilter()
     closed_at = django_filters.IsoDateTimeFromToRangeFilter()
 
     transfer_rule = django_filters.CharFilter(field_name="transfer_rule__name")
+
+    from_holder = django_filters.CharFilter(field_name="from_checking_account__holder__holder_id")
+    to_holder = django_filters.CharFilter(field_name="to_checking_account__holder__holder_id")
 
     from_amount = django_filters.RangeFilter()
     to_amount = django_filters.RangeFilter()
@@ -177,6 +180,7 @@ class TransferFilter(django_filters.FilterSet):
             "closed_at",
             "transfer_rule",
             "from_checking_account",
+            "to_checking_account",
             "from_amount",
             "to_amount",
         ]
