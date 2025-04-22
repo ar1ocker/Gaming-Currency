@@ -493,5 +493,9 @@ class TransferTransactionListTests(TestCase):
             self.assertEqual(transfer.from_checking_account.currency_unit.symbol, self.unit_1.symbol)
 
     def test_list_transfer_rule_none(self):
-        # TODO ADD TEST TRANSFER NONE
-        pass
+        null_transfer_rule_transfers = TransfersService.list(filters=dict(transfer_rule_null=True))
+
+        self.assertEqual(null_transfer_rule_transfers.count(), 1)
+
+        for transfer in null_transfer_rule_transfers:
+            self.assertIsNone(transfer.transfer_rule)
