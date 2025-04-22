@@ -405,22 +405,29 @@ class ExchangeServiceListTests(TestCase):
 
         cls.unit_1 = CurrencyUnitsTestFactory()
         cls.unit_2 = CurrencyUnitsTestFactory()
+        cls.unit_3 = CurrencyUnitsTestFactory()
 
         cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
         cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
+        cls.account_holder_1_unit_3 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_3)
+
         cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
         cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+        cls.account_holder_2_unit_3 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_3)
 
         cls.add_amount(
             accounts=(
                 cls.account_holder_1_unit_1,
                 cls.account_holder_1_unit_2,
+                cls.account_holder_1_unit_3,
                 cls.account_holder_2_unit_1,
                 cls.account_holder_2_unit_2,
+                cls.account_holder_2_unit_3,
             )
         )
 
-        cls.exchange_rule = ExchangeRule.objects.create(
+        cls.exchange_rule_1 = ExchangeRule.objects.create(
+            name="exchange_rule_1",
             enabled_forward=True,
             enabled_reverse=True,
             first_unit=cls.unit_1,
@@ -431,10 +438,22 @@ class ExchangeServiceListTests(TestCase):
             min_second_amount=Decimal(1),
         )
 
+        cls.exchange_rule_2 = ExchangeRule.objects.create(
+            name="exchange_rule_2",
+            enabled_forward=True,
+            enabled_reverse=True,
+            first_unit=cls.unit_1,
+            second_unit=cls.unit_3,
+            forward_rate=Decimal(10),
+            reverse_rate=Decimal(5),
+            min_first_amount=Decimal(1),
+            min_second_amount=Decimal(1),
+        )
+
         ExchangesService.create(
             service=cls.service_1,
             holder=cls.holder_1,
-            exchange_rule=cls.exchange_rule,
+            exchange_rule=cls.exchange_rule_1,
             from_unit=cls.unit_1,
             to_unit=cls.unit_2,
             from_amount=10,
@@ -444,7 +463,7 @@ class ExchangeServiceListTests(TestCase):
         ExchangesService.create(
             service=cls.service_1,
             holder=cls.holder_2,
-            exchange_rule=cls.exchange_rule,
+            exchange_rule=cls.exchange_rule_1,
             from_unit=cls.unit_1,
             to_unit=cls.unit_2,
             from_amount=10,
@@ -455,7 +474,7 @@ class ExchangeServiceListTests(TestCase):
             exchange_transaction=ExchangesService.create(
                 service=cls.service_1,
                 holder=cls.holder_1,
-                exchange_rule=cls.exchange_rule,
+                exchange_rule=cls.exchange_rule_1,
                 from_unit=cls.unit_1,
                 to_unit=cls.unit_2,
                 from_amount=100,
@@ -468,7 +487,7 @@ class ExchangeServiceListTests(TestCase):
             exchange_transaction=ExchangesService.create(
                 service=cls.service_1,
                 holder=cls.holder_2,
-                exchange_rule=cls.exchange_rule,
+                exchange_rule=cls.exchange_rule_1,
                 from_unit=cls.unit_1,
                 to_unit=cls.unit_2,
                 from_amount=100,
@@ -481,7 +500,7 @@ class ExchangeServiceListTests(TestCase):
             exchange_transaction=ExchangesService.create(
                 service=cls.service_1,
                 holder=cls.holder_1,
-                exchange_rule=cls.exchange_rule,
+                exchange_rule=cls.exchange_rule_1,
                 from_unit=cls.unit_2,
                 to_unit=cls.unit_1,
                 from_amount=300,
@@ -494,8 +513,8 @@ class ExchangeServiceListTests(TestCase):
             exchange_transaction=ExchangesService.create(
                 service=cls.service_2,
                 holder=cls.holder_1,
-                exchange_rule=cls.exchange_rule,
-                from_unit=cls.unit_2,
+                exchange_rule=cls.exchange_rule_2,
+                from_unit=cls.unit_3,
                 to_unit=cls.unit_1,
                 from_amount=300,
                 description="exchange rejected service 2",
@@ -538,11 +557,11 @@ class ExchangeServiceListTests(TestCase):
             self.assertEqual(exchange.status, "CONFIRMED")
 
     def test_list_service_2(self):
-        exchanges = ExchangesService.list(filters=dict(service="service_test_2"))
+        exchanges = ExchangesService.list(filters=dict(service=self.service_2.name))
 
         self.assertEqual(exchanges.count(), 1)
 
-        self.assertEqual(exchanges[0].service.name, "service_test_2")
+        self.assertEqual(exchanges[0].service.name, self.service_2.name)
 
     def test_list_holder_2(self):
         exchanges = ExchangesService.list(filters=dict(holder=self.holder_2.holder_id))
@@ -550,3 +569,71 @@ class ExchangeServiceListTests(TestCase):
         self.assertEqual(exchanges.count(), 2)
         for exchange in exchanges:
             self.assertEqual(exchange.from_checking_account.holder.holder_id, self.holder_2.holder_id)
+
+    def test_list_exchange_rule(self):
+        exchange_rule_2_exchanges = ExchangesService.list(filters=dict(exchange_rule=self.exchange_rule_2.name))
+
+        self.assertEqual(exchange_rule_2_exchanges.count(), 1)
+
+        for exchange in exchange_rule_2_exchanges:
+            self.assertEqual(exchange.exchange_rule, self.exchange_rule_2)
+
+    def test_list_exchange_rule_null(self):
+        exchange_rule_deleted = ExchangeRule.objects.create(
+            name="exchange_rule_deleted",
+            enabled_forward=True,
+            enabled_reverse=True,
+            first_unit=self.unit_2,
+            second_unit=self.unit_3,
+            forward_rate=Decimal(10),
+            reverse_rate=Decimal(5),
+            min_first_amount=Decimal(1),
+            min_second_amount=Decimal(1),
+        )
+
+        ExchangesService.create(
+            service=self.service_1,
+            holder=self.holder_1,
+            exchange_rule=exchange_rule_deleted,
+            from_unit=self.unit_2,
+            to_unit=self.unit_3,
+            from_amount=10,
+            description="",
+        )
+
+        exchange_rule_deleted.delete()
+
+        exchange_rule_null_exchanges = ExchangesService.list(filters=dict(exchange_rule_null=True))
+
+        self.assertEqual(exchange_rule_null_exchanges.count(), 1)
+
+        for exchange in exchange_rule_null_exchanges:
+            self.assertIsNone(exchange.exchange_rule)
+
+    def test_list_from_amount(self):
+        from_amount_300_exchanges = ExchangesService.list(
+            filters=dict(from_amount_min=Decimal("300"), from_amount_max=Decimal("300"))
+        )
+
+        self.assertEqual(from_amount_300_exchanges.count(), 2)
+
+    def test_list_to_amount(self):
+        to_amount_2_exchanges = ExchangesService.list(filters=dict(to_amount_min=Decimal(1), to_amount_max=Decimal(1)))
+
+        self.assertEqual(to_amount_2_exchanges.count(), 2)
+
+    def test_list_from_unit(self):
+        from_unit_1_exchanges = ExchangesService.list(filters=dict(from_unit=self.unit_1.symbol))
+
+        self.assertEqual(from_unit_1_exchanges.count(), 4)
+
+        for exchange in from_unit_1_exchanges:
+            self.assertEqual(exchange.from_checking_account.currency_unit.symbol, self.unit_1.symbol)
+
+    def test_list_to_unit(self):
+        to_unit_1_exchanges = ExchangesService.list(filters=dict(to_unit=self.unit_1.symbol))
+
+        self.assertEqual(to_unit_1_exchanges.count(), 2)
+
+        for exhcnage in to_unit_1_exchanges:
+            self.assertEqual(exhcnage.to_checking_account.currency_unit.symbol, self.unit_1.symbol)
