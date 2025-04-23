@@ -393,6 +393,38 @@ class ExchangesServiceTests(TestCase):
                 description="",
             )
 
+    def test_from_account_not_found(self):
+        holder = HoldersTestFactory()
+
+        AccountsService.get_or_create(holder=holder, currency_unit=self.unit2)
+
+        with self.assertRaisesMessage(ExchangesService.ValidationError, "From checking account not found"):
+            ExchangesService.create(
+                service=self.service,
+                holder=holder,
+                exchange_rule=self.exchange_rule,
+                from_unit=self.unit1,
+                to_unit=self.unit2,
+                from_amount=100,
+                description="",
+            )
+
+    def test_to_account_not_found(self):
+        holder = HoldersTestFactory()
+
+        AccountsService.get_or_create(holder=holder, currency_unit=self.unit1)
+
+        with self.assertRaisesMessage(ExchangesService.ValidationError, "To checking account not found"):
+            ExchangesService.create(
+                service=self.service,
+                holder=holder,
+                exchange_rule=self.exchange_rule,
+                from_unit=self.unit1,
+                to_unit=self.unit2,
+                from_amount=100,
+                description="",
+            )
+
 
 class ExchangeServiceListTests(TestCase):
     @classmethod
