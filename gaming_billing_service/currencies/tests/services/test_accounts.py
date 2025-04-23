@@ -28,3 +28,6 @@ class CheckingAccountServicesTests(TestCase):
         AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)
 
         self.assertIsNotNone(AccountsService.get(holder=self.holder, currency_unit=self.currency_unit))
+
+    def test_get_does_not_exists(self):
+        self.assertIsNone(AccountsService.get(holder=self.holder, currency_unit=self.currency_unit))
