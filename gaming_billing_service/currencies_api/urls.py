@@ -7,9 +7,19 @@ from .views.adjustments import (
     AdjustmentListAPI,
     AdjustmentRejectAPI,
 )
-from .views.exchanges import ExchangeConfirmAPI, ExchangeCreateAPI, ExchangeRejectAPI, ExchangesListAPI
+from .views.exchanges import (
+    ExchangeConfirmAPI,
+    ExchangeCreateAPI,
+    ExchangeRejectAPI,
+    ExchangesListAPI,
+)
 from .views.holders import HolderCreateAPI, HolderDetailAPI, HolderListAPI
-from .views.transfers import TransferConfirmAPI, TransferCreateAPI, TransferRejectAPI
+from .views.transfers import (
+    TransferConfirmAPI,
+    TransferCreateAPI,
+    TransferRejectAPI,
+    TransfersListAPI,
+)
 from .views.units import CurrencyUnitsListAPI
 
 urlpatterns = [
@@ -27,6 +37,7 @@ urlpatterns = [
     path("adjustments/confirm/", AdjustmentConfirmAPI.as_view(), name="adjustments_confirm"),
     path("adjustments/reject/", AdjustmentRejectAPI.as_view(), name="adjustments_reject"),
     #
+    path("transfers/", TransfersListAPI.as_view(), name="transfers_list"),
     path("transfers/create/", TransferCreateAPI.as_view(), name="transfers_create"),
     path("transfers/confirm/", TransferConfirmAPI.as_view(), name="transfers_confirm"),
     path("transfers/reject/", TransferRejectAPI.as_view(), name="transfers_reject"),
