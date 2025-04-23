@@ -499,3 +499,9 @@ class TransferTransactionListTests(TestCase):
 
         for transfer in null_transfer_rule_transfers:
             self.assertIsNone(transfer.transfer_rule)
+
+    def test_list_ordering(self):
+        ordering_transfers = TransfersService.list(filters=dict(ordering="from_amount"))
+
+        self.assertEqual(ordering_transfers.first().from_amount, 1)  # type: ignore
+        self.assertEqual(ordering_transfers.last().from_amount, 1000)  # type: ignore

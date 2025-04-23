@@ -195,6 +195,8 @@ class ExchangesFilter(django_filters.FilterSet):
     from_unit = django_filters.CharFilter(field_name="from_checking_account__currency_unit__symbol")
     to_unit = django_filters.CharFilter(field_name="to_checking_account__currency_unit__symbol")
 
+    ordering = django_filters.OrderingFilter(fields=["created_at", "closed_at", "from_amount", "to_amount"])
+
     class Meta:
         model = ExchangeTransaction
         fields = [

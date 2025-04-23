@@ -669,3 +669,9 @@ class ExchangeServiceListTests(TestCase):
 
         for exhcnage in to_unit_1_exchanges:
             self.assertEqual(exhcnage.to_checking_account.currency_unit.symbol, self.unit_1.symbol)
+
+    def test_list_ordering(self):
+        ordering_exchanges = ExchangesService.list(filters=dict(ordering="-from_amount"))
+
+        self.assertEqual(ordering_exchanges.first().from_amount, 300)  # type: ignore
+        self.assertEqual(ordering_exchanges.last().from_amount, 10)  # type: ignore

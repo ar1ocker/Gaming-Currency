@@ -173,6 +173,8 @@ class TransferFilter(django_filters.FilterSet):
     to_amount = django_filters.RangeFilter()
     unit = django_filters.CharFilter(field_name="from_checking_account__currency_unit__symbol")
 
+    ordering = django_filters.OrderingFilter(fields=["created_at", "closed_at", "from_amount", "to_amount"])
+
     class Meta:
         model = TransferTransaction
         fields = [

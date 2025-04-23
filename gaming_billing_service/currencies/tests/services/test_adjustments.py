@@ -311,3 +311,9 @@ class AdjustmentListServiceTests(TestCase):
 
         for adjustment in adjustments_with_amount_100:
             self.assertEqual(adjustment.amount, 100)
+
+    def test_list_ordering(self):
+        ordering_adjustments = AdjustmentsService.list(filters=dict(ordering="-amount"))
+
+        self.assertEqual(ordering_adjustments.first().amount, 1000)  # type: ignore
+        self.assertEqual(ordering_adjustments.last().amount, 10)  # type: ignore

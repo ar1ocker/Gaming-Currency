@@ -143,6 +143,8 @@ class AdjustmentsFilter(django_filters.FilterSet):
     created_at = django_filters.IsoDateTimeFromToRangeFilter()
     closed_at = django_filters.IsoDateTimeFromToRangeFilter()
 
+    ordering = django_filters.OrderingFilter(fields=["created_at", "closed_at", "amount"])
+
     class Meta:
         model = AdjustmentTransaction
         fields = ["service", "status", "holder", "currency_unit", "amount", "created_at", "closed_at"]
