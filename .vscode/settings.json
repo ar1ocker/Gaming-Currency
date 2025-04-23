@@ -16,6 +16,10 @@
     
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.inlayHints.functionReturnTypes": true,
+
+    "python.analysis.extraPaths": ["gaming_billing_service/"],
+    "python.autoComplete.extraPaths": ["gaming_billing_service/"],
+
     "python.terminal.activateEnvironment": true,
 
     "cSpell.language": "en,ru",
