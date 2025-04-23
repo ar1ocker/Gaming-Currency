@@ -159,6 +159,8 @@ class TransfersListAPI(APIView):
         to_amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
         unit = serializers.CharField(required=False)
 
+        ordering = serializers.CharField(required=False)
+
     class OutputSerializer(serializers.Serializer):
         service = serializers.CharField(source="service.name")
         status = serializers.CharField()

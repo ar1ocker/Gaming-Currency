@@ -122,13 +122,16 @@ class AdjustmentListAPI(APIView):
     class FilterSerializer(serializers.Serializer):
         service = serializers.CharField(required=False)
         status = serializers.CharField(required=False)
-        holder = serializers.CharField(required=False)
-        currency_unit = serializers.CharField(required=False)
-        amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
         created_at_after = serializers.DateTimeField(required=False)
         created_at_before = serializers.DateTimeField(required=False)
         closed_at_after = serializers.DateTimeField(required=False)
         closed_at_before = serializers.DateTimeField(required=False)
+
+        holder = serializers.CharField(required=False)
+        currency_unit = serializers.CharField(required=False)
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4, required=False)
+
+        ordering = serializers.CharField(required=False)
 
     class OutputSerializer(serializers.Serializer):
         service = serializers.CharField(source="service.name")

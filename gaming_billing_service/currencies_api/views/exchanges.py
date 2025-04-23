@@ -132,6 +132,8 @@ class ExchangesListAPI(APIView):
         from_unit = serializers.CharField(required=False)
         to_unit = serializers.CharField(required=False)
 
+        ordering = serializers.CharField(required=False)
+
     class OutputSerializer(serializers.Serializer):
         service = serializers.CharField(source="service.name")
         status = serializers.CharField()
