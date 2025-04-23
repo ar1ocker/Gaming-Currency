@@ -1,5 +1,8 @@
+from typing import Any
+
 import django_filters
 from currencies.models import Holder, HolderType
+from django.db.models import QuerySet
 
 
 class HoldersService:
@@ -20,7 +23,7 @@ class HoldersService:
             return None
 
     @classmethod
-    def list(cls, *, filters: dict[str, str] | None = None):
+    def list(cls, *, filters: dict[str, Any] | None = None) -> QuerySet[Holder]:
         filters = filters or {}
 
         queryset = Holder.objects.all()
