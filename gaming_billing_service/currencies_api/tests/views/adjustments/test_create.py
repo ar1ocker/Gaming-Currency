@@ -1,17 +1,20 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
+
+from currencies.models import CurrencyService
+from currencies.services import (
+    AccountsService,
+    AdjustmentsService,
+    CurrencyServicesService,
+)
+from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies_api.test_factories import CurrencyServiceAuthTestFactory
+from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from currencies.test_factories import HoldersTestFactory, CurrencyUnitsTestFactory
-from currencies.services import CurrencyServicesService, AccountsService
-from currencies_api.test_factories import CurrencyServiceAuthFactory
-from django.conf import settings
-from decimal import Decimal
-
-from currencies.services import AdjustmentsService
-from currencies.models import CurrencyService
 
 if TYPE_CHECKING:
-    from currencies.models import Holder, CurrencyUnit
+    from currencies.models import CurrencyUnit, Holder
 
 
 @override_settings(ENABLE_HMAC_VALIDATION=False)
@@ -23,7 +26,7 @@ class AdjustmentCreateAPITest(TestCase):
         cls.service.permissions = {"root": True}
         cls.service.save()
 
-        cls.service_auth = CurrencyServiceAuthFactory(service=cls.service)
+        cls.service_auth = CurrencyServiceAuthTestFactory(service=cls.service)
 
         cls.holder: Holder = HoldersTestFactory()
         cls.unit: CurrencyUnit = CurrencyUnitsTestFactory()
@@ -41,7 +44,7 @@ class AdjustmentCreateAPITest(TestCase):
             permissions=permissions,
         )
 
-        CurrencyServiceAuthFactory(service=service)
+        CurrencyServiceAuthTestFactory(service=service)
 
         return service
 

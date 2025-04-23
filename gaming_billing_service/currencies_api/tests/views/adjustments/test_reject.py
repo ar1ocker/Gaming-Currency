@@ -8,7 +8,7 @@ from currencies.services import (
     CurrencyServicesService,
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
-from currencies_api.test_factories import CurrencyServiceAuthFactory
+from currencies_api.test_factories import CurrencyServiceAuthTestFactory
 from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -26,7 +26,7 @@ class AdjustmentRejectAPITest(TestCase):
         cls.service.permissions = {"root": True}
         cls.service.save()
 
-        cls.service_auth = CurrencyServiceAuthFactory(service=cls.service)
+        cls.service_auth = CurrencyServiceAuthTestFactory(service=cls.service)
 
         cls.holder: Holder = HoldersTestFactory()
         cls.unit: CurrencyUnit = CurrencyUnitsTestFactory()
@@ -46,7 +46,7 @@ class AdjustmentRejectAPITest(TestCase):
             permissions=permissions,
         )
 
-        CurrencyServiceAuthFactory(service=service)
+        CurrencyServiceAuthTestFactory(service=service)
 
         return service
 

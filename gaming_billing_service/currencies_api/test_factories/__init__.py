@@ -1,1 +1,1 @@
-from .currency_service_auth import CurrencyServiceAuthFactory  # noqa
+from .currency_service_auth import CurrencyServiceAuthTestFactory  # noqa
