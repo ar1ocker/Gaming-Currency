@@ -1,6 +1,7 @@
 import uuid
 from typing import TYPE_CHECKING
 
+from common.utils import assemble_auth_headers
 from currencies.models import CurrencyService
 from currencies.services import (
     AccountsService,
@@ -9,7 +10,6 @@ from currencies.services import (
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase, override_settings
 from django.urls import reverse
 

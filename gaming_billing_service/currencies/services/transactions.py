@@ -2,13 +2,13 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from itertools import chain
 
+from common.utils import retry_on_serialization_error
 from currencies.models import (
     AdjustmentTransaction,
     ExchangeTransaction,
     TransferTransaction,
 )
 from currencies.services import CurrencyServicesService
-from currencies.utils import retry_on_serialization_error
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone

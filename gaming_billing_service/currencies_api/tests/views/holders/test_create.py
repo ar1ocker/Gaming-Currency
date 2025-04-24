@@ -1,5 +1,6 @@
 import json
 
+from common.utils import assemble_auth_headers
 from currencies.services.holders import HoldersTypeService
 from currencies.test_factories import (
     CurrencyServicesTestFactory,
@@ -7,7 +8,6 @@ from currencies.test_factories import (
     HoldersTypeTestFactory,
 )
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase
 from django.urls import reverse
 

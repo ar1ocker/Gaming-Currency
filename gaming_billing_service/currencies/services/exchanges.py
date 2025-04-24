@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 import django_filters
+from common.utils import get_decimal_places, retry_on_serialization_error
 from currencies.models import (
     CurrencyService,
     CurrencyUnit,
@@ -11,7 +12,6 @@ from currencies.models import (
     ExchangeTransaction,
     Holder,
 )
-from currencies.utils import get_decimal_places, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction

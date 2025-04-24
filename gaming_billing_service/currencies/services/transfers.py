@@ -4,13 +4,13 @@ from decimal import ROUND_DOWN, Decimal
 from typing import Any
 
 import django_filters
+from common.utils import get_decimal_places, retry_on_serialization_error
 from currencies.models import (
     CheckingAccount,
     CurrencyService,
     TransferRule,
     TransferTransaction,
 )
-from currencies.utils import get_decimal_places, retry_on_serialization_error
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction

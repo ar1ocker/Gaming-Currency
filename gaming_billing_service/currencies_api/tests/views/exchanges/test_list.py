@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from common.utils import assemble_auth_headers
 from currencies.models import ExchangeRule
 from currencies.services import ExchangesService
 from currencies.services.accounts import AccountsService
@@ -8,7 +9,6 @@ from currencies.test_factories import CurrencyServicesTestFactory
 from currencies.test_factories.holders import HoldersTestFactory
 from currencies.test_factories.units import CurrencyUnitsTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase
 from django.urls import reverse
 

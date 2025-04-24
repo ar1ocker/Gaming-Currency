@@ -1,8 +1,10 @@
 import logging
+from decimal import Decimal
 from functools import wraps
 
+from currencies.models import CurrencyService
+from django.conf import settings
 from django.db import OperationalError
-from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +54,7 @@ def get_decimal_places(decimal: Decimal) -> int:
         return 0
 
     return abs(places)
+
+
+def assemble_auth_headers(*, service: CurrencyService):
+    return {settings.SERVICE_HEADER: service.name}
