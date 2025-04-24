@@ -12,13 +12,13 @@ class HoldersServiceTests(TestCase):
         return super().setUpTestData()
 
     def test_create_holder(self):
-        holder = HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type1)
+        holder = HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type1)[0]
         self.assertEqual(holder.holder_id, "test")
 
     def test_double_create_holder(self):
         self.assertEqual(
-            HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type1),
-            HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type2),
+            HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type1)[0],
+            HoldersService.get_or_create(holder_id="test", holder_type=self.holder_type2)[0],
         )
 
     def test_holder_does_not_exists(self):

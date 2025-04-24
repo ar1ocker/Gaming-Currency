@@ -63,7 +63,7 @@ class HolderCreateAPI(APIView):
         holder_type = serializer.validated_data["holder_type"]  # type: ignore
         info = serializer.validated_data["info"]  # type: ignore
 
-        holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type, info=info)
+        holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type, info=info)[0]
 
         return Response(self.OutputSerializer(holder).data)
 

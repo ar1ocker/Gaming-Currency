@@ -42,7 +42,7 @@ class CheckingAccountDetailAPI(APIView):
             HoldersPermissionsService.enforce_create(permissions=service_auth.service.permissions)
             AccountsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
 
-            holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type)
+            holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type)[0]
             account = AccountsService.get_or_create(holder=holder, currency_unit=unit_symbol)
         else:
             holder = HoldersService.get(holder_id=holder_id, holder_type=holder_type)

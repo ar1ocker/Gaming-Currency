@@ -7,10 +7,10 @@ from django.db.models import QuerySet
 
 class HoldersService:
     @classmethod
-    def get_or_create(cls, *, holder_id: str, holder_type: HolderType, info: dict = {}) -> Holder:
+    def get_or_create(cls, *, holder_id: str, holder_type: HolderType, info: dict = {}) -> tuple[Holder, bool]:
         return Holder.objects.select_related("holder_type").get_or_create(
             holder_id=holder_id, defaults={"enabled": True, "holder_type": holder_type, "info": info}
-        )[0]
+        )
 
     @classmethod
     def get(cls, *, holder_id: str, holder_type: HolderType | None = None):
