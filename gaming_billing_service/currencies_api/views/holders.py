@@ -4,7 +4,7 @@ from currencies.services import HoldersService, HoldersTypeService
 from currencies_api.auth import hmac_service_auth
 from currencies_api.models import CurrencyServiceAuth
 from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -30,6 +30,9 @@ class HolderDetailAPI(APIView):
         holder_id = serializer.validated_data["holder_id"]  # type: ignore
 
         holder = HoldersService.get(holder_id=holder_id)
+
+        if holder is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
 
         return Response(self.OutputSerializer(holder).data)
 
