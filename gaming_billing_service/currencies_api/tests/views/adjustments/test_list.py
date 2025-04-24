@@ -9,7 +9,7 @@ from currencies.services import (
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from django.conf import settings
+from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -51,16 +51,13 @@ class AdjustmentListAPITest(TestCase):
 
         return service
 
-    def assemble_auth_headers(self, *, service: CurrencyService):
-        return {settings.SERVICE_HEADER: service.name}
-
     def test_valid_get(self):
         response = self.client.get(
             self.list_reverse_path,
             data=dict(
                 limit=1,
             ),
-            headers=self.assemble_auth_headers(service=self.service),
+            headers=assemble_auth_headers(service=self.service),
         )
 
         data = response.data  # type: ignore
@@ -71,7 +68,7 @@ class AdjustmentListAPITest(TestCase):
     def test_valid_get_list(self):
         response = self.client.get(
             self.list_reverse_path,
-            headers=self.assemble_auth_headers(service=self.service),
+            headers=assemble_auth_headers(service=self.service),
         )
 
         data = response.data  # type: ignore
@@ -84,7 +81,7 @@ class AdjustmentListAPITest(TestCase):
 
         response = self.client.get(
             self.list_reverse_path,
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         data = response.data  # type: ignore

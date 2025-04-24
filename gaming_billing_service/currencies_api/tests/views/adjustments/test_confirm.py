@@ -9,7 +9,7 @@ from currencies.services import (
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from django.conf import settings
+from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -50,9 +50,6 @@ class AdjustmentConfirmAPITest(TestCase):
 
         return service
 
-    def assemble_auth_headers(self, *, service: CurrencyService):
-        return {settings.SERVICE_HEADER: service.name}
-
     def test_valid_confirm_from_root(self):
         service = self.create_service_with_permissions(permissions=dict(root=True))
 
@@ -62,7 +59,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=self.pending_transaction.uuid,
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -89,7 +86,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=self.pending_transaction.uuid,
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         self.assertEqual(response.status_code, 200)
@@ -106,7 +103,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=uuid.uuid1(),
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -130,7 +127,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=self.pending_transaction.uuid,
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -160,7 +157,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=self.pending_transaction.uuid,
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -190,7 +187,7 @@ class AdjustmentConfirmAPITest(TestCase):
                 uuid=self.pending_transaction.uuid,
                 status_description="test_status",
             ),
-            headers=self.assemble_auth_headers(service=service),
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore

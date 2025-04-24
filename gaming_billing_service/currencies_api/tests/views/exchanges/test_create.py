@@ -8,7 +8,7 @@ from currencies.test_factories import (
     HoldersTestFactory,
 )
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from django.conf import settings
+from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -55,7 +55,7 @@ class ExchangesCreateAPITest(TestCase):
 
         cls.create_reverse_path = reverse("exchanges_create")
 
-        cls.headers = {settings.SERVICE_HEADER: cls.service.name}
+        cls.headers = assemble_auth_headers(service=cls.service)
 
     def test_valid_create(self):
         response = self.client.post(
@@ -108,7 +108,7 @@ class ExchangesCreateAPITest(TestCase):
                 from_amount=5,
                 description="test",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data = response.data  # type: ignore
@@ -145,7 +145,7 @@ class ExchangesCreateAPITest(TestCase):
                 description="test",
                 auto_reject_timeout=100,
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data = response.data  # type: ignore
@@ -182,7 +182,7 @@ class ExchangesCreateAPITest(TestCase):
                 description="test",
                 auto_reject_timeout=100,
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data = response.data  # type: ignore

@@ -9,7 +9,7 @@ from currencies.services import (
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from django.conf import settings
+from currencies_api.utils import assemble_auth_headers
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -35,7 +35,7 @@ class AdjustmentCreateAPITest(TestCase):
 
         cls.create_reverse_path = reverse("adjustments_create")
 
-        cls.headers = {settings.SERVICE_HEADER: cls.service.name}
+        cls.headers = assemble_auth_headers(service=cls.service)
 
     def create_service_with_permissions(self, *, permissions: dict):
         service = CurrencyService.objects.create(
@@ -145,7 +145,7 @@ class AdjustmentCreateAPITest(TestCase):
                 amount=100,
                 description="test_description",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -181,7 +181,7 @@ class AdjustmentCreateAPITest(TestCase):
                 amount=100,
                 description="test_description",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -214,7 +214,7 @@ class AdjustmentCreateAPITest(TestCase):
                 amount=100,
                 description="test_description",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -247,7 +247,7 @@ class AdjustmentCreateAPITest(TestCase):
                 amount=100,
                 description="test_description",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -280,7 +280,7 @@ class AdjustmentCreateAPITest(TestCase):
                 amount=100,
                 description="test_description",
             ),
-            headers={settings.SERVICE_HEADER: service.name},
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
