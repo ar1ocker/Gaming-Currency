@@ -51,6 +51,7 @@ class HolderCreateAPI(APIView):
         holder_type = serializers.CharField(source="holder_type.name")
         info = serializers.JSONField()
         created_at = serializers.DateTimeField()
+        created_now = serializers.BooleanField(source="_created_now")
 
     @hmac_service_auth
     def post(self, request, service_auth: CurrencyServiceAuth):
@@ -63,9 +64,11 @@ class HolderCreateAPI(APIView):
         holder_type = serializer.validated_data["holder_type"]  # type: ignore
         info = serializer.validated_data["info"]  # type: ignore
 
-        holder = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type, info=info)[0]
+        holder, created_now = HoldersService.get_or_create(holder_id=holder_id, holder_type=holder_type, info=info)
 
-        return Response(self.OutputSerializer(holder).data)
+        holder._created_now = created_now  # type: ignore
+
+        return Response(self.OutputSerializer(holder).data, status=status.HTTP_201_CREATED)
 
 
 class HolderListAPI(APIView):
