@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class TransferCreateAPI(APIView):
+class TransfersCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
         from_holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
         to_holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
@@ -84,7 +84,7 @@ class TransferCreateAPI(APIView):
         return Response(status=status.HTTP_201_CREATED, data=self.OutputSerializer(transaction).data)
 
 
-class TransferConfirmAPI(APIView):
+class TransfersConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(queryset=TransferTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()
@@ -110,7 +110,7 @@ class TransferConfirmAPI(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class TransferRejectAPI(APIView):
+class TransfersRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(queryset=TransferTransaction.objects.all())
         status_description = serializers.CharField()

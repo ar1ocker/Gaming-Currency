@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class ExchangeCreateAPI(APIView):
+class ExchangesCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
         exchange_rule = serializers.SlugRelatedField(queryset=ExchangeRule.objects.all(), slug_field="name")
@@ -63,7 +63,7 @@ class ExchangeCreateAPI(APIView):
         return Response(status=status.HTTP_201_CREATED, data=self.OutputSerializer(exchange).data)
 
 
-class ExchangeConfirmAPI(APIView):
+class ExchangesConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()
@@ -86,7 +86,7 @@ class ExchangeConfirmAPI(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class ExchangeRejectAPI(APIView):
+class ExchangesRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(queryset=ExchangeTransaction.objects.select_related("service").all())
         status_description = serializers.CharField()

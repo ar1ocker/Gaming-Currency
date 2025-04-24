@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class HolderDetailAPI(APIView):
+class HoldersDetailAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.CharField()
 
@@ -37,7 +37,7 @@ class HolderDetailAPI(APIView):
         return Response(self.OutputSerializer(holder).data)
 
 
-class HolderCreateAPI(APIView):
+class HoldersCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.CharField()
         holder_type = serializers.SlugRelatedField(
@@ -71,7 +71,7 @@ class HolderCreateAPI(APIView):
         return Response(self.OutputSerializer(holder).data, status=status.HTTP_201_CREATED)
 
 
-class HolderListAPI(APIView):
+class HoldersListAPI(APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 1
 

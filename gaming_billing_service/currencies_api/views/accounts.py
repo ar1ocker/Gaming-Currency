@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class CheckingAccountDetailAPI(APIView):
+class CheckingAccountsDetailAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.CharField()
         holder_type = serializers.SlugRelatedField(
@@ -57,7 +57,7 @@ class CheckingAccountDetailAPI(APIView):
         return Response(self.OutputSerializer(dict(account=account, holder=holder)).data)
 
 
-class CheckingAccountListAPI(APIView):
+class CheckingAccountsListAPI(APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 1
 

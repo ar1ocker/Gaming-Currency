@@ -13,7 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class AdjustmentCreateAPI(APIView):
+class AdjustmentsCreateAPI(APIView):
     class InputSerializer(serializers.Serializer):
         holder_id = serializers.SlugRelatedField(queryset=Holder.objects.all(), slug_field="holder_id")
         unit_symbol = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
@@ -59,7 +59,7 @@ class AdjustmentCreateAPI(APIView):
         return Response(status=status.HTTP_201_CREATED, data=self.OutputSerializer(adjustment).data)
 
 
-class AdjustmentConfirmAPI(APIView):
+class AdjustmentsConfirmAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(
             queryset=AdjustmentTransaction.objects.select_related("service").all()
@@ -87,7 +87,7 @@ class AdjustmentConfirmAPI(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class AdjustmentRejectAPI(APIView):
+class AdjustmentsRejectAPI(APIView):
     class InputSerializer(serializers.Serializer):
         uuid = serializers.PrimaryKeyRelatedField(
             queryset=AdjustmentTransaction.objects.select_related("service").all()
@@ -115,7 +115,7 @@ class AdjustmentRejectAPI(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-class AdjustmentListAPI(APIView):
+class AdjustmentsListAPI(APIView):
     class Pagination(LimitOffsetPagination):
         pass
 
