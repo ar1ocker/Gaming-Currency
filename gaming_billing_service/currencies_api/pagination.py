@@ -19,6 +19,10 @@ def get_paginated_response(*, pagination_class, serializer_class, queryset, requ
 
 
 class LimitOffsetPagination(_LimitOffsetPagination):
+    """
+    From Django Styleguide
+    """
+
     default_limit = 10
     max_limit = 50
 
