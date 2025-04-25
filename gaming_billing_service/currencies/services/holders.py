@@ -1,6 +1,7 @@
 from typing import Any
 
 import django_filters
+from common.services import model_update
 from currencies.models import Holder, HolderType
 from django.db.models import QuerySet
 
@@ -21,6 +22,12 @@ class HoldersService:
                 return Holder.objects.select_related("holder_type").get(holder_id=holder_id, holder_type=holder_type)
         except Holder.DoesNotExist:
             return None
+
+    @classmethod
+    def update(cls, *, holder: Holder, data: dict) -> tuple[Holder, bool]:
+        fields = ["enabled", "info"]
+
+        return model_update(instance=holder, fields=fields, data=data)
 
     @classmethod
     def list(cls, *, filters: dict[str, Any] | None = None) -> QuerySet[Holder]:

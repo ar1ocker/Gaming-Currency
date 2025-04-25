@@ -24,6 +24,25 @@ class HoldersServiceTests(TestCase):
     def test_holder_does_not_exists(self):
         self.assertIsNone(HoldersService.get(holder_id="notfound"))
 
+    def test_holder_update(self):
+        holder = HoldersTestFactory(enabled=False, info={})
+
+        updated_holder, has_updated = HoldersService.update(
+            holder=holder,
+            data=dict(
+                enabled=True,
+                info={"new_info": "data"},
+            ),
+        )
+
+        self.assertTrue(has_updated)
+
+        holder.refresh_from_db()
+
+        self.assertEqual(updated_holder, holder)
+        self.assertEqual(holder.enabled, True)
+        self.assertEqual(holder.info, {"new_info": "data"})
+
 
 class HoldersServiceListTests(TestCase):
     @classmethod
