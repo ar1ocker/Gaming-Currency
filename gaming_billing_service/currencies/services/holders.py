@@ -45,9 +45,11 @@ class HoldersTypeService:
 
 
 class HoldersFilter(django_filters.FilterSet):
+    enabled = django_filters.BooleanFilter()
+    holder_id = django_filters.CharFilter()
     holder_type = django_filters.CharFilter(field_name="holder_type__name")
     created_at = django_filters.IsoDateTimeFromToRangeFilter()
 
     class Meta:
         model = Holder
-        fields = ("holder_id", "holder_type", "created_at")
+        fields = ("enabled", "holder_id", "holder_type", "created_at")
