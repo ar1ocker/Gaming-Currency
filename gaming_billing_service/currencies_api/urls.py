@@ -13,7 +13,12 @@ from .views.exchanges import (
     ExchangesListAPI,
     ExchangesRejectAPI,
 )
-from .views.holders import HoldersCreateAPI, HoldersDetailAPI, HoldersListAPI
+from .views.holders import (
+    HoldersCreateAPI,
+    HoldersDetailAPI,
+    HoldersListAPI,
+    HoldersUpdateAPI,
+)
 from .views.transfers import (
     TransfersConfirmAPI,
     TransfersCreateAPI,
@@ -26,6 +31,7 @@ urlpatterns = [
     path("holders/", HoldersListAPI.as_view(), name="holders_list"),
     path("holders/detail/", HoldersDetailAPI.as_view(), name="holders_detail"),
     path("holders/create/", HoldersCreateAPI.as_view(), name="holders_create"),
+    path("holders/update/", HoldersUpdateAPI.as_view(), name="holders_update"),
     #
     path("accounts/", CheckingAccountsListAPI.as_view(), name="checking_accounts_list"),
     path("accounts/detail/", CheckingAccountsDetailAPI.as_view(), name="checking_accounts_detail"),

@@ -71,6 +71,47 @@ class HoldersCreateAPI(APIView):
         return Response(self.OutputSerializer(holder).data, status=status.HTTP_201_CREATED)
 
 
+class HoldersUpdateAPI(APIView):
+    class InputSerializer(serializers.Serializer):
+        holder_id = serializers.CharField()
+
+    class UpdateDataSerializer(serializers.Serializer):
+        enabled = serializers.BooleanField(required=False)
+        info = serializers.JSONField(required=False)
+
+    class OutputSerializer(serializers.Serializer):
+        enabled = serializers.BooleanField()
+        holder_id = serializers.CharField()
+        holder_type = serializers.CharField(source="holder_type.name")
+        info = serializers.JSONField()
+        created_at = serializers.DateTimeField()
+        updated_now = serializers.BooleanField(source="_updated_now")
+
+    @hmac_service_auth
+    def post(self, request, service_auth: CurrencyServiceAuth):
+        input_serializer = self.InputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+
+        holder_id = input_serializer.validated_data["holder_id"]  # type: ignore
+
+        holder = HoldersService.get(holder_id=holder_id)
+
+        if holder is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        parameter_serializer = self.UpdateDataSerializer(data=request.data)
+        parameter_serializer.is_valid(raise_exception=True)
+
+        updated_holder, updated_now = HoldersService.update(
+            holder=holder,
+            data=parameter_serializer.validated_data,  # type: ignore
+        )
+
+        updated_holder._updated_now = updated_now  # type: ignore
+
+        return Response(self.OutputSerializer(updated_holder).data)
+
+
 class HoldersListAPI(APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 1
