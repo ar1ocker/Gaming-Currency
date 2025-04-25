@@ -76,6 +76,7 @@ class HoldersListAPI(APIView):
         default_limit = 1
 
     class FilterSerializer(serializers.Serializer):
+        enabled = serializers.CharField(required=False)
         holder_type = serializers.CharField(required=False)
         created_at_after = serializers.DateTimeField(required=False)
         created_at_before = serializers.DateTimeField(required=False)
@@ -89,7 +90,7 @@ class HoldersListAPI(APIView):
 
     @hmac_service_auth
     def get(self, request, service_auth: CurrencyServiceAuth):
-        HoldersPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+        HoldersPermissionsService.enforce_access(permissions=service_auth.service.permissions)
 
         filter_serializer = self.FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)
