@@ -10,3 +10,4 @@ from .exchanges.test_list import *  # noqa
 from .exchanges.test_reject import *  # noqa
 from .holders.test_create import *  # noqa
 from .holders.test_detail import *  # noqa
+from .holders.test_list import *  # noqa
