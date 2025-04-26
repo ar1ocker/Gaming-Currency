@@ -183,9 +183,6 @@ class AdjustmentTransactionServicesTests(TestCase):
 
         with self.assertRaises(AdjustmentsService.ValidationError):
             AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
-            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
-            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
-            AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
 
     def test_reject_outdated(self):
         transaction1 = AdjustmentsService.create(
