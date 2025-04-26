@@ -7,18 +7,25 @@
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
-        }
+        },
     },
 
     "flake8.args": [
         "--max-line-length=120",
     ],
-    
+
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.callArgumentNames": "all",
 
-    "python.analysis.extraPaths": ["gaming_billing_service/"],
-    "python.autoComplete.extraPaths": ["gaming_billing_service/"],
+    "python.analysis.extraPaths": ["${workspaceFolder}/gaming_billing_service/"],
+    "python.autoComplete.extraPaths": ["${workspaceFolder}/gaming_billing_service/"],
 
     "python.terminal.activateEnvironment": true,
 
@@ -47,5 +54,5 @@
         "**/.ruff_cache": true,
         "**/.tox": true
     },
-    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeCheckingMode": "standard",
 }
