@@ -8,10 +8,11 @@ from currencies.test_factories import (
     HoldersTypeTestFactory,
 )
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 
+@override_settings(ENABLE_HMAC_VALIDATION=False)
 class HoldersCreateAPITests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
