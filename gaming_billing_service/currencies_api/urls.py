@@ -1,6 +1,10 @@
 from django.urls import path
 
-from .views.accounts import CheckingAccountsDetailAPI, CheckingAccountsListAPI
+from .views.accounts import (
+    CheckingAccountsCreateAPI,
+    CheckingAccountsDetailAPI,
+    CheckingAccountsListAPI,
+)
 from .views.adjustments import (
     AdjustmentsConfirmAPI,
     AdjustmentsCreateAPI,
@@ -35,6 +39,7 @@ urlpatterns = [
     #
     path("accounts/", CheckingAccountsListAPI.as_view(), name="checking_accounts_list"),
     path("accounts/detail/", CheckingAccountsDetailAPI.as_view(), name="checking_accounts_detail"),
+    path("accounts/create/", CheckingAccountsCreateAPI.as_view(), name="checking_accounts_create"),
     #
     path("units/", CurrencyUnitsListAPI.as_view(), name="currency_units_list"),
     #

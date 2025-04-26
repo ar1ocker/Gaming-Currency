@@ -50,6 +50,52 @@ class CheckingAccountsDetailAPI(APIView):
         return Response(self.OutputSerializer(dict(account=account, holder=holder)).data)
 
 
+class CheckingAccountsCreateAPI(APIView):
+    class InputSerializer(serializers.Serializer):
+        holder_id = serializers.CharField()
+        holder_type = serializers.SlugRelatedField(
+            queryset=HolderType.objects.all(), slug_field="name", default=HoldersTypeService.get_default
+        )
+        unit_symbol = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
+
+    class OutputSerializer(serializers.Serializer):
+        holder_enabled = serializers.BooleanField(source="holder.enabled")
+        holder_id = serializers.CharField(source="holder.holder_id")
+        holder_type = serializers.CharField(source="holder.holder_type.name")
+        currency_unit = serializers.CharField(source="account.currency_unit.symbol")
+        amount = serializers.DecimalField(max_digits=13, decimal_places=4, source="account.amount")
+        created_at = serializers.DateTimeField(source="account.created_at")
+        created_now = serializers.BooleanField(source="created_now")
+
+    @hmac_service_auth
+    def post(self, request, service_auth: CurrencyServiceAuth):
+        AccountsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
+
+        serializer = self.InputSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+
+        holder_id: str = serializer.validated_data["holder_id"]  # type: ignore
+        holder_type: HolderType = serializer.validated_data["holder_type"]  # type: ignore
+        currency_unit: CurrencyUnit = serializer.validated_data["unit_symbol"]  # type: ignore
+
+        holder = HoldersService.get(holder_id=holder_id, holder_type=holder_type)
+
+        if holder is None:
+            raise Http404("Holder not found")
+
+        account, created_now = AccountsService.get_or_create(holder=holder, currency_unit=currency_unit)
+
+        return Response(
+            self.OutputSerializer(
+                dict(
+                    account=account,
+                    holder=holder,
+                    created_now=created_now,
+                )
+            ).data
+        )
+
+
 class CheckingAccountsListAPI(APIView):
     class Pagination(LimitOffsetPagination):
         default_limit = 1
