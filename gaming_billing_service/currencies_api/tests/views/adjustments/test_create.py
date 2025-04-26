@@ -288,3 +288,22 @@ class AdjustmentCreateAPITest(TestCase):
         self.assertEqual(response.status_code, 403, data)
         self.assertIn("Auto reject timeout is out of range", data["message"], data)
         self.assertEqual(AdjustmentsService.list().count(), 0)
+
+    def test_account_not_found(self):
+        holder = HoldersTestFactory()
+
+        response = self.client.post(
+            self.create_reverse_path,
+            data=dict(
+                holder_id=holder.holder_id,
+                unit_symbol=self.unit.symbol,
+                amount=100,
+                description="test_description",
+            ),
+            headers=self.headers,
+        )
+
+        data = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data.get("message"), "Account not found")
