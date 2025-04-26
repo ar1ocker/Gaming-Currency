@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from common.utils import assemble_auth_headers
 from currencies.models import CheckingAccount, Holder
 from currencies.services import (
     AccountsService,
@@ -7,8 +8,11 @@ from currencies.services import (
     HoldersTypeService,
 )
 from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies.test_factories.currency_services import CurrencyServicesTestFactory
 from currencies_api.models import CurrencyServiceAuth
-from django.conf import settings
+from currencies_api.test_factories.currency_service_auth import (
+    CurrencyServiceAuthTestFactory,
+)
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -33,16 +37,17 @@ class CheckingAccountDetailTest(APITestCase):
 
         cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)
 
+        cls.account_detail_reverse_path = reverse("checking_accounts_detail")
+
     def test_get_detail(self):
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id=self.holder.holder_id,
                 holder_type=self.holder_type.name,
                 unit_symbol=self.currency_unit_1.symbol,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=self.service),
         )
 
         data: dict = response.data  # type: ignore
@@ -55,15 +60,14 @@ class CheckingAccountDetailTest(APITestCase):
 
     def test_get_or_create_detail(self):
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id=self.holder.holder_id,
                 holder_type=self.holder_type.name,
                 unit_symbol=self.currency_unit_2.symbol,  # unit 2
                 create_if_not_exists=True,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=self.service),
         )
 
         data: dict = response.data  # type: ignore
@@ -77,18 +81,17 @@ class CheckingAccountDetailTest(APITestCase):
         self.assertEqual(CheckingAccount.objects.count(), 2)
 
     def test_get_with_no_access_permissions(self):
-        self.service.permissions = {}
-        self.service.save()
+        service = CurrencyServicesTestFactory(permissions={})
+        CurrencyServiceAuthTestFactory(service=service)
 
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id=self.holder.holder_id,
                 holder_type=self.holder_type.name,
                 unit_symbol=self.currency_unit_1.symbol,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -97,28 +100,29 @@ class CheckingAccountDetailTest(APITestCase):
         self.assertTrue("Missing required permission" in data["message"], data)
 
     def test_get_or_create_with_no_create_permissions(self):
-        self.service.permissions = dict(
-            accounts=dict(
-                enabled=True,
-                create=dict(enabled=False),
-            ),
-            holders=dict(
-                enabled=True,
-                create=dict(enabled=True),
-            ),
+        service = CurrencyServicesTestFactory(
+            permissions=dict(
+                accounts=dict(
+                    enabled=True,
+                    create=dict(enabled=False),
+                ),
+                holders=dict(
+                    enabled=True,
+                    create=dict(enabled=True),
+                ),
+            )
         )
-        self.service.save()
+        CurrencyServiceAuthTestFactory(service=service)
 
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id=self.holder.holder_id,
                 holder_type=self.holder_type.name,
                 unit_symbol=self.currency_unit_2.symbol,
                 create_if_not_exists=True,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -129,28 +133,29 @@ class CheckingAccountDetailTest(APITestCase):
         self.assertEqual(CheckingAccount.objects.count(), 1)
 
     def test_get_or_create_with_no_holders_create_permissions(self):
-        self.service.permissions = dict(
-            accounts=dict(
-                enabled=True,
-                create=dict(enabled=True),
-            ),
-            holders=dict(
-                enabled=True,
-                create=dict(enabled=False),
-            ),
+        service = CurrencyServicesTestFactory(
+            permissions=dict(
+                accounts=dict(
+                    enabled=True,
+                    create=dict(enabled=True),
+                ),
+                holders=dict(
+                    enabled=True,
+                    create=dict(enabled=False),
+                ),
+            )
         )
-        self.service.save()
+        CurrencyServiceAuthTestFactory(service=service)
 
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id=self.holder.holder_id,
                 holder_type=self.holder_type.name,
                 unit_symbol=self.currency_unit_2.symbol,
                 create_if_not_exists=True,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=service),
         )
 
         data: dict = response.data  # type: ignore
@@ -162,14 +167,13 @@ class CheckingAccountDetailTest(APITestCase):
 
     def test_get_or_create_with_default_holder_type(self):
         response = self.client.get(
-            reverse("checking_accounts_detail"),
+            self.account_detail_reverse_path,
             data=dict(
                 holder_id="new_holder_id",
                 unit_symbol=self.currency_unit_2.symbol,  # unit 2
                 create_if_not_exists=True,
             ),
-            headers={settings.SERVICE_HEADER: self.service.name},
-            content_type="application/json",
+            headers=assemble_auth_headers(service=self.service),
         )
 
         data: dict = response.data  # type: ignore
