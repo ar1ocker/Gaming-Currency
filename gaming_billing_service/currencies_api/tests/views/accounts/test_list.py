@@ -28,7 +28,7 @@ class CheckingAccountListTest(APITestCase):
         cls.currency_unit_1 = CurrencyUnitsTestFactory()
         cls.currency_unit_2 = CurrencyUnitsTestFactory()
 
-        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)
+        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)[0]
 
     def test_list(self):
         response = self.client.get(

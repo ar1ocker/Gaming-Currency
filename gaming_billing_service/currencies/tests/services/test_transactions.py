@@ -62,17 +62,17 @@ class TransactionsTest(TestCase):
     def setUp(self) -> None:
         self.checking_account_unit_1_user_1 = AccountsService.get_or_create(
             holder=self.holder_1, currency_unit=self.unit_1
-        )
+        )[0]
         self.checking_account_unit_2_user_1 = AccountsService.get_or_create(
             holder=self.holder_1, currency_unit=self.unit_2
-        )
+        )[0]
 
         self.checking_account_unit_1_user_2 = AccountsService.get_or_create(
             holder=self.holder_2, currency_unit=self.unit_1
-        )
+        )[0]
         self.checking_account_unit_2_user_2 = AccountsService.get_or_create(
             holder=self.holder_2, currency_unit=self.unit_2
-        )
+        )[0]
 
     def create_adjustments(
         self,

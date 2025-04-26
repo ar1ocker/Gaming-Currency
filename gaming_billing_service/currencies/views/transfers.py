@@ -48,9 +48,9 @@ class TransferCreateView(views.View):
 
         transfer_rule = form.cleaned_data["transfer_rule"]
 
-        from_checking_account = AccountsService.get_or_create(holder=from_holder, currency_unit=transfer_rule.unit)
+        from_checking_account = AccountsService.get_or_create(holder=from_holder, currency_unit=transfer_rule.unit)[0]
 
-        to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=transfer_rule.unit)
+        to_checking_account = AccountsService.get_or_create(holder=to_holder, currency_unit=transfer_rule.unit)[0]
 
         service = form.cleaned_data["service"]
         from_amount = form.cleaned_data["from_amount"]

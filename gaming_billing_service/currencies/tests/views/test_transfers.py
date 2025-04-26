@@ -63,7 +63,7 @@ class TransferActionTest(TestCase):
 
     def setUp(self) -> None:
         self.client.force_login(self.superuser)
-        self.account1 = AccountsService.get_or_create(holder=self.holder1, currency_unit=self.unit)
+        self.account1 = AccountsService.get_or_create(holder=self.holder1, currency_unit=self.unit)[0]
 
         AdjustmentsService.confirm(
             adjustment_transaction=AdjustmentsService.create(
@@ -72,7 +72,7 @@ class TransferActionTest(TestCase):
             status_description="teststatus",
         )
 
-        account2 = AccountsService.get_or_create(holder=self.holder2, currency_unit=self.unit)
+        account2 = AccountsService.get_or_create(holder=self.holder2, currency_unit=self.unit)[0]
 
         self.transfer = TransfersService.create(
             service=self.service,

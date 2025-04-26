@@ -40,7 +40,7 @@ class AdjustmentCreateView(views.View):
             form.add_error("holder_id", "Holder with given ID does not exist")
             return self.render_form(request, form)
 
-        checking_account = AccountsService.get_or_create(holder=holder, currency_unit=form.cleaned_data["to_unit"])
+        checking_account = AccountsService.get_or_create(holder=holder, currency_unit=form.cleaned_data["to_unit"])[0]
 
         service = form.cleaned_data["service"]
         amount = form.cleaned_data["amount"]

@@ -25,8 +25,8 @@ class ExchangesCreateAPITest(TestCase):
         cls.unit_1 = CurrencyUnitsTestFactory()
         cls.unit_2 = CurrencyUnitsTestFactory()
 
-        cls.account_unit_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_1)
-        cls.account_unit_2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_2)
+        cls.account_unit_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_1)[0]
+        cls.account_unit_2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_2)[0]
 
         cls.exchange_rule = ExchangeRule.objects.create(
             name="exchange_rule",

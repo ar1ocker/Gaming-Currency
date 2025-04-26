@@ -25,8 +25,8 @@ class ExchangesServiceTests(TestCase):
         return super().setUpTestData()
 
     def setUp(self):
-        self.checking_account_unit1 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit1)
-        self.checking_account_unit2 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit2)
+        self.checking_account_unit1 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit1)[0]
+        self.checking_account_unit2 = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit2)[0]
 
         self.exchange_rule = ExchangeRule.objects.create(
             name="test",
@@ -439,13 +439,13 @@ class ExchangeServiceListTests(TestCase):
         cls.unit_2 = CurrencyUnitsTestFactory()
         cls.unit_3 = CurrencyUnitsTestFactory()
 
-        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
-        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
-        cls.account_holder_1_unit_3 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_3)
+        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)[0]
+        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)[0]
+        cls.account_holder_1_unit_3 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_3)[0]
 
-        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
-        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
-        cls.account_holder_2_unit_3 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_3)
+        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)[0]
+        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)[0]
+        cls.account_holder_2_unit_3 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_3)[0]
 
         cls.add_amount(
             accounts=(

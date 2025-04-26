@@ -46,7 +46,7 @@ class CheckingAccountsDetailAPI(APIView):
 
         if create_if_not_exists:
             AccountsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
-            account = AccountsService.get_or_create(holder=holder, currency_unit=currency_unit)
+            account = AccountsService.get_or_create(holder=holder, currency_unit=currency_unit)[0]
         else:
             account = AccountsService.get(holder=holder, currency_unit=currency_unit)
             if account is None:

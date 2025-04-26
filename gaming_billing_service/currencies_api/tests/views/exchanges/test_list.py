@@ -24,7 +24,7 @@ class ExhcnagesListAPITests(TestCase):
         cls.unit_1 = CurrencyUnitsTestFactory()
         cls.unit_2 = CurrencyUnitsTestFactory()
 
-        cls.account_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_1)
+        cls.account_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_1)[0]
         AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit_2)
 
         AdjustmentsService.confirm(

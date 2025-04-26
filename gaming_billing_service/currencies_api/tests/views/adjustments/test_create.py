@@ -31,7 +31,7 @@ class AdjustmentCreateAPITest(TestCase):
         cls.holder: Holder = HoldersTestFactory()
         cls.unit: CurrencyUnit = CurrencyUnitsTestFactory()
 
-        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit)
+        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit)[0]
 
         cls.create_reverse_path = reverse("adjustments_create")
 

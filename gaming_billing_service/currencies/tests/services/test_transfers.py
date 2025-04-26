@@ -37,10 +37,10 @@ class CurrencyTransferTransactionServicesTests(TestCase):
     def setUp(self):
         self.one_checking_account = AccountsService.get_or_create(
             holder=self.first_holder, currency_unit=self.currency_unit
-        )
+        )[0]
         self.two_checking_account = AccountsService.get_or_create(
             holder=self.second_holder, currency_unit=self.currency_unit
-        )
+        )[0]
 
         self.add_amount(self.one_checking_account, 100)
 
@@ -177,7 +177,7 @@ class CurrencyTransferTransactionServicesTests(TestCase):
     def test_transfer_with_different_currency_units(self):
         currency_unit = CurrencyUnitsTestFactory()
 
-        diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)
+        diff_currency_account = AccountsService.get_or_create(holder=self.second_holder, currency_unit=currency_unit)[0]
         self.add_amount(diff_currency_account, 100)
 
         with self.assertRaisesRegex(TransfersService.ValidationError, "Transfer with unsuitable currency"):
@@ -339,10 +339,10 @@ class TransferTransactionListTests(TestCase):
             min_from_amount=Decimal(1),
         )
 
-        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
-        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
-        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
-        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+        cls.account_holder_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)[0]
+        cls.account_holder_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)[0]
+        cls.account_holder_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)[0]
+        cls.account_holder_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)[0]
 
         cls.add_amount(
             accounts=(

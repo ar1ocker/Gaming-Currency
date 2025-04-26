@@ -1,20 +1,21 @@
+from itertools import chain
 from typing import Any
-from django.core.management.base import BaseCommand
+
+from currencies.models import ExchangeRule, TransferRule
+from currencies.services import (
+    AccountsService,
+    AdjustmentsService,
+    ExchangesService,
+    HoldersTypeService,
+    TransfersService,
+)
 from currencies.test_factories import (
+    CurrencyServicesTestFactory,
     CurrencyUnitsTestFactory,
     HoldersTestFactory,
     HoldersTypeTestFactory,
-    CurrencyServicesTestFactory,
 )
-from currencies.services import (
-    HoldersTypeService,
-    AccountsService,
-    ExchangesService,
-    AdjustmentsService,
-    TransfersService,
-)
-from currencies.models import ExchangeRule, TransferRule
-from itertools import chain
+from django.core.management.base import BaseCommand
 from django.db import transaction
 
 
@@ -35,11 +36,11 @@ class Command(BaseCommand):
 
             accounts_unit_1 = []
             for holder in holders:
-                accounts_unit_1.append(AccountsService.get_or_create(holder=holder, currency_unit=units[0]))
+                accounts_unit_1.append(AccountsService.get_or_create(holder=holder, currency_unit=units[0])[0])
 
             accounts_unit_2 = []
             for holder in holders:
-                accounts_unit_2.append(AccountsService.get_or_create(holder=holder, currency_unit=units[3]))
+                accounts_unit_2.append(AccountsService.get_or_create(holder=holder, currency_unit=units[3])[0])
 
             for account in chain(accounts_unit_1, accounts_unit_2):
                 AdjustmentsService.create(

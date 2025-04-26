@@ -25,7 +25,7 @@ class AdjustmentTransactionServicesTests(TestCase):
         return super().setUpTestData()
 
     def setUp(self):
-        self.checking_account = AccountsService().get_or_create(holder=self.holder, currency_unit=self.currency_unit)
+        self.checking_account = AccountsService().get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0]
 
     def add_amount(self, amount):
         return AdjustmentsService().confirm(
@@ -234,11 +234,11 @@ class AdjustmentListServiceTests(TestCase):
         cls.unit_1: CurrencyUnit = CurrencyUnitsTestFactory()
         cls.unit_2: CurrencyUnit = CurrencyUnitsTestFactory()
 
-        cls.account_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)
-        cls.account_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)
+        cls.account_1_unit_1 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_1)[0]
+        cls.account_1_unit_2 = AccountsService.get_or_create(holder=cls.holder_1, currency_unit=cls.unit_2)[0]
 
-        cls.account_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)
-        cls.account_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)
+        cls.account_2_unit_1 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_1)[0]
+        cls.account_2_unit_2 = AccountsService.get_or_create(holder=cls.holder_2, currency_unit=cls.unit_2)[0]
 
         cls.pending_adjustments = [
             AdjustmentsService.create(

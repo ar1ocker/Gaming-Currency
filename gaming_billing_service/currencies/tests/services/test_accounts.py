@@ -15,17 +15,17 @@ class CheckingAccountServicesTests(TestCase):
         self.currency_unit = CurrencyUnitsTestFactory()
 
     def test_create_checking_account(self):
-        checking_account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)
+        checking_account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0]
         self.assertEqual(checking_account.amount, 0)
 
     def test_double_create_checking_account(self):
         self.assertEqual(
-            AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit),
-            AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit),
+            AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0],
+            AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0],
         )
 
     def test_get(self):
-        AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)
+        AccountsService.get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0]
 
         self.assertIsNotNone(AccountsService.get(holder=self.holder, currency_unit=self.currency_unit))
 

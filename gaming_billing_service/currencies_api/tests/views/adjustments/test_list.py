@@ -31,7 +31,7 @@ class AdjustmentListAPITest(TestCase):
         cls.holder: Holder = HoldersTestFactory()
         cls.unit: CurrencyUnit = CurrencyUnitsTestFactory()
 
-        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit)
+        cls.account = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit)[0]
 
         for i in range(1, 11):
             AdjustmentsService.create(

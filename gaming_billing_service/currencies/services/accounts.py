@@ -4,10 +4,10 @@ from currencies.models import CheckingAccount, CurrencyUnit, Holder
 
 class AccountsService:
     @classmethod
-    def get_or_create(cls, *, holder: Holder, currency_unit: CurrencyUnit) -> CheckingAccount:
+    def get_or_create(cls, *, holder: Holder, currency_unit: CurrencyUnit) -> tuple[CheckingAccount, bool]:
         return CheckingAccount.objects.select_related("currency_unit").get_or_create(
             holder=holder, currency_unit=currency_unit, defaults={"amount": 0}
-        )[0]
+        )
 
     @classmethod
     def get(cls, *, holder: Holder, currency_unit: CurrencyUnit) -> CheckingAccount | None:

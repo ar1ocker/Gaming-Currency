@@ -37,7 +37,7 @@ class AccountDetailAPITest(APITestCase):
         cls.currency_unit_1 = CurrencyUnitsTestFactory()
         cls.currency_unit_2 = CurrencyUnitsTestFactory()
 
-        cls.account_unit_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)
+        cls.account_unit_1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.currency_unit_1)[0]
 
         cls.account_detail_reverse_path = reverse("checking_accounts_detail")
 

@@ -57,7 +57,7 @@ class TransactionActionTest(TestCase):
         self.client.force_login(self.superuser)
 
         self.unit = CurrencyUnitsTestFactory()
-        self.account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit)
+        self.account = AccountsService.get_or_create(holder=self.holder, currency_unit=self.unit)[0]
 
         self.transaction = AdjustmentsService.create(
             service=self.service, checking_account=self.account, amount=100, description="test description"

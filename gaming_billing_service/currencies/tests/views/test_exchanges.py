@@ -51,8 +51,8 @@ class ExchangesActionTests(TestCase):
         cls.unit1 = CurrencyUnitsTestFactory()
         cls.unit2 = CurrencyUnitsTestFactory()
 
-        cls.checking_account1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit1)
-        cls.checking_account2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit2)
+        cls.checking_account1 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit1)[0]
+        cls.checking_account2 = AccountsService.get_or_create(holder=cls.holder, currency_unit=cls.unit2)[0]
 
         cls.rule = ExchangeRule.objects.create(
             enabled_forward=True,
