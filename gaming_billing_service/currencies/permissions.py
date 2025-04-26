@@ -183,11 +183,6 @@ class TransfersPermissionsService(BasePermission):
     section_key = "transfers"
 
 
-class HoldersPermissionsService(BasePermission):
-    verbose_name = "holders"
-    section_key = "holders"
-
-
 class AccountsPermissionsService(BasePermission):
     verbose_name = "accounts"
     section_key = "accounts"
@@ -196,3 +191,26 @@ class AccountsPermissionsService(BasePermission):
 class CurrencyUnitsPermissionsService(BasePermission):
     verbose_name = "currency units"
     section_key = "units"
+
+
+class HoldersPermissionsService(BasePermission):
+    verbose_name = "holders"
+    section_key = "holders"
+
+    update_key = "update"
+
+    @classmethod
+    def enforce_update(cls, *, permissions: dict):
+        if cls._is_root(permissions=permissions):
+            return
+
+        cls._check_access(permissions=permissions)
+
+        try:
+            update_section = permissions[cls.section_key][cls.update_key]
+
+            if update_section[cls.enabled_key] is not True:
+                raise PermissionDenied(f"{cls.verbose_name}: Update is disabled")
+
+        except KeyError as e:
+            raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
