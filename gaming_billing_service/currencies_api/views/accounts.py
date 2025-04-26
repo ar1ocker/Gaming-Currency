@@ -17,7 +17,6 @@ class CheckingAccountsDetailAPI(APIView):
             queryset=HolderType.objects.all(), slug_field="name", default=HoldersTypeService.get_default
         )
         unit_symbol = serializers.SlugRelatedField(queryset=CurrencyUnit.objects.all(), slug_field="symbol")
-        create_if_not_exists = serializers.BooleanField(default=False)
 
     class OutputSerializer(serializers.Serializer):
         holder_enabled = serializers.BooleanField(source="holder.enabled")
@@ -34,7 +33,6 @@ class CheckingAccountsDetailAPI(APIView):
         serializer = self.InputSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
 
-        create_if_not_exists: bool = serializer.validated_data["create_if_not_exists"]  # type: ignore
         holder_id: str = serializer.validated_data["holder_id"]  # type: ignore
         holder_type: HolderType = serializer.validated_data["holder_type"]  # type: ignore
         currency_unit: CurrencyUnit = serializer.validated_data["unit_symbol"]  # type: ignore
@@ -44,13 +42,10 @@ class CheckingAccountsDetailAPI(APIView):
         if holder is None:
             raise Http404("Holder not found")
 
-        if create_if_not_exists:
-            AccountsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
-            account = AccountsService.get_or_create(holder=holder, currency_unit=currency_unit)[0]
-        else:
-            account = AccountsService.get(holder=holder, currency_unit=currency_unit)
-            if account is None:
-                raise Http404("Account not found")
+        account = AccountsService.get(holder=holder, currency_unit=currency_unit)
+
+        if account is None:
+            raise Http404("Account not found")
 
         return Response(self.OutputSerializer(dict(account=account, holder=holder)).data)
 
