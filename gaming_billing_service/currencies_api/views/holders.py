@@ -89,6 +89,8 @@ class HoldersUpdateAPI(APIView):
 
     @hmac_service_auth
     def post(self, request, service_auth: CurrencyServiceAuth):
+        HoldersPermissionsService.enforce_update(permissions=service_auth.service.permissions)
+
         input_serializer = self.InputSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
 
