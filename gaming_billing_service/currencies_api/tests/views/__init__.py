@@ -12,3 +12,4 @@ from .holders.test_create import *  # noqa
 from .holders.test_detail import *  # noqa
 from .holders.test_list import *  # noqa
 from .holders.test_update import *  # noqa
+from .units.test_list import *  # noqa
