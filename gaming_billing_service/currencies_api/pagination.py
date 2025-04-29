@@ -53,5 +53,5 @@ class LimitOffsetPagination(_LimitOffsetPagination):
                     ("previous", self.get_previous_link()),
                     ("results", data),
                 ]
-            )
+            )  # type: ignore
         )
