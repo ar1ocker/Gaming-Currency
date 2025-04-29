@@ -100,6 +100,7 @@ DATABASES = {
 }
 
 if "test" in sys.argv and "--no-input" not in sys.argv:
+    print("[ ! ] Redefining the standard database to sqlite for local testing, check settings/settings.py")
     DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": ":memory:",
