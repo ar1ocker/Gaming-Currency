@@ -202,7 +202,7 @@ class AdjustmentTransaction(BaseTransaction):
             f"{self.checking_account_id} / {self.status}"  # type: ignore _id adds by django
         )
 
-    class Meta:
+    class Meta(BaseTransaction.Meta):
         verbose_name = "Транзакция получения/вычета"
         verbose_name_plural = "Транзакции получения/вычета"
 
@@ -222,7 +222,7 @@ class TransferTransaction(BaseTransaction):
             f" на {self.to_checking_account_id} / {self.status}"  # type: ignore _id adds by django
         )
 
-    class Meta:
+    class Meta(BaseTransaction.Meta):
         verbose_name = "Транзакция перевода"
         verbose_name_plural = "Транзакции перевода"
 
@@ -247,6 +247,6 @@ class ExchangeTransaction(BaseTransaction):
     def __str__(self):
         return "Обмен"
 
-    class Meta:
+    class Meta(BaseTransaction.Meta):
         verbose_name = "Транзакция обмена"
         verbose_name_plural = "Транзакции обмена"
