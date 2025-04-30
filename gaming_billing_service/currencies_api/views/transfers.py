@@ -27,7 +27,8 @@ class TransfersCreateAPI(APIView):
     class OutputSerializer(serializers.Serializer):
         uuid = serializers.UUIDField()
         status = serializers.CharField()
-        amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+        from_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
+        to_amount = serializers.DecimalField(max_digits=13, decimal_places=4)
 
     @hmac_service_auth
     def post(self, request, service_auth: CurrencyServiceAuth):
