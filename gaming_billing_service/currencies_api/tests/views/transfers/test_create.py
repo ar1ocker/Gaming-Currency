@@ -136,3 +136,38 @@ class TransfersCreateAPITests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertIn("Auto reject timeout is out of range", data.get("message"), data)
+
+    def test_enforce_amount_permissions(self):
+        service = CurrencyServicesTestFactory(
+            permissions={
+                "transfers": {
+                    "enabled": True,
+                    "create": {
+                        "enabled": True,
+                        "max_auto_reject": 1000,
+                        "min_auto_reject": 0,
+                        "min_amount": 0,
+                        "max_amount": 1,
+                    },
+                },
+            }
+        )
+
+        CurrencyServiceAuthTestFactory(service=service)
+
+        response = self.client.post(
+            self.create_reverse_path,
+            data=dict(
+                from_holder_id=self.holder_1.holder_id,
+                to_holder_id=self.holder_2.holder_id,
+                transfer_rule=self.transfer_rule.name,
+                amount=1000,
+                description="test",
+            ),
+            headers=assemble_auth_headers(service=service),
+        )
+
+        data = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("Amount is out of range", data.get("message"), data)
