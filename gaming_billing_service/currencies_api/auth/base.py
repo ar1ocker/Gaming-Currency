@@ -1,17 +1,25 @@
 import hmac
-from typing import Callable
+from typing import Protocol
 
 from rest_framework.request import Request
 from rest_framework.validators import ValidationError
 
 
+class _GeneratorProtocol(Protocol):
+    def __call__(self, *, request: Request, secret_key: str) -> str: ...
+
+
+class _GetterProtocol(Protocol):
+    def __call__(self, *, request: Request) -> str: ...
+
+
 class BaseHMACValidator:
-    signature_generator: Callable
-    signature_getter: Callable
+    generator: _GeneratorProtocol
+    getter: _GetterProtocol
 
     def validate_request(self, *, request: Request, secret_key: str):
-        getted_signature = self.signature_getter(request=request)
-        generated_signature = self.signature_generator(request=request, secret_key=secret_key)
+        getted_signature = self.getter(request=request)
+        generated_signature = self.generator(request=request, secret_key=secret_key)
 
         if not self._compare_signature(getted_signature, generated_signature):
             raise ValidationError("Request body, signature or secret key is corrupted, hmac does not match")
