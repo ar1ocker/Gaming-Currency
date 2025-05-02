@@ -14,5 +14,6 @@ from .holders.test_list import *  # noqa
 from .holders.test_update import *  # noqa
 from .transfers.test_confirm import *  # noqa
 from .transfers.test_create import *  # noqa
+from .transfers.test_list import *  # noqa
 from .transfers.test_reject import *  # noqa
 from .units.test_list import *  # noqa
