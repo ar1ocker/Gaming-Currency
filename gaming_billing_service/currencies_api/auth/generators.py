@@ -3,8 +3,8 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from dateutil.parser import isoparse as datetime_isoparse
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
-from rest_framework.validators import ValidationError
 
 
 class TimestampSignatureGenerator:
