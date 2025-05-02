@@ -1,7 +1,7 @@
 import re
 
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
-from rest_framework.validators import ValidationError
 
 
 class SimpleHeaderGetter:
