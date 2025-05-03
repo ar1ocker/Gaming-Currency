@@ -35,31 +35,31 @@ class AdjustmentsService:
         if amount == 0:
             raise ValidationError({"amount": "The amount cannot be zero"})
 
-        with transaction.atomic():
-            blocked_checking_account = CheckingAccount.objects.select_related("currency_unit").get(
-                pk=checking_account.pk
+        if get_decimal_places(amount) > checking_account.currency_unit.precision:
+            raise ValidationError(
+                f"Число знаков после запятой у валюты больше чем возможно: {amount},"
+                f" максимальная точность {checking_account.currency_unit.precision}"
             )
 
-            if get_decimal_places(amount) > blocked_checking_account.currency_unit.precision:
-                raise ValidationError(
-                    f"Число знаков после запятой у валюты больше чем возможно: {amount},"
-                    f" максимальная точность {blocked_checking_account.currency_unit.precision}"
-                )
-
+        with transaction.atomic():
             # Когда мы тратим валюту (amount < 0) - выводим валюту со счета сразу, чтобы заблокировать её трату до
             # подтверждения транзакции или же вернуть её при отмене транзакции
-            if amount < 0:
-                abs_amount = abs(amount)
 
-                if blocked_checking_account.amount < abs_amount:
+            abs_amount = abs(amount)
+
+            if amount < 0:
+                updated = CheckingAccount.objects.filter(pk=checking_account.pk, amount__gte=abs_amount).update(
+                    amount=F("amount") - abs_amount
+                )
+
+                if not updated:
                     raise ValidationError("Insufficient funds in the checking account")
 
-                blocked_checking_account.amount = F("amount") - abs_amount
-                blocked_checking_account.save()
+                checking_account.refresh_from_db(fields=["amount", "updated_at"])
 
             currency_transaction = AdjustmentTransaction(
                 service=service,
-                checking_account=blocked_checking_account,
+                checking_account=checking_account,
                 amount=amount,
                 description=description,
                 auto_reject_after=timezone.now() + auto_reject_timedelta,
@@ -74,37 +74,30 @@ class AdjustmentsService:
     @retry_on_serialization_error()
     def confirm(cls, *, adjustment_transaction: AdjustmentTransaction, status_description: str):
         with transaction.atomic():
-            blocked_currency_transaction = AdjustmentTransaction.objects.select_related("checking_account").get(
-                pk=adjustment_transaction.pk
-            )
-
-            blocked_currency_transaction._confirm(status_description)
+            adjustment_transaction._confirm(status_description)
 
             # Когда мы добавляем валюту на счет - мы добавляем её только при подтвержденном статусе транзакции
-            if blocked_currency_transaction.amount > 0:
-                blocked_currency_transaction.checking_account.amount = F("amount") + blocked_currency_transaction.amount
-                blocked_currency_transaction.checking_account.save()
+            if adjustment_transaction.amount > 0:
+                adjustment_transaction.checking_account.amount = F("amount") + adjustment_transaction.amount
+                adjustment_transaction.checking_account.save(update_fields=["amount", "updated_at"])
+                adjustment_transaction.checking_account.refresh_from_db(fields=["amount", "updated_at"])
 
-        return blocked_currency_transaction
+        return adjustment_transaction
 
     @classmethod
     @retry_on_serialization_error()
     def reject(cls, *, adjustment_transaction: AdjustmentTransaction, status_description: str):
         with transaction.atomic():
-            blocked_currency_transaction = AdjustmentTransaction.objects.select_related("checking_account").get(
-                pk=adjustment_transaction.pk
-            )
 
-            blocked_currency_transaction._reject(status_description)
+            adjustment_transaction._reject(status_description)
 
             # Возвращаем валюту которая была заблокирована при создании транзакции
-            if blocked_currency_transaction.amount < 0:
-                blocked_currency_transaction.checking_account.amount = F("amount") + abs(
-                    blocked_currency_transaction.amount
-                )
-                blocked_currency_transaction.checking_account.save()
+            if adjustment_transaction.amount < 0:
+                adjustment_transaction.checking_account.amount = F("amount") + abs(adjustment_transaction.amount)
+                adjustment_transaction.checking_account.save(update_fields=["amount", "updated_at"])
+                adjustment_transaction.checking_account.refresh_from_db(fields=["amount", "updated_at"])
 
-        return blocked_currency_transaction
+        return adjustment_transaction
 
     @classmethod
     def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[AdjustmentTransaction]:
