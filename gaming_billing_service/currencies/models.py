@@ -214,7 +214,7 @@ class BaseTransaction(models.Model):
         self.status = "CONFIRMED"
         self.status_description = description
         self.closed_at = timezone.now()
-        self.save()
+        self.save(update_fields=["status", "status_description", "closed_at"])
 
     def _reject(self, description: str):
         if self.status != "PENDING":
@@ -223,7 +223,7 @@ class BaseTransaction(models.Model):
         self.status = "REJECTED"
         self.status_description = description
         self.closed_at = timezone.now()
-        self.save()
+        self.save(update_fields=["status", "status_description", "closed_at"])
 
     class Meta:
         abstract = True
