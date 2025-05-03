@@ -8,9 +8,12 @@ from django.utils import timezone
 
 
 class CurrencyService(models.Model):
-    name = models.SlugField(max_length=100, unique=True)
-    enabled = models.BooleanField(default=False)
-    permissions = models.JSONField(default=dict)
+    name = models.SlugField(verbose_name="Название", max_length=100, unique=True)
+    enabled = models.BooleanField(verbose_name="Включено", default=False)
+    permissions = models.JSONField(verbose_name="Разрешения", default=dict)
+
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
         return self.name
@@ -21,10 +24,13 @@ class CurrencyService(models.Model):
 
 
 class HolderType(models.Model):
-    name = models.SlugField(max_length=100, unique=True)
+    name = models.SlugField(verbose_name="Название", max_length=100, unique=True)
+
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
-        return f"Тип держателя {self.name}"
+        return self.name
 
     class Meta:
         verbose_name = "Тип держателя"
@@ -34,25 +40,23 @@ class HolderType(models.Model):
     def get_default(cls):
         return cls.objects.get_or_create(name=settings.CURRENCY_DEFAULT_HOLDER_TYPE_SLUG)[0]
 
-    @classmethod
-    def get_default_holder_pk(cls):
-        return cls.get_default().pk
-
 
 class Holder(models.Model):
-    enabled = models.BooleanField()
-    holder_id = models.CharField(max_length=255, unique=True)
+    enabled = models.BooleanField(verbose_name="Включен")
+    holder_id = models.CharField(verbose_name="Уникальный ID", max_length=255, unique=True)
     holder_type = models.ForeignKey(
-        HolderType,
+        verbose_name="Тип держателя",
+        to=HolderType,
         on_delete=models.PROTECT,
         related_name="holders",
     )
-    info = models.JSONField(default=dict, null=True, blank=True)
+    info = models.JSONField(verbose_name="Дополнительная информация", default=dict, null=True, blank=True)
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
-        return f"Держатель {self.holder_type}:{self.holder_id}"
+        return self.holder_id
 
     class Meta:
         verbose_name = "Держатель"
@@ -60,12 +64,17 @@ class Holder(models.Model):
 
 
 class CurrencyUnit(models.Model):
-    symbol = models.CharField(max_length=30, unique=True)
-    measurement = models.CharField(max_length=100)
-    precision = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(4)])
+    symbol = models.CharField(verbose_name="Символ", max_length=30, unique=True)
+    measurement = models.CharField(verbose_name="Название единицы измерения", max_length=100)
+    precision = models.IntegerField(
+        verbose_name="Количество знаков после запятой", validators=[MinValueValidator(0), MaxValueValidator(4)]
+    )
+
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
-        return f"Игровая валюта {self.symbol}"
+        return f"{self.symbol} / {self.measurement}"
 
     class Meta:
         verbose_name = "Игровая валюта"
@@ -73,16 +82,23 @@ class CurrencyUnit(models.Model):
 
 
 class TransferRule(models.Model):
-    enabled = models.BooleanField(default=False)
+    enabled = models.BooleanField(verbose_name="Включено", default=False)
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(verbose_name="Название", max_length=255, unique=True)
 
-    unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE)
-    fee_percent = models.DecimalField(max_digits=6, decimal_places=1, validators=[MinValueValidator(0)])
-    min_from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+    unit = models.ForeignKey(verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.CASCADE)
+    fee_percent = models.DecimalField(
+        verbose_name="Комиссия за обмен", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)]
+    )
+    min_from_amount = models.DecimalField(
+        verbose_name="Минимальное количество изначально отправляемой валюты",
+        max_digits=13,
+        decimal_places=4,
+        validators=[MinValueValidator(0)],
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     class Meta:
         verbose_name = "Правило перевода валюты"
@@ -90,19 +106,38 @@ class TransferRule(models.Model):
 
 
 class ExchangeRule(models.Model):
-    enabled_forward = models.BooleanField(default=False)
-    enabled_reverse = models.BooleanField(default=False)
+    enabled_forward = models.BooleanField(verbose_name="Включен ли прямой обмен (1 -> 2)", default=False)
+    enabled_reverse = models.BooleanField(verbose_name="Включен ли обратный обмен (2 -> 1)", default=False)
 
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(verbose_name="Название", max_length=255, unique=True)
 
-    first_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="first_exchanges")  # ПК
-    second_unit = models.ForeignKey(CurrencyUnit, on_delete=models.CASCADE, related_name="second_exchanges")  # КК
-    forward_rate = models.DecimalField(max_digits=13, decimal_places=4)  # 100
-    reverse_rate = models.DecimalField(max_digits=13, decimal_places=4)  # 85
-    min_first_amount = models.DecimalField(max_digits=13, decimal_places=4)  # 100
-    min_second_amount = models.DecimalField(max_digits=13, decimal_places=4)  # 10
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    first_unit = models.ForeignKey(
+        verbose_name="Игровая валюта 1", to=CurrencyUnit, on_delete=models.CASCADE, related_name="first_exchanges"
+    )  # ПК
+    second_unit = models.ForeignKey(
+        verbose_name="Игровая валюта 2", to=CurrencyUnit, on_delete=models.CASCADE, related_name="second_exchanges"
+    )  # КК
+    forward_rate = models.DecimalField(
+        verbose_name="Прямой курс",
+        max_digits=13,
+        decimal_places=4,
+        help_text="За какое количество валюты 1 дают одну единицу валюты 2",
+    )  # 100
+    reverse_rate = models.DecimalField(
+        verbose_name="Обратный курс",
+        max_digits=13,
+        decimal_places=4,
+        help_text="Какое количество валюты 1 дадут за одну единицу валюты 2",
+    )  # 85
+    min_first_amount = models.DecimalField(
+        verbose_name="Минимальное количество валюты 1", max_digits=13, decimal_places=4
+    )  # 100
+    min_second_amount = models.DecimalField(
+        verbose_name="Минимальное количество валюты 2", max_digits=13, decimal_places=4
+    )  # 10
+
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     # Чтобы получить 200 КК нужно потратить forward_rate * 200 КК = 100 * 200 = 20 000 ПК
     # При трате 200 ПК мы получаем 200 ПК // forward_rate = 200 ПК // 100 = 2 КК
@@ -120,9 +155,7 @@ class ExchangeRule(models.Model):
         )
 
     def __str__(self):
-        return (
-            f"{self.name} {self.first_unit} по {self.forward_rate} за 1 {self.second_unit} / реверс {self.reverse_rate}"
-        )
+        return self.name
 
     def clean(self):
         if self.first_unit == self.second_unit:
@@ -139,10 +172,14 @@ class ExchangeRule(models.Model):
 
 
 class CheckingAccount(models.Model):
-    holder = models.ForeignKey(Holder, on_delete=models.PROTECT, related_name="checking_accounts")
-    currency_unit = models.ForeignKey(CurrencyUnit, on_delete=models.PROTECT)
-    amount = models.DecimalField(max_digits=13, decimal_places=4)
-    created_at = models.DateTimeField(auto_now_add=True)
+    holder = models.ForeignKey(
+        verbose_name="Держатель", to=Holder, on_delete=models.PROTECT, related_name="checking_accounts"
+    )
+    currency_unit = models.ForeignKey(verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.PROTECT)
+    amount = models.DecimalField(verbose_name="Сумма средств", max_digits=13, decimal_places=4)
+
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
         return f"Счёт держателя {self.holder.holder_id} {self.currency_unit.symbol} - {self.amount}"
@@ -159,16 +196,16 @@ class CheckingAccount(models.Model):
 class BaseTransaction(models.Model):
     STATUSES = (("PENDING", "Pending"), ("CONFIRMED", "Confirmed"), ("REJECTED", "Rejected"))
 
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    uuid = models.UUIDField(verbose_name="Уникальный ID (uuid)", primary_key=True, default=uuid.uuid4)
 
-    service = models.ForeignKey(CurrencyService, on_delete=models.PROTECT)
-    description = models.TextField(blank=True)
-    status = models.CharField(max_length=10, choices=STATUSES, default="PENDING")
-    status_description = models.TextField(blank=True)
+    service = models.ForeignKey(verbose_name="Сервис", to=CurrencyService, on_delete=models.PROTECT)
+    description = models.TextField(verbose_name="Описание", blank=True)
+    status = models.CharField(verbose_name="Статус", max_length=10, choices=STATUSES, default="PENDING")
+    status_description = models.TextField(verbose_name="Описание статуса", blank=True)
 
-    auto_reject_after = models.DateTimeField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    closed_at = models.DateTimeField(null=True, blank=True)
+    auto_reject_after = models.DateTimeField(verbose_name="Дата автоматического отклонения")
+    created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
+    closed_at = models.DateTimeField(verbose_name="Дата завершения", null=True, blank=True)
 
     def _confirm(self, description: str):
         if self.status != "PENDING":
@@ -193,8 +230,10 @@ class BaseTransaction(models.Model):
 
 
 class AdjustmentTransaction(BaseTransaction):
-    checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="transactions")
-    amount = models.DecimalField(max_digits=13, decimal_places=4)
+    checking_account = models.ForeignKey(
+        verbose_name="Счёт", to=CheckingAccount, on_delete=models.CASCADE, related_name="transactions"
+    )
+    amount = models.DecimalField(verbose_name="Сумма", max_digits=13, decimal_places=4)
 
     def __str__(self):
         return (
@@ -208,17 +247,27 @@ class AdjustmentTransaction(BaseTransaction):
 
 
 class TransferTransaction(BaseTransaction):
-    transfer_rule = models.ForeignKey(TransferRule, on_delete=models.SET_NULL, null=True)
+    transfer_rule = models.ForeignKey(
+        verbose_name="Правило перевода", to=TransferRule, on_delete=models.SET_NULL, null=True
+    )
 
-    from_checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="out_transfers")
-    to_checking_account = models.ForeignKey(CheckingAccount, on_delete=models.CASCADE, related_name="in_transfers")
+    from_checking_account = models.ForeignKey(
+        verbose_name="Счёт отправителя", to=CheckingAccount, on_delete=models.CASCADE, related_name="out_transfers"
+    )
+    to_checking_account = models.ForeignKey(
+        verbose_name="Счёт получателя", to=CheckingAccount, on_delete=models.CASCADE, related_name="in_transfers"
+    )
 
-    from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
-    to_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+    from_amount = models.DecimalField(
+        verbose_name="Сумма снятия", max_digits=13, decimal_places=4, validators=[MinValueValidator(0)]
+    )
+    to_amount = models.DecimalField(
+        verbose_name="Сумма получения", max_digits=13, decimal_places=4, validators=[MinValueValidator(0)]
+    )
 
     def __str__(self):
         return (
-            f"Трансфер {self.from_amount} с {self.from_checking_account_id}"  # type: ignore _id adds by django
+            f"Перевод {self.from_amount} с {self.from_checking_account_id}"  # type: ignore _id adds by django
             f" на {self.to_checking_account_id} / {self.status}"  # type: ignore _id adds by django
         )
 
@@ -228,24 +277,33 @@ class TransferTransaction(BaseTransaction):
 
 
 class ExchangeTransaction(BaseTransaction):
-    exchange_rule = models.ForeignKey(ExchangeRule, on_delete=models.SET_NULL, null=True)
+    exchange_rule = models.ForeignKey(
+        verbose_name="Правило обмена", to=ExchangeRule, on_delete=models.SET_NULL, null=True
+    )
 
     from_checking_account = models.ForeignKey(
-        CheckingAccount,
+        verbose_name="Счёт источник",
+        to=CheckingAccount,
         on_delete=models.PROTECT,
         related_name="from_exchange_transactions",
     )
+
     to_checking_account = models.ForeignKey(
-        CheckingAccount,
+        verbose_name="Счёт получатель",
+        to=CheckingAccount,
         on_delete=models.PROTECT,
         related_name="to_exchange_transactions",
     )
 
-    from_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
-    to_amount = models.DecimalField(max_digits=13, decimal_places=4, validators=[MinValueValidator(0)])
+    from_amount = models.DecimalField(
+        verbose_name="Сумма из источника", max_digits=13, decimal_places=4, validators=[MinValueValidator(0)]
+    )
+    to_amount = models.DecimalField(
+        verbose_name="Сумма получения", max_digits=13, decimal_places=4, validators=[MinValueValidator(0)]
+    )
 
     def __str__(self):
-        return "Обмен"
+        return f"Обмен {self.from_amount} на {self.to_amount} / {self.status}"
 
     class Meta(BaseTransaction.Meta):
         verbose_name = "Транзакция обмена"
