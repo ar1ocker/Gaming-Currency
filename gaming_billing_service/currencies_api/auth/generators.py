@@ -38,15 +38,13 @@ class TimestampSignatureGenerator:
 
         self._validate_timestamp_text(timestamp_text=timestamp_text)
 
-        body = b""
-        if request.method == "GET":
-            body: bytes = request.get_full_path().encode()
-        else:
-            body: bytes = request.body
+        path = request.get_full_path()
+
+        body: bytes = request.body
 
         return hmac.digest(
             secret_key.encode(),
-            f"{timestamp_text}.".encode() + body,
+            f"{timestamp_text}.{path}.".encode() + body,
             self.hash_type,
         ).hex()
 

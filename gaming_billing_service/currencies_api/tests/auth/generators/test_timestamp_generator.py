@@ -18,27 +18,18 @@ class TimestampSignatureGeneratorTests(TestCase):
 
         cls.factory = RequestFactory()
 
-    def test_valid_get(self):
+    def test_valid(self):
         timestamp_text = datetime.now(timezone.utc).isoformat()
-
-        valid_signature = hmac.digest(
-            self.secret_key.encode(), f"{timestamp_text}./path/to/view/?query=random".encode(), "sha256"
-        ).hex()
-
-        request = self.factory.get("/path/to/view/", data={"query": "random"}, headers={"tz": timestamp_text})
-
-        self.assertEqual(self.generator(request=request, secret_key=self.secret_key), valid_signature)  # type: ignore
-
-    def test_valid_post(self):
-        timestamp_text = datetime.now(timezone.utc).isoformat()
-
-        valid_signature = hmac.digest(
-            self.secret_key.encode(), f'{timestamp_text}.{{"query": "random"}}'.encode(), "sha256"
-        ).hex()
 
         request = self.factory.post(
             "/path/to/view/", data={"query": "random"}, headers={"tz": timestamp_text}, content_type="application/json"
         )
+
+        valid_signature = hmac.digest(
+            self.secret_key.encode(),
+            f'{timestamp_text}.{request.get_full_path()}.{{"query": "random"}}'.encode(),
+            "sha256",
+        ).hex()
 
         self.assertEqual(self.generator(request=request, secret_key=self.secret_key), valid_signature)  # type: ignore
 
