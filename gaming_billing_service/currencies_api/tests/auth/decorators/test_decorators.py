@@ -8,7 +8,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 
 @override_settings(ENABLE_HMAC_VALIDATION=False)
-class HMACServiceAuth(TestCase):
+class HMACServiceAuthTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.factory = RequestFactory()
