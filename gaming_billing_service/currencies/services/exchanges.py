@@ -99,7 +99,7 @@ class ExchangesService:
                 raise ValidationError("Insufficient funds in the 'from' checking account")
 
             from_account.amount = F("amount") - from_amount
-            from_account.save()
+            from_account.save(update_fields=["amount", "updated_at"])
 
             exchange_transaction = ExchangeTransaction(
                 service=service,
@@ -121,35 +121,25 @@ class ExchangesService:
     @retry_on_serialization_error()
     def confirm(cls, *, exchange_transaction: ExchangeTransaction, status_description: str):
         with transaction.atomic():
-            blocked_exchange_transaction = ExchangeTransaction.objects.select_related("to_checking_account").get(
-                pk=exchange_transaction.pk
-            )
+            exchange_transaction._confirm(status_description)
 
-            blocked_exchange_transaction._confirm(status_description)
+            to_checking_account = exchange_transaction.to_checking_account
+            to_checking_account.amount = F("amount") + exchange_transaction.to_amount
+            to_checking_account.save(update_fields=["amount", "updated_at"])
 
-            to_checking_account = blocked_exchange_transaction.to_checking_account
-            to_checking_account.amount = F("amount") + blocked_exchange_transaction.to_amount
-
-            to_checking_account.save()
-
-        return blocked_exchange_transaction
+        return exchange_transaction
 
     @classmethod
     @retry_on_serialization_error()
     def reject(cls, *, exchange_transaction: ExchangeTransaction, status_description: str):
         with transaction.atomic():
-            blocked_exchange_transaction = ExchangeTransaction.objects.select_related("from_checking_account").get(
-                pk=exchange_transaction.pk
-            )
+            exchange_transaction._reject(status_description)
 
-            blocked_exchange_transaction._reject(status_description)
+            from_checking_account = exchange_transaction.from_checking_account
+            from_checking_account.amount = F("amount") + exchange_transaction.from_amount
+            from_checking_account.save(update_fields=["amount", "updated_at"])
 
-            from_checking_account = blocked_exchange_transaction.from_checking_account
-            from_checking_account.amount = F("amount") + blocked_exchange_transaction.from_amount
-
-            from_checking_account.save()
-
-        return blocked_exchange_transaction
+        return exchange_transaction
 
     @classmethod
     def reject_all_outdated(cls, *, status_description="Rejected as outdated") -> list[ExchangeTransaction]:
