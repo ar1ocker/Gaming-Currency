@@ -1,6 +1,6 @@
-from itertools import chain
 from typing import Any
 
+from atpbar import atpbar
 from currencies.models import ExchangeRule, TransferRule
 from currencies.services import (
     AccountsService,
@@ -26,32 +26,43 @@ class Command(BaseCommand):
         with transaction.atomic():
             service = CurrencyServicesTestFactory()
 
-            units = [CurrencyUnitsTestFactory(precision=i) for i in range(1, 5)]
+            units = [CurrencyUnitsTestFactory(precision=i) for i in atpbar(range(1, 5), "Currency units")]
 
             holder_type_1 = HoldersTypeService.get_default()
             holder_type_2 = HoldersTypeTestFactory()
 
-            holders = [HoldersTestFactory(holder_type=holder_type_1) for _ in range(20)]
-            holders.extend([HoldersTestFactory(holder_type=holder_type_2) for _ in range(20)])
+            holders = [
+                HoldersTestFactory(holder_type=holder_type_1)
+                for _ in atpbar(range(1000), name="Holders with holder type 1")
+            ]
+
+            holders.extend(
+                [
+                    HoldersTestFactory(holder_type=holder_type_2)
+                    for _ in atpbar(range(700), name="Holders with holder type 2")
+                ]
+            )
 
             accounts_unit_1 = []
-            for holder in holders:
+            for holder in atpbar(holders, "Accounts with unit 1"):
                 accounts_unit_1.append(AccountsService.get_or_create(holder=holder, currency_unit=units[0])[0])
 
             accounts_unit_2 = []
-            for holder in holders:
+            for holder in atpbar(holders, "Accounts with unit 2"):
                 accounts_unit_2.append(AccountsService.get_or_create(holder=holder, currency_unit=units[3])[0])
 
-            for account in chain(accounts_unit_1, accounts_unit_2):
+            for account in atpbar(accounts_unit_1 + accounts_unit_2, "Adjustments for all accounts"):
                 AdjustmentsService.create(
                     service=service, checking_account=account, amount=1000, description="Pending adjustment"
                 )
+
                 AdjustmentsService.confirm(
                     adjustment_transaction=AdjustmentsService.create(
                         service=service, checking_account=account, amount=2000, description="Confirmed adjustment"
                     ),
                     status_description="Confirmed by test data creation",
                 )
+
                 AdjustmentsService.reject(
                     adjustment_transaction=AdjustmentsService.create(
                         service=service, checking_account=account, amount=200, description="Rejected adjustment"
@@ -81,7 +92,7 @@ class Command(BaseCommand):
             exchange_rule.full_clean()
             exchange_rule.save()
 
-            for account_1, account_2 in zip(accounts_unit_1, accounts_unit_2):
+            for account_1, account_2 in atpbar(zip(accounts_unit_1, accounts_unit_2), "Exchanges"):
                 ExchangesService.create(
                     service=service,
                     holder=account_1.holder,
@@ -91,6 +102,7 @@ class Command(BaseCommand):
                     from_amount=100,
                     description="Pending exchange",
                 )
+
                 ExchangesService.confirm(
                     exchange_transaction=ExchangesService.create(
                         service=service,
@@ -124,7 +136,7 @@ class Command(BaseCommand):
             transfer_rule.full_clean()
             transfer_rule.save()
 
-            for account_1, account_2 in zip(accounts_unit_2[:10], accounts_unit_2[10:]):
+            for account_1, account_2 in atpbar(zip(accounts_unit_2[:10], accounts_unit_2[10:]), "Transfers"):
                 TransfersService.create(
                     service=service,
                     transfer_rule=transfer_rule,
@@ -133,6 +145,7 @@ class Command(BaseCommand):
                     from_amount=100,
                     description="Pending transfer",
                 )
+
                 TransfersService.confirm(
                     transfer_transaction=TransfersService.create(
                         service=service,
@@ -144,6 +157,7 @@ class Command(BaseCommand):
                     ),
                     status_description="Confirmed transfer",
                 )
+
                 TransfersService.reject(
                     transfer_transaction=TransfersService.create(
                         service=service,
