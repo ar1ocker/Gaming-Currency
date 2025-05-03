@@ -1,6 +1,5 @@
 from typing import Any
 
-from atpbar import atpbar
 from currencies.models import ExchangeRule, TransferRule
 from currencies.services import (
     AccountsService,
@@ -17,6 +16,7 @@ from currencies.test_factories import (
 )
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from tqdm import tqdm
 
 
 class Command(BaseCommand):
@@ -26,36 +26,35 @@ class Command(BaseCommand):
         with transaction.atomic():
             service = CurrencyServicesTestFactory()
 
-            units = [CurrencyUnitsTestFactory(precision=i) for i in atpbar(range(1, 5), "Currency units")]
+            units = [CurrencyUnitsTestFactory(precision=i) for i in tqdm(range(1, 5), "Currency units")]
 
             holder_type_1 = HoldersTypeService.get_default()
             holder_type_2 = HoldersTypeTestFactory()
 
             holders = [
-                HoldersTestFactory(holder_type=holder_type_1)
-                for _ in atpbar(range(1000), name="Holders with holder type 1")
+                HoldersTestFactory(holder_type=holder_type_1) for _ in tqdm(range(1000), "Holders with holder type 1")
             ]
 
             holders.extend(
-                [
-                    HoldersTestFactory(holder_type=holder_type_2)
-                    for _ in atpbar(range(700), name="Holders with holder type 2")
-                ]
+                [HoldersTestFactory(holder_type=holder_type_2) for _ in tqdm(range(700), "Holders with holder type 2")]
             )
 
             accounts_unit_1 = []
-            for holder in atpbar(holders, "Accounts with unit 1"):
+            for holder in tqdm(holders, "Accounts with unit 1"):
                 accounts_unit_1.append(AccountsService.get_or_create(holder=holder, currency_unit=units[0])[0])
 
             accounts_unit_2 = []
-            for holder in atpbar(holders, "Accounts with unit 2"):
+            for holder in tqdm(holders, "Accounts with unit 2"):
                 accounts_unit_2.append(AccountsService.get_or_create(holder=holder, currency_unit=units[3])[0])
 
-            for account in atpbar(accounts_unit_1 + accounts_unit_2, "Adjustments for all accounts"):
+            all_accounts = accounts_unit_1 + accounts_unit_2
+
+            for account in tqdm(all_accounts, "Pending adjustments"):
                 AdjustmentsService.create(
                     service=service, checking_account=account, amount=1000, description="Pending adjustment"
                 )
 
+            for account in tqdm(all_accounts, "Confirmed adjustments"):
                 AdjustmentsService.confirm(
                     adjustment_transaction=AdjustmentsService.create(
                         service=service, checking_account=account, amount=2000, description="Confirmed adjustment"
@@ -63,6 +62,7 @@ class Command(BaseCommand):
                     status_description="Confirmed by test data creation",
                 )
 
+            for account in tqdm(all_accounts, "Rejected adjustments"):
                 AdjustmentsService.reject(
                     adjustment_transaction=AdjustmentsService.create(
                         service=service, checking_account=account, amount=200, description="Rejected adjustment"
@@ -70,6 +70,7 @@ class Command(BaseCommand):
                     status_description="Rejected by test data creation",
                 )
 
+            for account in tqdm(all_accounts, "Confirmed negative adjustments"):
                 AdjustmentsService.confirm(
                     adjustment_transaction=AdjustmentsService.create(
                         service=service, checking_account=account, amount=-10, description="Confirmed adjustment"
@@ -92,7 +93,9 @@ class Command(BaseCommand):
             exchange_rule.full_clean()
             exchange_rule.save()
 
-            for account_1, account_2 in atpbar(zip(accounts_unit_1, accounts_unit_2), "Exchanges"):
+            zipped_accounts_two_units = list(zip(accounts_unit_1, accounts_unit_2))
+
+            for account_1, account_2 in tqdm(zipped_accounts_two_units, "Pending exchanges"):
                 ExchangesService.create(
                     service=service,
                     holder=account_1.holder,
@@ -103,6 +106,7 @@ class Command(BaseCommand):
                     description="Pending exchange",
                 )
 
+            for account_1, account_2 in tqdm(zipped_accounts_two_units, "Confirmed exchanges"):
                 ExchangesService.confirm(
                     exchange_transaction=ExchangesService.create(
                         service=service,
@@ -116,6 +120,7 @@ class Command(BaseCommand):
                     status_description="Confirmed exchange",
                 )
 
+            for account_1, account_2 in tqdm(zipped_accounts_two_units, "Rejected exchanges"):
                 ExchangesService.reject(
                     exchange_transaction=ExchangesService.create(
                         service=service,
@@ -136,7 +141,14 @@ class Command(BaseCommand):
             transfer_rule.full_clean()
             transfer_rule.save()
 
-            for account_1, account_2 in atpbar(zip(accounts_unit_2[:10], accounts_unit_2[10:]), "Transfers"):
+            zipped_accounts_one_unit = list(
+                zip(
+                    accounts_unit_2[: int(len(accounts_unit_2) / 2)],
+                    accounts_unit_2[int(len(accounts_unit_2) / 2) :],
+                )
+            )
+
+            for account_1, account_2 in tqdm(zipped_accounts_one_unit, "Pending transfers"):
                 TransfersService.create(
                     service=service,
                     transfer_rule=transfer_rule,
@@ -146,6 +158,7 @@ class Command(BaseCommand):
                     description="Pending transfer",
                 )
 
+            for account_1, account_2 in tqdm(zipped_accounts_one_unit, "Confirmed transfers"):
                 TransfersService.confirm(
                     transfer_transaction=TransfersService.create(
                         service=service,
@@ -158,6 +171,7 @@ class Command(BaseCommand):
                     status_description="Confirmed transfer",
                 )
 
+            for account_1, account_2 in tqdm(zipped_accounts_one_unit, "Rejected transfers"):
                 TransfersService.reject(
                     transfer_transaction=TransfersService.create(
                         service=service,
