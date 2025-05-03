@@ -14,6 +14,8 @@ class CurrencyUnitsListAPI(APIView):
     class OutputSerializer(serializers.Serializer):
         symbol = serializers.CharField()
         measurement = serializers.CharField()
+        created_at = serializers.DateTimeField()
+        updated_at = serializers.DateTimeField()
 
     @hmac_service_auth
     def get(self, request, service_auth: CurrencyServiceAuth):

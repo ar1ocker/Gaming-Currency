@@ -25,6 +25,7 @@ class CheckingAccountsDetailAPI(APIView):
         currency_unit = serializers.CharField(source="account.currency_unit.symbol")
         amount = serializers.DecimalField(max_digits=13, decimal_places=4, source="account.amount")
         created_at = serializers.DateTimeField(source="account.created_at")
+        updated_at = serializers.DateTimeField(source="account.updated_at")
 
     @hmac_service_auth
     def get(self, request, service_auth: CurrencyServiceAuth):
@@ -65,6 +66,7 @@ class CheckingAccountsCreateAPI(APIView):
         currency_unit = serializers.CharField(source="account.currency_unit.symbol")
         amount = serializers.DecimalField(max_digits=13, decimal_places=4, source="account.amount")
         created_at = serializers.DateTimeField(source="account.created_at")
+        updated_at = serializers.DateTimeField(source="account.updated_at")
         created_now = serializers.BooleanField(source="created_now")
 
     @hmac_service_auth
@@ -116,6 +118,7 @@ class CheckingAccountsListAPI(APIView):
         currency_unit = serializers.CharField(source="currency_unit.symbol")
         amount = serializers.DecimalField(max_digits=13, decimal_places=4)
         created_at = serializers.DateTimeField()
+        updated_at = serializers.DateTimeField()
 
     @hmac_service_auth
     def get(self, request, service_auth: CurrencyServiceAuth):
