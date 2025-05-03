@@ -10,7 +10,7 @@ services:
     volumes:
       - static_value:/var/html/static
     group_add:
-      - 110 # для чтения статики из сервиса playtime
+      - 110
     depends_on:
       - gaming-billing
     networks:
@@ -19,7 +19,7 @@ services:
       - source: nginx
         target: /etc/nginx/conf.d/default.conf
 
-  gaming-billing-migrations:
+  migrations:
     build: ../gaming_billing_service/
     command: ["./migrations.sh"]
     stop_signal: SIGINT
@@ -32,9 +32,49 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
+  tests:
+    build: ../gaming_billing_service/
+    command: ["python3", "manage.py", "test", "--no-input"]
+    stop_signal: SIGINT
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - only-lan-network
+    configs:
+      - source: gaming-billing
+        target: /app/config.toml
+
+
+  celery:
+    build: ../gaming_billing_service/
+    command: celery -A settings worker -l info -n celery-worker@%h
+    develop:
+      watch:
+        - path: ../gaming_billing_service
+          target: /app
+          action: sync+restart
+    depends_on:
+      - migrations
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - only-lan-network
+    configs:
+      - source: gaming-billing
+        target: /app/config.toml
+
   gaming-billing:
     build: ../gaming_billing_service/
     command: "gunicorn settings.wsgi:application --bind 0:8000"
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    develop:
+      watch:
+        - path: ../gaming_billing_service
+          target: /app
+          action: sync
     stop_signal: SIGINT
     restart: always
     volumes:
@@ -42,7 +82,7 @@ services:
     group_add:
       - 110
     depends_on:
-      gaming-billing-migrations:
+      tests:
         condition: service_completed_successfully
     networks:
       - only-lan-network
@@ -51,18 +91,18 @@ services:
       - source: gaming-billing
         target: /app/config.toml
 
-  # gaming-billing-cron:
-  #   build: ../gaming_billing_service/
-  #   command: ["python3", "manage.py", "cronloop", "-s", "300"]
-  #   stop_signal: SIGINT
-  #   restart: always
-  #   depends_on:
-  #     - gaming-billing
-  #   networks:
-  #     - only-lan-network
-  #   configs:
-  #     - source: gaming-billing
-  #       target: /app/config.toml
+  celery-beats:
+    build: ../gaming_billing_service/
+    command: celery -A settings beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    depends_on:
+      - tests
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - only-lan-network
+    configs:
+      - source: gaming-billing
+        target: /app/config.toml
 
   db:
     image: postgres:15.4-bookworm
@@ -79,6 +119,22 @@ services:
     env_file:
       - ./configs/postgres/postgres.env
 
+  rabbitmq:
+    image: "rabbitmq:alpine"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - only-lan-network
+
+configs:
+  gaming-billing:
+    file: ./configs/gaming_billing/config.toml
+  nginx:
+    file: ./configs/nginx/default.conf
+
 volumes:
   postgres_value:
   static_value:
@@ -86,9 +142,3 @@ volumes:
 networks:
   to-wan-network:
   only-lan-network:
-
-configs:
-  gaming-billing:
-    file: ./configs/gaming_billing/config.toml
-  nginx:
-    file: ./configs/nginx/default.conf
