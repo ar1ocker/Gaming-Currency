@@ -25,11 +25,12 @@ def hmac_service_auth(func):
             raise AuthenticationFailed("Service disabled")
 
         if settings.ENABLE_HMAC_VALIDATION:
-            validator = None
+
             if service_auth.is_battlemetrics:
                 validator = BattlemetricsRequestHMACValidator()
             else:
                 validator = TimestampRequestHMACValidator()
+
             try:
                 validator.validate_request(request=request, secret_key=service_auth.key)
             except ValidationError as e:
