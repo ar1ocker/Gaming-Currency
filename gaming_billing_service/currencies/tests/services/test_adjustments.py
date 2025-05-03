@@ -28,7 +28,7 @@ class AdjustmentTransactionServicesTests(TestCase):
         self.checking_account = AccountsService().get_or_create(holder=self.holder, currency_unit=self.currency_unit)[0]
 
     def add_amount(self, amount):
-        return AdjustmentsService().confirm(
+        return AdjustmentsService.confirm(
             adjustment_transaction=AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=amount, description=""
             ),
