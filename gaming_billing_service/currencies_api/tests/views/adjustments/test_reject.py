@@ -1,8 +1,7 @@
 import uuid
-from typing import TYPE_CHECKING
 
 from common.utils import assemble_auth_headers
-from currencies.models import CurrencyService
+from currencies.models import CurrencyService, CurrencyUnit, Holder
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
@@ -12,9 +11,6 @@ from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFacto
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
 from django.test import TestCase, override_settings
 from django.urls import reverse
-
-if TYPE_CHECKING:
-    from currencies.models import CurrencyUnit, Holder
 
 
 @override_settings(ENABLE_HMAC_VALIDATION=False)
