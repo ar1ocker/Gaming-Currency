@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from itertools import chain
-from typing import Literal, Sequence
+from typing import Literal
 
 from currencies.models import (
     AdjustmentTransaction,
@@ -216,11 +216,6 @@ class TransactionsTest(TestCase):
         self.checking_account_unit_1_user_2.refresh_from_db()
         self.checking_account_unit_2_user_1.refresh_from_db()
         self.checking_account_unit_2_user_2.refresh_from_db()
-
-    def change_created_date(self, *, transactions: Sequence, new_date: datetime):
-        for transaction in transactions:
-            transaction.created_at = new_date
-            transaction.save()
 
     def test_remove_outdated_adjustments(self):
 
