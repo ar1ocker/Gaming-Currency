@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from celery import shared_task
 from currencies.services import (
     AdjustmentsService,
@@ -33,5 +35,7 @@ def reject_outdated_exchanges():
 
 
 @shared_task
-def collapse_all_old_transactions():
-    TransactionsService.collapse_old_transactions(old_than_timedelta=settings.COLLAPSE_OLD_TRANSACTIONS_TIMEDELTA)
+def collapse_all_old_transactions(service_names: Sequence[str]):
+    TransactionsService.collapse_old_transactions(
+        old_than_timedelta=settings.COLLAPSE_OLD_TRANSACTIONS_TIMEDELTA, service_names=service_names
+    )
