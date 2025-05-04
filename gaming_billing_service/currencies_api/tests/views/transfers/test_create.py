@@ -171,3 +171,45 @@ class TransfersCreateAPITests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertIn("Amount is out of range", data.get("message"), data)
+
+    def test_from_account_not_found(self):
+        holder = HoldersTestFactory()
+
+        response = self.client.post(
+            self.create_reverse_path,
+            data=dict(
+                from_holder_id=holder.holder_id,
+                to_holder_id=self.holder_2.holder_id,
+                transfer_rule=self.transfer_rule.name,
+                amount=10,
+                description="test",
+            ),
+            headers=assemble_auth_headers(service=self.service),
+        )
+
+        data = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 400)
+
+        self.assertIn("not found", data["extra"]["fields"][0])
+
+    def test_to_account_not_found(self):
+        holder = HoldersTestFactory()
+
+        response = self.client.post(
+            self.create_reverse_path,
+            data=dict(
+                from_holder_id=self.holder_1.holder_id,
+                to_holder_id=holder.holder_id,
+                transfer_rule=self.transfer_rule.name,
+                amount=10,
+                description="test",
+            ),
+            headers=assemble_auth_headers(service=self.service),
+        )
+
+        data = response.data  # type: ignore
+
+        self.assertEqual(response.status_code, 400)
+
+        self.assertIn("not found", data["extra"]["fields"][0])
