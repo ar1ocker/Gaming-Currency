@@ -301,5 +301,5 @@ class AdjustmentCreateAPITest(TestCase):
 
         data = response.data  # type: ignore
 
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(data.get("message"), "Account not found")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(data["extra"]["fields"][0], "Account not found")

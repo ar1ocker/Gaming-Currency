@@ -8,8 +8,8 @@ from currencies_api.auth import hmac_service_auth
 from currencies_api.models import CurrencyServiceAuth
 from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from django.conf import settings
-from django.http import Http404
 from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -47,7 +47,7 @@ class AdjustmentsCreateAPI(APIView):
 
         account = AccountsService.get(holder=holder, currency_unit=unit)
         if account is None:
-            raise Http404("Account not found")
+            raise ValidationError("Account not found")
 
         adjustment = AdjustmentsService.create(
             service=service_auth.service,
