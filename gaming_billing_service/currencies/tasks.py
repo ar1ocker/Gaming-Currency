@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Sequence
 
 from celery import shared_task
@@ -7,7 +8,6 @@ from currencies.services import (
     TransactionsService,
     TransfersService,
 )
-from django.conf import settings
 
 
 @shared_task
@@ -35,7 +35,7 @@ def reject_outdated_exchanges():
 
 
 @shared_task
-def collapse_all_old_transactions(service_names: Sequence[str]):
+def collapse_all_old_transactions(*, older_than_days: int, service_names: Sequence[str]):
     TransactionsService.collapse_old_transactions(
-        old_than_timedelta=settings.COLLAPSE_OLD_TRANSACTIONS_TIMEDELTA, service_names=service_names
+        old_than_timedelta=timedelta(days=older_than_days), service_names=service_names
     )
