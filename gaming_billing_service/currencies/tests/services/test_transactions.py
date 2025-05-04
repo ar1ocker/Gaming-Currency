@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
 from itertools import chain
-from typing import Literal
+from typing import Literal, Sequence
 
 from currencies.models import (
     AdjustmentTransaction,
     CheckingAccount,
+    CurrencyService,
     CurrencyUnit,
     ExchangeRule,
     ExchangeTransaction,
@@ -16,12 +17,15 @@ from currencies.models import (
 from currencies.services import (
     AccountsService,
     AdjustmentsService,
-    CurrencyServicesService,
     ExchangesService,
     TransactionsService,
     TransfersService,
 )
-from currencies.test_factories import CurrencyUnitsTestFactory, HoldersTestFactory
+from currencies.test_factories import (
+    CurrencyServicesTestFactory,
+    CurrencyUnitsTestFactory,
+    HoldersTestFactory,
+)
 from django.test import TestCase
 from django.utils import timezone
 
@@ -29,7 +33,7 @@ from django.utils import timezone
 class TransactionsTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.service = CurrencyServicesService.get_default()
+        cls.service = CurrencyServicesTestFactory()
         cls.holder_1 = HoldersTestFactory()
         cls.holder_2 = HoldersTestFactory()
 
@@ -78,9 +82,10 @@ class TransactionsTest(TestCase):
         self,
         *,
         count: int,
-        status: Literal["p", "r", "c"],
+        status: Literal["pending", "rejected", "confirmed"],
         checking_account: CheckingAccount,
         amount: Decimal | int,
+        service: CurrencyService,
         created_at: datetime,
     ) -> list[AdjustmentTransaction]:
 
@@ -88,7 +93,7 @@ class TransactionsTest(TestCase):
 
         for _ in range(count):
             transaction = AdjustmentsService.create(
-                service=self.service, checking_account=checking_account, amount=amount, description=""
+                service=service, checking_account=checking_account, amount=amount, description=""
             )
 
             # Подделываем дату создания
@@ -96,16 +101,18 @@ class TransactionsTest(TestCase):
             transaction.save()
 
             match status:
-                case "p":
-                    continue
-                case "c":
+                case "pending":
+                    ret_transactions.append(transaction)
+                case "confirmed":
                     ret_transactions.append(
                         AdjustmentsService.confirm(adjustment_transaction=transaction, status_description="")
                     )
-                case "r":
+                case "rejected":
                     ret_transactions.append(
                         AdjustmentsService.reject(adjustment_transaction=transaction, status_description="")
                     )
+                case _:
+                    self.fail("Error in calling the function")
 
         return ret_transactions
 
@@ -113,17 +120,18 @@ class TransactionsTest(TestCase):
         self,
         *,
         count: int,
-        status: Literal["p", "r", "c"],
+        status: Literal["pending", "rejected", "confirmed"],
         from_account: CheckingAccount,
         to_account: CheckingAccount,
         amount: Decimal | int,
+        service: CurrencyService,
         created_at: datetime,
     ) -> list[TransferTransaction]:
         ret_transactions = []
 
         for _ in range(count):
             transaction = TransfersService.create(
-                service=self.service,
+                service=service,
                 transfer_rule=self.transfer_rule,
                 from_checking_account=from_account,
                 to_checking_account=to_account,
@@ -136,16 +144,18 @@ class TransactionsTest(TestCase):
             transaction.save()
 
             match status:
-                case "p":
-                    continue
-                case "c":
+                case "pending":
+                    ret_transactions.append(transaction)
+                case "confirmed":
                     ret_transactions.append(
                         TransfersService.confirm(transfer_transaction=transaction, status_description="")
                     )
-                case "r":
+                case "rejected":
                     ret_transactions.append(
                         TransfersService.reject(transfer_transaction=transaction, status_description="")
                     )
+                case _:
+                    self.fail("Error in calling the function")
 
         return ret_transactions
 
@@ -153,18 +163,19 @@ class TransactionsTest(TestCase):
         self,
         *,
         count: int,
-        status: Literal["p", "r", "c"],
+        status: Literal["pending", "rejected", "confirmed"],
         holder: Holder,
         exchange_rule: ExchangeRule,
         from_unit: CurrencyUnit,
         to_unit: CurrencyUnit,
         from_amount: int,
+        service: CurrencyService,
         created_at: datetime,
     ) -> list[ExchangeTransaction]:
         ret_transactions = []
         for _ in range(count):
             transaction = ExchangesService.create(
-                service=self.service,
+                service=service,
                 holder=holder,
                 exchange_rule=exchange_rule,
                 from_unit=from_unit,
@@ -178,16 +189,18 @@ class TransactionsTest(TestCase):
             transaction.save()
 
             match status:
-                case "p":
-                    continue
-                case "c":
+                case "pending":
+                    ret_transactions.append(transaction)
+                case "confirmed":
                     ret_transactions.append(
                         ExchangesService.confirm(exchange_transaction=transaction, status_description="")
                     )
-                case "r":
+                case "rejected":
                     ret_transactions.append(
                         ExchangesService.reject(exchange_transaction=transaction, status_description="")
                     )
+                case _:
+                    self.fail("Error in calling the function")
 
         return ret_transactions
 
@@ -204,47 +217,63 @@ class TransactionsTest(TestCase):
         self.checking_account_unit_2_user_1.refresh_from_db()
         self.checking_account_unit_2_user_2.refresh_from_db()
 
+    def change_created_date(self, *, transactions: Sequence, new_date: datetime):
+        for transaction in transactions:
+            transaction.created_at = new_date
+            transaction.save()
+
     def test_remove_outdated_adjustments(self):
 
         confirmed_outdated_adjustments = self.create_adjustments(
             count=3,
-            status="c",
+            status="confirmed",
             checking_account=self.checking_account_unit_1_user_1,
             amount=100,
+            service=self.service,
             created_at=self.old_datetime,
         )
 
         rejected_outdated_adjustments = self.create_adjustments(
             count=3,
-            status="r",
+            status="rejected",
             checking_account=self.checking_account_unit_1_user_1,
             amount=100,
+            service=self.service,
             created_at=self.old_datetime,
         )
 
         not_outdated_adjustments = self.create_adjustments(
-            count=3, status="c", checking_account=self.checking_account_unit_1_user_1, amount=100, created_at=self.now
+            count=3,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=100,
+            service=self.service,
+            created_at=self.now,
         )
 
         not_outdated_adjustments.extend(
             self.create_adjustments(
                 count=3,
-                status="r",
+                status="rejected",
                 checking_account=self.checking_account_unit_1_user_1,
                 amount=100,
+                service=self.service,
                 created_at=self.now,
             )
         )
 
         pending_outdated_adjustments = self.create_adjustments(
             count=3,
-            status="p",
+            status="pending",
             checking_account=self.checking_account_unit_1_user_1,
             amount=10,
+            service=self.service,
             created_at=self.old_datetime,
         )
 
-        TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
+        TransactionsService.collapse_old_transactions(
+            old_than_timedelta=self.cutoff_timedelta, service_names=[self.service.name]
+        )
 
         self.refresh_all_accounts()
 
@@ -272,62 +301,79 @@ class TransactionsTest(TestCase):
 
     def test_remove_outdated_transfers(self):
         self.create_adjustments(
-            count=1, status="c", checking_account=self.checking_account_unit_1_user_1, amount=2000, created_at=self.now
+            count=1,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=2000,
+            service=self.service,
+            created_at=self.now,
         )
         self.create_adjustments(
-            count=1, status="c", checking_account=self.checking_account_unit_1_user_2, amount=2000, created_at=self.now
+            count=1,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_2,
+            amount=2000,
+            service=self.service,
+            created_at=self.now,
         )
 
         outdated_transfers = self.create_transfers(
             count=3,
-            status="c",
+            status="confirmed",
             from_account=self.checking_account_unit_1_user_1,
             to_account=self.checking_account_unit_1_user_2,
             amount=300,
+            service=self.service,
             created_at=self.old_datetime,
         )
 
         outdated_transfers.extend(
             self.create_transfers(
                 count=3,
-                status="r",
+                status="rejected",
                 from_account=self.checking_account_unit_1_user_1,
                 to_account=self.checking_account_unit_1_user_2,
                 amount=100,
+                service=self.service,
                 created_at=self.old_datetime,
             )
         )
 
         not_outdated_transfers = self.create_transfers(
             count=3,
-            status="c",
+            status="confirmed",
             from_account=self.checking_account_unit_1_user_1,
             to_account=self.checking_account_unit_1_user_2,
             amount=33,
+            service=self.service,
             created_at=self.now,
         )
 
         not_outdated_transfers.extend(
             self.create_transfers(
                 count=3,
-                status="r",
+                status="rejected",
                 from_account=self.checking_account_unit_1_user_1,
                 to_account=self.checking_account_unit_1_user_2,
                 amount=100,
+                service=self.service,
                 created_at=self.now,
             )
         )
 
         pending_outdated_transfers = self.create_transfers(
             count=3,
-            status="p",
+            status="pending",
             from_account=self.checking_account_unit_1_user_1,
             to_account=self.checking_account_unit_1_user_2,
             amount=100,
+            service=self.service,
             created_at=self.old_datetime,
         )
 
-        TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
+        TransactionsService.collapse_old_transactions(
+            old_than_timedelta=self.cutoff_timedelta, service_names=[self.service.name]
+        )
 
         self.refresh_all_accounts()
 
@@ -344,7 +390,7 @@ class TransactionsTest(TestCase):
             for transfer in chain(not_outdated_transfers, pending_outdated_transfers):
                 transfer.refresh_from_db()
         except TransferTransaction.DoesNotExist:
-            self.fail("Not outdated transfer has been deleted!")
+            self.fail("Not outdated or pending transfer has been deleted!")
 
         fake_transaction_user_1 = self.get_first_adjustment(self.checking_account_unit_1_user_1)
 
@@ -362,72 +408,89 @@ class TransactionsTest(TestCase):
 
     def test_remove_outdated_exchanged(self):
         self.create_adjustments(
-            count=1, status="c", checking_account=self.checking_account_unit_1_user_1, amount=10000, created_at=self.now
+            count=1,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=10000,
+            service=self.service,
+            created_at=self.now,
         )
         self.create_adjustments(
-            count=1, status="c", checking_account=self.checking_account_unit_2_user_1, amount=10000, created_at=self.now
+            count=1,
+            status="confirmed",
+            checking_account=self.checking_account_unit_2_user_1,
+            amount=10000,
+            service=self.service,
+            created_at=self.now,
         )
 
         outdated_exchanges = self.create_exchanges(
             count=3,
-            status="c",
+            status="confirmed",
             holder=self.holder_1,
             exchange_rule=self.exchange_rule,
             from_unit=self.unit_1,
             to_unit=self.unit_2,
             from_amount=100,
+            service=self.service,
             created_at=self.old_datetime,
         )  # для коллапсированной транзакции даст -300 для unit_1 и +3 у unit_2
 
         outdated_exchanges.extend(
             self.create_exchanges(
                 count=3,
-                status="r",
+                status="rejected",
                 holder=self.holder_1,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit_1,
                 to_unit=self.unit_2,
                 from_amount=100,
+                service=self.service,
                 created_at=self.old_datetime,
             )
         )  # для коллапсированной транзакции не должно дать ничего, ибо reject
 
         not_outdated_exchanges = self.create_exchanges(
             count=3,
-            status="c",
+            status="confirmed",
             holder=self.holder_1,
             exchange_rule=self.exchange_rule,
             from_unit=self.unit_1,
             to_unit=self.unit_2,
             from_amount=200,
+            service=self.service,
             created_at=self.now,
         )  # для коллапсированной транзакции не должно дать ничего, ибо дата новее чем cutoff_date
 
         not_outdated_exchanges.extend(
             self.create_exchanges(
                 count=3,
-                status="r",
+                status="rejected",
                 holder=self.holder_1,
                 exchange_rule=self.exchange_rule,
                 from_unit=self.unit_1,
                 to_unit=self.unit_2,
                 from_amount=200,
+                service=self.service,
                 created_at=self.now,
             )
         )  # для коллапсированной транзакции не должно дать ничего, ибо reject и дата новее чем cutoff_date
 
         pending_outdated_exchanges = self.create_exchanges(
             count=3,
-            status="p",
+            status="pending",
             holder=self.holder_1,
             exchange_rule=self.exchange_rule,
             from_unit=self.unit_1,
             to_unit=self.unit_2,
             from_amount=100,
+            service=self.service,
             created_at=self.old_datetime,
-        )  # для коллапсированной транзакции не должно дать ничего, хоть дата и старая, но транзакция pennding
+        )  # для коллапсированной транзакции не должно дать ничего, хоть дата и старая, но транзакция pending
 
-        TransactionsService.collapse_old_transactions(old_than_timedelta=self.cutoff_timedelta)
+        TransactionsService.collapse_old_transactions(
+            old_than_timedelta=self.cutoff_timedelta, service_names=[self.service.name]
+        )
 
         self.refresh_all_accounts()
 
@@ -460,3 +523,39 @@ class TransactionsTest(TestCase):
         self.assertEqual(fake_transaction_unit_2.status, "CONFIRMED")
         self.assertIsNotNone(fake_transaction_unit_2.closed_at)
         self.assertIsNotNone(fake_transaction_unit_2.status_description)
+
+    def test_collapse_by_service(self):
+        service_1 = CurrencyServicesTestFactory()
+        service_2 = CurrencyServicesTestFactory()
+
+        adjustments_service_1 = self.create_adjustments(
+            count=3,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=100,
+            service=service_1,
+            created_at=self.old_datetime,
+        )
+        adjustments_service_2 = self.create_adjustments(
+            count=3,
+            status="confirmed",
+            checking_account=self.checking_account_unit_1_user_1,
+            amount=1000,
+            service=service_2,
+            created_at=self.old_datetime,
+        )
+
+        TransactionsService.collapse_old_transactions(
+            old_than_timedelta=self.cutoff_timedelta, service_names=[service_1.name, service_2.name]
+        )
+
+        all_adjustments = AdjustmentsService.list()
+
+        self.assertEqual(all_adjustments.count(), 2)
+
+        self.assertEqual(all_adjustments.filter(service=service_1, amount=300).count(), 1)
+        self.assertEqual(all_adjustments.filter(service=service_2, amount=3000).count(), 1)
+
+        for adjustment in chain(adjustments_service_1, adjustments_service_2):
+            with self.assertRaises(AdjustmentTransaction.DoesNotExist):
+                adjustment.refresh_from_db()
