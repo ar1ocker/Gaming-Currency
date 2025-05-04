@@ -9,6 +9,7 @@ from currencies_api.models import CurrencyServiceAuth
 from currencies_api.pagination import LimitOffsetPagination, get_paginated_response
 from django.conf import settings
 from rest_framework import serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -51,25 +52,17 @@ class TransfersCreateAPI(APIView):
 
         from_account = AccountsService.get(holder=from_holder, currency_unit=transfer_rule.unit)
         if from_account is None:
-            return Response(
-                {
-                    "error": (
-                        f"Checking account for {from_holder.holder_id} with "
-                        f"currency unit {transfer_rule.unit.symbol} not found"
-                    )
-                }
+            raise ValidationError(
+                f"Checking account for {from_holder.holder_id} with "
+                f"currency unit {transfer_rule.unit.symbol} not found"
             )
 
         to_account = AccountsService.get(holder=to_holder, currency_unit=transfer_rule.unit)
 
         if to_account is None:
-            return Response(
-                {
-                    "error": (
-                        f"Checking account for {to_holder.holder_id} with "
-                        f"currency unit {transfer_rule.unit.symbol} not found"
-                    )
-                }
+            raise ValidationError(
+                f"Checking account for {to_holder.holder_id} with "
+                f"currency unit {transfer_rule.unit.symbol} not found"
             )
 
         transaction = TransfersService.create(
