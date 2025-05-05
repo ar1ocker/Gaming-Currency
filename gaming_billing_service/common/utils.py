@@ -56,5 +56,10 @@ def get_decimal_places(decimal: Decimal) -> int:
     return abs(places)
 
 
-def assemble_auth_headers(*, service: CurrencyService):
-    return {settings.SERVICE_HEADER: service.name}
+def assemble_auth_headers(*, service: CurrencyService, additional_headers: dict | None = None):
+    headers = {settings.SERVICE_HEADER: service.name}
+
+    if additional_headers is not None:
+        return headers | additional_headers
+
+    return headers
