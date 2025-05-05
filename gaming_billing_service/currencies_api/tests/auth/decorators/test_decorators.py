@@ -1,3 +1,7 @@
+import hmac
+from datetime import datetime, timezone
+
+from common.utils import assemble_auth_headers
 from currencies.test_factories import CurrencyServicesTestFactory
 from currencies_api.auth.decorators import hmac_service_auth
 from currencies_api.test_factories import CurrencyServiceAuthTestFactory
@@ -55,3 +59,61 @@ class HMACServiceAuthTests(TestCase):
 
         with self.assertRaisesMessage(AuthenticationFailed, "Service disabled"):
             self.some_view(request)  # type: ignore
+
+
+@override_settings(ENABLE_HMAC_VALIDATION=True)
+class HMACServiceAuthWithEnabledValidationTests(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.factory = RequestFactory()
+
+    @hmac_service_auth
+    def some_view(self, request, service_auth):
+        return request, service_auth
+
+    def test_timestamp_hmac_validation_valid(self):
+        service = CurrencyServicesTestFactory()
+        service_auth = CurrencyServiceAuthTestFactory(service=service, is_battlemetrics=False)
+
+        timestamp_text = datetime.now(timezone.utc).isoformat()
+
+        signature = hmac.digest(
+            service_auth.key.encode(), f"{timestamp_text}./.{{}}".encode(), settings.HMAC_HASH_TYPE
+        ).hex()
+
+        request = self.factory.post(
+            "",
+            headers=assemble_auth_headers(
+                service=service,
+                additional_headers={
+                    settings.HMAC_TIMESTAMP_HEADER: timestamp_text,
+                    settings.HMAC_SIGNATURE_HEADER: signature,
+                },
+            ),
+            content_type="application/json",
+        )
+
+        self.some_view(request=request)  # type: ignore
+
+    def test_battlemetrics_hmac_validation_valid(self):
+        service = CurrencyServicesTestFactory()
+        service_auth = CurrencyServiceAuthTestFactory(is_battlemetrics=True, service=service)
+
+        timestamp_text = datetime.now(timezone.utc).isoformat()
+
+        signature = hmac.digest(
+            service_auth.key.encode(), f"{timestamp_text}.{{}}".encode(), settings.HMAC_HASH_TYPE
+        ).hex()
+
+        request = self.factory.post(
+            "",
+            headers=assemble_auth_headers(
+                service=service,
+                additional_headers={
+                    settings.HMAC_SIGNATURE_HEADER: f"t={timestamp_text},s={signature}",
+                },
+            ),
+            content_type="application/json",
+        )
+
+        self.some_view(request=request)  # type: ignore
