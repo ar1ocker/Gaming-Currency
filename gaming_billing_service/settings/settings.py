@@ -6,8 +6,12 @@ from pathlib import Path
 import toml
 from django.db.backends.postgresql.psycopg_any import IsolationLevel
 
+# DECIMAL
+
 getcontext().prec = 20
 getcontext().rounding = ROUND_HALF_UP
+
+# BASE
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -183,3 +187,40 @@ CELERY_RESULT_EXTENDED = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_WORKER_CONCURRENCY = 2
+
+# Logging
+
+if "test" not in sys.argv:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "machine_readable": {
+                "format": (
+                    "{levelname} | {asctime} | {module} | {name} | {process:d} | {thread:d} | {ip} | {status_code} | {message} | {params}"
+                ),
+                "style": "{",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "filters": {
+            "add_ip": {
+                "()": "common.logging_filters.AddIPFilter",
+            },
+            "add_request_params": {
+                "()": "common.logging_filters.AddRequestParamsFilter",
+            },
+        },
+        "handlers": {
+            "console": {
+                "level": "WARNING",
+                "class": "logging.StreamHandler",
+                "formatter": "machine_readable",
+                "filters": ["add_ip", "add_request_params"],
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+    }

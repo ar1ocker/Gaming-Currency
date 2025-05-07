@@ -11,10 +11,10 @@ def django_validation_error_exception_handler(exc, ctx):
         exc = exceptions.ValidationError(as_serializer_error(exc))
 
     if isinstance(exc, Http404):
-        exc = exceptions.NotFound(str(exc))
+        exc = exceptions.NotFound(*exc.args)
 
     if isinstance(exc, PermissionDenied):
-        exc = exceptions.PermissionDenied(str(exc))
+        exc = exceptions.PermissionDenied(*exc.args)
 
     response = exception_handler(exc, ctx)
 
