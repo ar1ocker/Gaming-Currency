@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"postgres_backup/internal/handlers"
+	"postgres_backup/internal/application"
 	"postgres_backup/internal/middlwares"
 
 	"github.com/go-telegram/bot"
@@ -16,12 +16,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	opts := []bot.Option{
+	options := []bot.Option{
 		bot.WithMiddlewares(middlwares.LogMessagesMiddlware),
 		bot.WithSkipGetMe(),
 	}
 
-	b, err := bot.New("7905186702:AAG8hwIWkDWFQKpwSxajdDnO5irEbe-zY0A", opts...)
+	b, err := bot.New("7905186702:AAG8hwIWkDWFQKpwSxajdDnO5irEbe-zY0A", options...)
 	if err != nil {
 		log.Fatal("Error on starting bot:", err)
 	}
@@ -31,7 +31,9 @@ func main() {
 		log.Fatal("Error on GetMe:", err)
 	}
 
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/start", bot.MatchTypeCommandStartOnly, handlers.CommandStartHandler)
+	app := application.Application{}
+
+	app.RegisterHandlers(b)
 
 	log.Printf("Bot has been started: ID - %d, Username - https://t.me/%s\n", me.ID, me.Username)
 	b.Start(ctx)
