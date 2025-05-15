@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
+	ctx, cancelContext := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancelContext()
 
 	options := []bot.Option{
 		bot.WithMiddlewares(middlwares.LogMessagesMiddlware),
@@ -26,15 +26,24 @@ func main() {
 		log.Fatal("Error on starting bot:", err)
 	}
 
-	me, err := b.GetMe(ctx)
-	if err != nil {
-		log.Fatal("Error on GetMe:", err)
-	}
-
 	app := application.Application{}
 
 	app.RegisterHandlers(b)
 
-	log.Printf("Bot has been started: ID - %d, Username - https://t.me/%s\n", me.ID, me.Username)
+	if err := logMe(ctx, b); err != nil {
+		log.Fatal("Error on startup getMe:", err)
+	}
+
 	b.Start(ctx)
+}
+
+func logMe(ctx context.Context, b *bot.Bot) error {
+	me, err := b.GetMe(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Bot has been started: ID - %d, Username - https://t.me/%s\n", me.ID, me.Username)
+
+	return nil
 }

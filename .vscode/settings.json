@@ -55,4 +55,14 @@
         "**/.tox": true
     },
     "python.analysis.typeCheckingMode": "standard",
+
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+        }
+    },
+    "gopls": {
+        "formatting.gofumpt": true
+    }
 }
