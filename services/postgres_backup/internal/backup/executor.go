@@ -3,13 +3,30 @@ package backup
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"postgres_backup/internal/postgres"
 )
 
-func (executor *BackupExecutor) RunPeriodicBackup(ctx context.Context, interval time.Duration, postgresOptions *postgres.PostgresOptions, backupDir string) <-chan BackupResult {
-	executor.timer = time.NewTimer(time.Second * 10)
+func NewBackupExecutor() *BackupExecutor {
+	timer := time.NewTimer(0)
+
+	if !timer.Stop() {
+		<-timer.C
+	}
+
+	return &BackupExecutor{timer: timer}
+}
+
+func (executor *BackupExecutor) RunBackupAfter(duration time.Duration) (alreadyRunned bool) {
+	executor.mu.Lock()
+	defer executor.mu.Unlock()
+
+	return !executor.timer.Reset(duration)
+}
+
+func (executor *BackupExecutor) CreatePeriodicBackupChan(ctx context.Context, interval time.Duration, postgresOptions postgres.PostgresOptions, backupDir string) <-chan BackupResult {
 	resultChan := make(chan BackupResult)
 
 	go func() {
@@ -25,19 +42,17 @@ func (executor *BackupExecutor) RunPeriodicBackup(ctx context.Context, interval 
 
 				result := executor.DumpDatabase(postgresOptions, backupDir)
 
-				elapsed := time.Since(startTime)
-				nextInterval := interval - elapsed
-
-				if nextInterval < 0 {
-					nextInterval = 0
-				}
-
-				executor.timer.Reset(nextInterval)
-
 				select {
-				case resultChan <- result:
 				case <-ctx.Done():
 					return
+				case resultChan <- result:
+					elapsed := time.Since(startTime)
+					if elapsed > interval {
+						log.Printf("backup took too long: %v (interval is %v)", elapsed, interval)
+					}
+
+					nextInterval := max(interval-elapsed, 0)
+					executor.RunBackupAfter(nextInterval)
 				}
 			}
 		}
@@ -46,7 +61,7 @@ func (executor *BackupExecutor) RunPeriodicBackup(ctx context.Context, interval 
 	return resultChan
 }
 
-func (executor *BackupExecutor) DumpDatabase(postgresOptions *postgres.PostgresOptions, backupDir string) BackupResult {
+func (executor *BackupExecutor) DumpDatabase(postgresOptions postgres.PostgresOptions, backupDir string) BackupResult {
 	filePath := fmt.Sprintf("%s/%d.backup", backupDir, time.Now().Unix())
 
 	path, err := postgres.DumpDatabase(postgresOptions, filePath)

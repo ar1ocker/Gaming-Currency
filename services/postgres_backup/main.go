@@ -28,7 +28,7 @@ func main() {
 
 	app := application.Application{}
 
-	app.RegisterHandlers(b)
+	app.RunHandlers(b)
 
 	if err := logMe(ctx, b); err != nil {
 		log.Fatal("Error on startup getMe:", err)
