@@ -9,11 +9,10 @@ import (
 	"github.com/go-telegram/bot"
 )
 
-func NewApplication(ctx context.Context, config Config, bot *bot.Bot) *Application {
+func NewApplication(ctx context.Context, config *Config, bot *bot.Bot) *Application {
 	app := &Application{backupExecutor: backup.NewBackupExecutor(), b: bot}
 
 	app.backupChan = app.backupExecutor.CreatePeriodicBackupChan(ctx, config.backupInterval, config.postgres, config.backupDir)
-	log.Println("application created")
 
 	return app
 }
@@ -23,7 +22,6 @@ func (app *Application) RunApplication(ctx context.Context) {
 
 	go app.BackupsProcessing(ctx)
 	app.backupExecutor.RunBackupAfter(0)
-	log.Println("application runned")
 }
 
 func (app *Application) BackupsProcessing(ctx context.Context) {

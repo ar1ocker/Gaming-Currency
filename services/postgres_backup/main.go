@@ -10,9 +10,16 @@ import (
 	"postgres_backup/internal/middlwares"
 
 	"github.com/go-telegram/bot"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
+var k = koanf.New(".")
+
 func main() {
+	k.Load(file.Provider("config.toml"), toml.Parser())
+
 	ctx, cancelContext := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancelContext()
 
@@ -23,9 +30,16 @@ func main() {
 
 	b, err := bot.New("7905186702:AAG8hwIWkDWFQKpwSxajdDnO5irEbe-zY0A", options...)
 	if err != nil {
-		log.Fatal("Error on starting bot:", err)
+		log.Fatal("Error on starting bot: ", err)
 	}
-	config := application.Config{}
+
+	config := &application.Config{}
+
+	_, err = config.LoadFromKoanf(k)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := application.NewApplication(ctx, config, b)
 
 	app.RunApplication(ctx)

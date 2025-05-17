@@ -1,0 +1,13 @@
+admins = ["1", "2"]
+
+[backup]
+chatIDs = [""]
+dir = "test"
+interval = "10s"
+
+[postgres]
+dbName = "postgres"
+host = "localhost"
+password = "password1"
+port = "port1"
+user = "user1"
