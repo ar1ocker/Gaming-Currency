@@ -26,6 +26,7 @@ func main() {
 	options := []bot.Option{
 		bot.WithMiddlewares(middlwares.LogMessagesMiddlware),
 		bot.WithSkipGetMe(),
+		bot.WithServerURL(k.String("apiUrl")),
 	}
 
 	b, err := bot.New(k.String("token"), options...)

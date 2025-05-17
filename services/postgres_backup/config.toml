@@ -1,3 +1,4 @@
+apiUrl = "https://api.telegram.org"
 token = ""
 admins = [""]
 
