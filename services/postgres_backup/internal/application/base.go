@@ -2,34 +2,42 @@ package application
 
 import (
 	"context"
-	"time"
+	"log"
 
 	"postgres_backup/internal/backup"
-	"postgres_backup/internal/postgres"
 
 	"github.com/go-telegram/bot"
 )
 
-type Application struct {
-	backupChan     <-chan backup.BackupResult
-	backupExecutor *backup.BackupExecutor
-}
-
-type ApplicationConfig struct {
-	postgres       postgres.PostgresOptions
-	backupInterval time.Duration
-	backupDir      string
-	admins         []string
-}
-
-func NewApplication(ctx context.Context, config ApplicationConfig) *Application {
-	app := &Application{backupExecutor: backup.NewBackupExecutor()}
+func NewApplication(ctx context.Context, config Config, bot *bot.Bot) *Application {
+	app := &Application{backupExecutor: backup.NewBackupExecutor(), b: bot}
 
 	app.backupChan = app.backupExecutor.CreatePeriodicBackupChan(ctx, config.backupInterval, config.postgres, config.backupDir)
+	log.Println("application created")
 
 	return app
 }
 
-func (app *Application) RunHandlers(b *bot.Bot) {
-	b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommandStartOnly, app.CommandStartHandler)
+func (app *Application) RunApplication(ctx context.Context) {
+	app.b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommandStartOnly, app.CommandStartHandler)
+
+	go app.BackupsProcessing(ctx)
+	app.backupExecutor.RunBackupAfter(0)
+	log.Println("application runned")
+}
+
+func (app *Application) BackupsProcessing(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case result, ok := <-app.backupChan:
+			if !ok {
+				log.Println("The backup channel has been closed")
+				return
+			}
+
+			log.Println(result.Err, result.FilePath)
+		}
+	}
 }

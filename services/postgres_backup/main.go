@@ -25,10 +25,10 @@ func main() {
 	if err != nil {
 		log.Fatal("Error on starting bot:", err)
 	}
+	config := application.Config{}
+	app := application.NewApplication(ctx, config, b)
 
-	app := application.Application{}
-
-	app.RunHandlers(b)
+	app.RunApplication(ctx)
 
 	if err := logMe(ctx, b); err != nil {
 		log.Fatal("Error on startup getMe:", err)
