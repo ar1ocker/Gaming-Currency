@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	"postgres_backup/internal/postgres"
@@ -62,7 +63,7 @@ func (executor *BackupExecutor) CreatePeriodicBackupChan(ctx context.Context, in
 }
 
 func (executor *BackupExecutor) DumpDatabase(postgresOptions postgres.PostgresOptions, backupDir string) BackupResult {
-	filePath := fmt.Sprintf("%s/%d.backup", backupDir, time.Now().Unix())
+	filePath := filepath.Join(backupDir, fmt.Sprintf("%d.backup", time.Now().Unix()))
 
 	path, err := postgres.DumpDatabase(postgresOptions, filePath)
 

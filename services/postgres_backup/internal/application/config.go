@@ -32,12 +32,12 @@ func (c *Config) LoadFromKoanf(k *koanf.Koanf) (*Config, error) {
 	}
 
 	if len(notExists) > 0 {
-		return c, fmt.Errorf("Not found params in config: %v", strings.Join(notExists, ", "))
+		return c, fmt.Errorf("not found params in config: %v", strings.Join(notExists, ", "))
 	}
 
 	interval, err := time.ParseDuration(k.String("backup.interval"))
 	if err != nil {
-		return c, fmt.Errorf("Parsing error in backupInterval value: %v", err)
+		return c, fmt.Errorf("parsing error in backupInterval value: %v", err)
 	}
 
 	c.admins = k.Strings("admins")

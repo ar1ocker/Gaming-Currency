@@ -10,4 +10,5 @@ type Application struct {
 	backupChan     <-chan backup.BackupResult
 	backupExecutor *backup.BackupExecutor
 	b              *bot.Bot
+	config         *Config
 }

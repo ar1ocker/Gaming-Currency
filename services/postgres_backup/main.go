@@ -28,7 +28,7 @@ func main() {
 		bot.WithSkipGetMe(),
 	}
 
-	b, err := bot.New("7905186702:AAG8hwIWkDWFQKpwSxajdDnO5irEbe-zY0A", options...)
+	b, err := bot.New(k.String("token"), options...)
 	if err != nil {
 		log.Fatal("Error on starting bot: ", err)
 	}

@@ -10,9 +10,9 @@ func DumpDatabase(options PostgresOptions, filePath string) (string, error) {
 
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PGPASSWORD=%s", options.Password))
 
-	_, err := cmd.CombinedOutput()
+	msg, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("ошибка при создание бекапа во время запуска pg_dump: %v", err)
+		return "", fmt.Errorf("ошибка при создание бекапа во время запуска pg_dump %v, %v", err, string(msg))
 	}
 
 	return filePath, nil

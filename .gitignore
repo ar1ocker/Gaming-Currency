@@ -175,3 +175,6 @@ cython_debug/
 
 # PERSONAL
 .VSCodeCounter/
+
+# go builds
+*.exe
