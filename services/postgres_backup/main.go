@@ -24,7 +24,7 @@ func main() {
 	defer cancelContext()
 
 	options := []bot.Option{
-		bot.WithMiddlewares(middlwares.LogMessagesMiddlware),
+		bot.WithMiddlewares(middlwares.MessagesOnlyFromIDs(k.Strings("admins")), middlwares.LogMessagesMiddlware),
 		bot.WithSkipGetMe(),
 		bot.WithServerURL(k.String("apiUrl")),
 	}
