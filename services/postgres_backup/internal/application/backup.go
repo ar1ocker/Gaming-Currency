@@ -38,19 +38,19 @@ func (app *Application) BackupsProcessing(ctx context.Context) {
 			}
 
 			for _, chatID := range app.config.backupChatIDs {
-				_, err := app.b.SendDocument(
-					ctx,
+				_, err := app.b.SendDocument(ctx,
 					&bot.SendDocumentParams{ChatID: chatID, Document: &models.InputFileUpload{
 						Filename: filepath.Base(result.FilePath),
 						Data:     bytes.NewReader(fileData),
 					}})
+
 				if err != nil {
 					msg := fmt.Sprintf("Error on send file %s to chat %s", result.FilePath, chatID)
 					log.Println(msg)
 					app.SendMessageToAllAdmins(ctx, msg)
-					continue
+				} else {
+					log.Printf("Sended backup %v to chat %v\n", filepath.Base(result.FilePath), chatID)
 				}
-				log.Printf("Sended backup %v to chat %v\n", filepath.Base(result.FilePath), chatID)
 			}
 
 			err = os.Remove(result.FilePath)
