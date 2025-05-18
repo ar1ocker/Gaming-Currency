@@ -1,0 +1,15 @@
+apiUrl = "https://api.telegram.org"
+token = ""
+admins = [""]
+
+[backup]
+chatIDs = [""]
+dir = "/app/backups"
+interval = "6h"
+
+[postgres]
+dbName = "postgres"
+host = "db"
+password = "dev"
+port = "5432"
+user = "postgres"
