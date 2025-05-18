@@ -5,7 +5,7 @@ admins = [""]
 [backup]
 chatIDs = [""]
 dir = "/app/backups"
-interval = "10s"
+interval = "6h"
 
 [postgres]
 dbName = "postgres"
