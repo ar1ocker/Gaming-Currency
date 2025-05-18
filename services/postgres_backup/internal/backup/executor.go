@@ -24,6 +24,7 @@ func (executor *BackupExecutor) RunBackupAfter(duration time.Duration) (alreadyR
 	executor.mu.Lock()
 	defer executor.mu.Unlock()
 
+	executor.NextRunTime = time.Now().Add(duration)
 	return !executor.timer.Reset(duration)
 }
 

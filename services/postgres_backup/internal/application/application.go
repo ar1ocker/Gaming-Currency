@@ -24,8 +24,11 @@ func NewApplication(ctx context.Context, config *Config, bot *bot.Bot) *Applicat
 func (app *Application) RunApplication(ctx context.Context) {
 	app.b.RegisterHandler(bot.HandlerTypeMessageText, "start", bot.MatchTypeCommandStartOnly, app.CommandStartHandler)
 	app.b.RegisterHandler(bot.HandlerTypeMessageText, "backup", bot.MatchTypeCommandStartOnly, app.RunManualBackupHandler)
+	app.b.RegisterHandler(bot.HandlerTypeMessageText, "list", bot.MatchTypeCommandStartOnly, app.ShowBackupsHandler)
+	app.b.RegisterHandler(bot.HandlerTypeMessageText, "status", bot.MatchTypeCommandStartOnly, app.ShowNextRunTimeHandler)
 
 	go app.BackupsProcessing(ctx)
+
 	app.backupExecutor.RunBackupAfter(time.Second * 3)
 }
 

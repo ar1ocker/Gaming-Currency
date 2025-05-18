@@ -31,7 +31,7 @@ func (app *Application) BackupsProcessing(ctx context.Context) {
 
 			fileData, err := os.ReadFile(result.FilePath)
 			if err != nil {
-				msg := fmt.Sprintf("Error on opening file %v, %v\n", result.FilePath, err)
+				msg := fmt.Sprintf("Error on opening file %v\n'%v'\n", result.FilePath, err)
 				log.Println(msg)
 				app.SendMessageToAllAdmins(ctx, msg)
 				continue

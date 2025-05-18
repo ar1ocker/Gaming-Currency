@@ -6,6 +6,8 @@ import (
 )
 
 type BackupExecutor struct {
+	NextRunTime time.Time
+
 	timer *time.Timer
 	mu    sync.Mutex
 }
