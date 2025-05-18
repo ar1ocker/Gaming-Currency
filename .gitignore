@@ -178,3 +178,6 @@ cython_debug/
 
 # go builds
 *.exe
+
+# configs
+*.toml
