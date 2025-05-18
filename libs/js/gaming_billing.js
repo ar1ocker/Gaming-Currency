@@ -27,6 +27,8 @@ export default class GamingBillingAPI {
       false,
       ["sign"]
     );
+
+    this._secret_key = ""
   }
 
   async _computeSignatureForData(data) {
