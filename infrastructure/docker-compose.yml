@@ -67,9 +67,6 @@ services:
   gaming-billing:
     build: ../services/gaming_billing/
     command: "gunicorn settings.wsgi:application --bind 0:8000"
-    ports:
-      - "8000:8000"
-      - "5678:5678"
     develop:
       watch:
         - path: ../services/gaming_billing
