@@ -180,4 +180,5 @@ cython_debug/
 *.exe
 
 # configs
-*.toml
+config.toml
+postgres.env
