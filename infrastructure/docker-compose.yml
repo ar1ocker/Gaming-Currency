@@ -76,7 +76,7 @@ services:
           target: /app
           action: sync
     stop_signal: SIGINT
-    restart: always
+    restart: on-failure
     volumes:
       - static_value:/app/static
     group_add:
@@ -106,7 +106,7 @@ services:
 
   db:
     image: postgres:15.4-bookworm
-    restart: always
+    restart: on-failure
     volumes:
       - postgres_value:/var/lib/postgresql/data/
     healthcheck:
@@ -119,8 +119,21 @@ services:
     env_file:
       - ./configs/postgres/postgres.env
 
+  postgres_backup:
+    build: ../services/postgres_backup/
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    configs:
+      - source: postgres-backup
+        target: /app/config.toml
+    networks:
+      - to-db
+
   rabbitmq:
     image: "rabbitmq:alpine"
+    restart: on-failure
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
@@ -130,6 +143,8 @@ services:
       - only-lan-network
 
 configs:
+  postgres-backup:
+    file: ./configs/postgres_backup/config.toml
   gaming-billing:
     file: ./configs/gaming_billing/config.toml
   nginx:
@@ -142,3 +157,4 @@ volumes:
 networks:
   to-wan-network:
   only-lan-network:
+  to-db:
