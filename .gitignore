@@ -178,3 +178,7 @@ cython_debug/
 
 # go builds
 *.exe
+
+# configs
+config.toml
+postgres.env
