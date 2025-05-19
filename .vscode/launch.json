@@ -20,7 +20,7 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/gaming_billing_service",
+                    "localRoot": "${workspaceFolder}/services/gaming_billing",
                     "remoteRoot": "/app"
                 }
             ],
