@@ -10,7 +10,7 @@ export default class GamingBillingAPI {
     secretKey,
     serviceHeader = "X-SERVICE",
     signatureHeader = "X-SIGNATURE",
-    timestampHeader = "X-SIGNATURE_TIMESTAMP"
+    timestampHeader = "X-SIGNATURE-TIMESTAMP"
   ) {
     this.endpoint = endpoint;
     this.serviceName = serviceName;
@@ -66,7 +66,7 @@ export default class GamingBillingAPI {
   }
 
   async holdersList(filters = {}) {
-    let path = "holders/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/holders/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -76,7 +76,7 @@ export default class GamingBillingAPI {
   }
 
   async holdersDetail(holder_id) {
-    let path = `holders/detail/?holder_id=${holder_id}`;
+    let path = `/api/currencies/holders/detail/?holder_id=${holder_id}`;
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -86,7 +86,7 @@ export default class GamingBillingAPI {
   }
 
   async holdersCreate(holder_id, holder_type, info = {}) {
-    let path = `holders/create/`;
+    let path = `/api/currencies/holders/create/`;
     let data = JSON.stringify({ holder_id: holder_id, holder_type: holder_type, info: info });
 
     let response = await this.client.post(path, data, {
@@ -101,7 +101,7 @@ export default class GamingBillingAPI {
       throw new Error("No parameters are set");
     }
 
-    let path = `holders/update/`;
+    let path = `/api/currencies/holders/update/`;
     let data = JSON.stringify({ holder_id: holder_id, enabled: enabled, info: info });
 
     let response = await this.client.post(path, data, {
@@ -112,7 +112,7 @@ export default class GamingBillingAPI {
   }
 
   async accountsList(filters = {}) {
-    let path = "accounts/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/accounts/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -123,7 +123,7 @@ export default class GamingBillingAPI {
 
   async accountsDetail(holder_id, unit_symbol, holder_type) {
     let path =
-      "accounts/detail/?" +
+      "/api/currencies/accounts/detail/?" +
       Qs.stringify(
         { holder_id: holder_id, unit_symbol: unit_symbol, holder_type: holder_type },
         { arrayFormat: "comma" }
@@ -137,7 +137,7 @@ export default class GamingBillingAPI {
   }
 
   async accountsCreate(holder_id, unit_symbol, holder_type) {
-    let path = "accounts/create/";
+    let path = "/api/currencies/accounts/create/";
 
     let data = JSON.stringify({ holder_id: holder_id, unit_symbol: unit_symbol, holder_type: holder_type });
 
@@ -149,7 +149,7 @@ export default class GamingBillingAPI {
   }
 
   async unitsList(filters = {}) {
-    let path = "units/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/units/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -159,7 +159,7 @@ export default class GamingBillingAPI {
   }
 
   async adjustmentsList(filters = {}) {
-    let path = "adjustments/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/adjustments/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -169,7 +169,7 @@ export default class GamingBillingAPI {
   }
 
   async adjustmentsCreate(holder_id, unit_symbol, amount, description, auto_reject_timeout) {
-    let path = "adjustments/create/";
+    let path = "/api/currencies/adjustments/create/";
 
     let data = JSON.stringify({
       holder_id: holder_id,
@@ -187,7 +187,7 @@ export default class GamingBillingAPI {
   }
 
   async adjustmentsConfirm(uuid, status_description) {
-    let path = "adjustments/confirm/";
+    let path = "/api/currencies/adjustments/confirm/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
@@ -199,7 +199,7 @@ export default class GamingBillingAPI {
   }
 
   async adjustmentsReject(uuid, status_description) {
-    let path = "adjustments/reject/";
+    let path = "/api/currencies/adjustments/reject/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
@@ -211,7 +211,7 @@ export default class GamingBillingAPI {
   }
 
   async transfersList(filters = {}) {
-    let path = "transfers/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/transfers/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -221,7 +221,7 @@ export default class GamingBillingAPI {
   }
 
   async transfersCreate(from_holder_id, to_holder_id, transfer_rule, amount, description, auto_reject_timeout) {
-    let path = "transfers/create/";
+    let path = "/api/currencies/transfers/create/";
 
     let data = JSON.stringify({
       from_holder_id: from_holder_id,
@@ -240,7 +240,7 @@ export default class GamingBillingAPI {
   }
 
   async transfersConfirm(uuid, status_description) {
-    let path = "transfers/confirm/";
+    let path = "/api/currencies/transfers/confirm/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
@@ -252,7 +252,7 @@ export default class GamingBillingAPI {
   }
 
   async transfersReject(uuid, status_description) {
-    let path = "transfers/reject/";
+    let path = "/api/currencies/transfers/reject/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
@@ -264,7 +264,7 @@ export default class GamingBillingAPI {
   }
 
   async exchangesList(filters = {}) {
-    let path = "exchanges/?" + Qs.stringify(filters, { arrayFormat: "comma" });
+    let path = "/api/currencies/exchanges/?" + Qs.stringify(filters, { arrayFormat: "comma" });
 
     let response = await this.client.get(path, {
       headers: await this._getHeaders(path),
@@ -274,7 +274,7 @@ export default class GamingBillingAPI {
   }
 
   async exchangesCreate(holder_id, exchange_rule, from_unit, to_unit, from_amount, description, auto_reject_timeout) {
-    let path = "exchanges/create/";
+    let path = "/api/currencies/exchanges/create/";
 
     let data = JSON.stringify({
       holder_id: holder_id,
@@ -294,7 +294,7 @@ export default class GamingBillingAPI {
   }
 
   async exchangesConfirm(uuid, status_description) {
-    let path = "exchanges/confirm/";
+    let path = "/api/currencies/exchanges/confirm/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
@@ -306,7 +306,7 @@ export default class GamingBillingAPI {
   }
 
   async exchangesReject(uuid, status_description) {
-    let path = "exchanges/reject/";
+    let path = "/api/currencies/exchanges/reject/";
 
     let data = JSON.stringify({ uuid: uuid, status_description: status_description });
 
