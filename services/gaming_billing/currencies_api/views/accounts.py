@@ -67,13 +67,13 @@ class CheckingAccountsCreateAPI(APIView):
         amount = serializers.DecimalField(max_digits=13, decimal_places=4, source="account.amount")
         created_at = serializers.DateTimeField(source="account.created_at")
         updated_at = serializers.DateTimeField(source="account.updated_at")
-        created_now = serializers.BooleanField(source="created_now")
+        created_now = serializers.BooleanField()
 
     @hmac_service_auth
     def post(self, request, service_auth: CurrencyServiceAuth):
         AccountsPermissionsService.enforce_create(permissions=service_auth.service.permissions)
 
-        serializer = self.InputSerializer(data=request.query_params)
+        serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         holder_id: str = serializer.validated_data["holder_id"]  # type: ignore
