@@ -69,7 +69,7 @@ class AdjustmentTransactionAdmin(ReadOnlyAdmin):
         "uuid",
         "status_description",
         "service__name",
-        "description__search",
+        "description",
         "checking_account__holder__holder_id",
     ]
     list_filter = ["status", "service", "created_at", "closed_at"]
@@ -132,7 +132,7 @@ class ExchangeTransactionAdmin(ReadOnlyAdmin):
 
 @admin.register(CheckingAccount)
 class CheckingAccountAdmin(admin.ModelAdmin):
-    search_fields = ["holder"]
+    search_fields = ["holder__holder_id"]
     list_filter = ["currency_unit", "created_at"]
     list_display = ["holder", "currency_unit__measurement", "amount", "created_at"]
 
@@ -151,7 +151,7 @@ class CurrencyUnitAdmin(admin.ModelAdmin):
 @admin.register(Holder)
 class HolderAdmin(admin.ModelAdmin):
     list_display = ["holder_id", "holder_type", "enabled"]
-    search_fields = ["holder_id", "holder_type"]
+    search_fields = ["holder_id", "holder_type__name"]
 
     def has_delete_permission(self, request, obj=None):
         return False
