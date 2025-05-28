@@ -34,7 +34,7 @@ services:
 
   tests:
     build: ../services/gaming_billing/
-    command: ["python3", "manage.py", "test", "--no-input"]
+    command: ["pytest"]
     stop_signal: SIGINT
     depends_on:
       migrations:
