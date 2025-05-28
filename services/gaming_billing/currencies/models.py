@@ -113,39 +113,31 @@ class ExchangeRule(models.Model):
 
     first_unit = models.ForeignKey(
         verbose_name="Игровая валюта 1", to=CurrencyUnit, on_delete=models.CASCADE, related_name="first_exchanges"
-    )  # ПК
+    )
     second_unit = models.ForeignKey(
         verbose_name="Игровая валюта 2", to=CurrencyUnit, on_delete=models.CASCADE, related_name="second_exchanges"
-    )  # КК
+    )
     forward_rate = models.DecimalField(
         verbose_name="Прямой курс",
         max_digits=13,
         decimal_places=4,
         help_text="За какое количество валюты 1 дают одну единицу валюты 2",
-    )  # 100
+    )
     reverse_rate = models.DecimalField(
         verbose_name="Обратный курс",
         max_digits=13,
         decimal_places=4,
         help_text="Какое количество валюты 1 дадут за одну единицу валюты 2",
-    )  # 85
+    )
     min_first_amount = models.DecimalField(
         verbose_name="Минимальное количество валюты 1", max_digits=13, decimal_places=4
-    )  # 100
+    )
     min_second_amount = models.DecimalField(
         verbose_name="Минимальное количество валюты 2", max_digits=13, decimal_places=4
-    )  # 10
+    )
 
     created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
-
-    # Чтобы получить 200 КК нужно потратить forward_rate * 200 КК = 100 * 200 = 20 000 ПК
-    # При трате 200 ПК мы получаем 200 ПК // forward_rate = 200 ПК // 100 = 2 КК
-    # деление должно быть целочисленным и не иметь остатка, т.к. 200 ПК % forward_rate = 0
-
-    # При трате 10 КК мы получаем reverse_rate * 10 КК = 85 * 10 КК = 850 ПК
-    # Чтобы получить 850 ПК нужно потратить 850 ПК // reverse_rate = 850 ПК // 85 = 10
-    # деление должно быть целочисленным и не иметь остатка, т.к. 850 КК % reverse_rate = 0
 
     @property
     def units(self):
