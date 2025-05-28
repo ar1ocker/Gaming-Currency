@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import timedelta
 from decimal import ROUND_HALF_UP, getcontext
@@ -10,6 +11,11 @@ from django.db.backends.postgresql.psycopg_any import IsolationLevel
 
 getcontext().prec = 20
 getcontext().rounding = ROUND_HALF_UP
+
+# FOR TESTS
+
+IS_LOCAL_RUN = bool(os.getenv("DJANGO_LOCAL_RUN"))
+IS_TESTING = sys.argv[0].endswith("pytest")
 
 # DJANGO BASE
 
@@ -42,7 +48,7 @@ THIRD_PARTY_APPS = [
 DEBUG_MIDDLEWARE = []
 DEBUG_APPS = []
 
-if "test" in sys.argv:
+if IS_TESTING:
     DEBUG_APPS = []
     DEBUG_MIDDLEWARE = []
 elif DEBUG:
@@ -104,11 +110,9 @@ DATABASES = {
     }
 }
 
-if "test" in sys.argv and "--no-input" not in sys.argv:
-    print(
-        "[ ! ] Redefining the standard database to sqlite for local testing, check settings/settings.py, "
-        "add --no-input to disable redefining"
-    )
+if IS_LOCAL_RUN:
+    print("[ ! ] Redefining the standard database to sqlite for local run, check settings/settings.py")
+
     DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": ":memory:",
@@ -141,7 +145,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # DJANGO LOGGING
 
-if "test" not in sys.argv:
+if not IS_TESTING:
     LOGGING = {
         "version": 1,
         "disable_existing_loggers": False,
