@@ -28,4 +28,4 @@ jobs:
       - name: Run Tests
         run: |
           cd services/gaming_billing/
-          python manage.py test
+          DJANGO_LOCAL_RUN=1 pytest
