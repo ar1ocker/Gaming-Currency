@@ -47,13 +47,13 @@ class AdjustmentTransactionServicesTests(TestCase):
         self.assertIsNone(transaction.closed_at)
 
     def test_insufficient_amount_error(self):
-        with self.assertRaises(AdjustmentsService.ValidationError):
+        with self.assertRaisesMessage(AdjustmentsService.ValidationError, "Insufficient funds in the checking account"):
             AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=-100, description=""
             )
 
     def test_zero_amount_error(self):
-        with self.assertRaises(AdjustmentsService.ValidationError):
+        with self.assertRaisesMessage(AdjustmentsService.ValidationError, "{'amount': ['The amount cannot be zero']}"):
             AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=0, description=""
             )
@@ -159,7 +159,7 @@ class AdjustmentTransactionServicesTests(TestCase):
             status_description="reject",
         )
 
-        with self.assertRaises(AdjustmentsService.ValidationError):
+        with self.assertRaisesMessage(AdjustmentsService.ValidationError, "The transaction has already been closed"):
             AdjustmentsService.confirm(adjustment_transaction=confirmed_transaction, status_description="")
 
     def test_reject_rejected_transaction_raise_error(self):
@@ -170,7 +170,7 @@ class AdjustmentTransactionServicesTests(TestCase):
             status_description="reject",
         )
 
-        with self.assertRaises(AdjustmentsService.ValidationError):
+        with self.assertRaisesMessage(AdjustmentsService.ValidationError, "The transaction has already been closed"):
             AdjustmentsService.reject(adjustment_transaction=rejected_transaction, status_description="")
 
     def test_reject_confirmed_transaction_raise_error(self):
@@ -181,7 +181,7 @@ class AdjustmentTransactionServicesTests(TestCase):
             status_description="reject",
         )
 
-        with self.assertRaises(AdjustmentsService.ValidationError):
+        with self.assertRaisesMessage(AdjustmentsService.ValidationError, "The transaction has already been closed"):
             AdjustmentsService.reject(adjustment_transaction=confirmed_transaction, status_description="")
 
     def test_reject_outdated(self):
