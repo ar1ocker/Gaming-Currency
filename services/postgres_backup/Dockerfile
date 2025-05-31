@@ -1,6 +1,6 @@
 # BUILD
 
-FROM golang:1.24-alpine AS builder
+FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app/
 
@@ -14,13 +14,16 @@ RUN go build -o postgres_backup .
 
 # APPLICATION
 
-FROM alpine:latest
+FROM debian:bookworm
 
 WORKDIR /app/
 
 ARG POSTGRES_VERSION=15
 
-RUN apk --no-cache add "postgresql${POSTGRES_VERSION}-client"
+RUN apt update
+RUN apt install -y --no-install-recommends "postgresql-client-${POSTGRES_VERSION}" ca-certificates
+
+RUN update-ca-certificates
 
 COPY --from=builder /app/postgres_backup .
 
