@@ -14,6 +14,9 @@ POSTGRES_PORT = 5432
 # протокола, при запросе сайта с другим заголовком host в запросе - конфигуратор не ответит
 ALLOWED_HOSTS = ['*']
 
+# Источники запросов, которые будет проверять сайт, указывать с портом и протоколом
+CSRF_TRUSTED_ORIGINS = ['http://example.com:1002/', 'https://example.com:1002/']
+
 [HMAC]
 ENABLE = true
 TIMESTAMP_DEVIATION = 10
