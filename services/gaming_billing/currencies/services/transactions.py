@@ -70,44 +70,44 @@ class TransactionsService:
         for item in chain(adjustment_sums, transfer_sums_in, transfer_sums_out, exchange_sums_in, exchange_sums_out):
             total_amounts[item["service"]][item["checking_account"]] += item["total_amount"]
 
-        cls._create_fake_transaction_and_remove_old(
-            total_amounts=total_amounts, cutoff_date=cutoff_date, closed_date=now, service_names=service_names
-        )
+        for service, accounts_with_total_amounts in total_amounts.items():
+            cls._create_fake_transaction_and_remove_old(
+                accounts_with_total_amounts=accounts_with_total_amounts,
+                cutoff_date=cutoff_date,
+                closed_date=now,
+                service=service,
+            )
 
     @classmethod
-    @retry_on_serialization_error()
+    @retry_on_serialization_error(max_retries=5)
     def _create_fake_transaction_and_remove_old(
-        cls, *, total_amounts, cutoff_date: datetime, closed_date: datetime, service_names: Sequence[str]
+        cls, *, accounts_with_total_amounts, cutoff_date: datetime, closed_date: datetime, service: str
     ):
         with transaction.atomic():
             # Создаем AdjustmentTransaction для каждого аккаунта
             # Удаляем старые транзакции
 
-            # TODO из-за того, что данные действия захватывают очень большое количество данных - ошибки сериализации тут будут 100% хоть при малейшей нагрузке
-            # Т.к. данные на самом деле не обязательно удалять все разом, можно обойти посервисными удалениями или же вообще поаккаунтными удалениями
-            # и не складывать всё в одну большую транзакцию
-            # хоть посервисно и поаккаутно будет больше работы, но эта работа будет стабильнее
-
             AdjustmentTransaction.objects.filter(
-                ~Q(status="PENDING"), created_at__lt=cutoff_date, service__name__in=service_names
+                ~Q(status="PENDING"), created_at__lt=cutoff_date, service=service
             ).delete()
             TransferTransaction.objects.filter(
-                ~Q(status="PENDING"), created_at__lt=cutoff_date, service__name__in=service_names
+                ~Q(status="PENDING"), created_at__lt=cutoff_date, service=service
             ).delete()
             ExchangeTransaction.objects.filter(
-                ~Q(status="PENDING"), created_at__lt=cutoff_date, service__name__in=service_names
+                ~Q(status="PENDING"), created_at__lt=cutoff_date, service=service
             ).delete()
 
-            for service, accounts in total_amounts.items():
-                for account_id, total_amount in accounts.items():
-                    AdjustmentTransaction.objects.create(
-                        description="The amount of old collapsed transactions",
-                        service_id=service,
-                        status="CONFIRMED",
-                        status_description="Confirmed without real change amount in checking account",
-                        auto_reject_after=closed_date,
-                        created_at=cutoff_date,
-                        closed_at=closed_date,
-                        checking_account_id=account_id,
-                        amount=total_amount,
-                    )
+            for account_id, total_amount in accounts_with_total_amounts.items():
+                adjustment_transaction = AdjustmentTransaction.objects.create(
+                    description="The amount of old collapsed transactions",
+                    service_id=service,
+                    status="CONFIRMED",
+                    status_description="Confirmed without real change amount in checking account",
+                    auto_reject_after=closed_date,
+                    created_at=cutoff_date,
+                    closed_at=closed_date,
+                    checking_account_id=account_id,
+                    amount=total_amount,
+                )
+                adjustment_transaction.created_at = cutoff_date
+                adjustment_transaction.save()

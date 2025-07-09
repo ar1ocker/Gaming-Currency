@@ -206,7 +206,7 @@ class TransactionsTest(TestCase):
 
     def get_first_adjustment(self, checking_account: CheckingAccount):
         adjustment: AdjustmentTransaction = (
-            AdjustmentTransaction.objects.filter(checking_account=checking_account).order_by("-created_at").first()
+            AdjustmentTransaction.objects.filter(checking_account=checking_account).order_by("created_at").first()
         )  # type: ignore
 
         return adjustment
@@ -287,12 +287,19 @@ class TransactionsTest(TestCase):
         except AdjustmentTransaction.DoesNotExist:
             self.fail("Not outdated or pending adjustments has been deleted!")
 
-        fake_transaction = self.get_first_adjustment(self.checking_account_unit_1_user_1)
+        fake_transaction: AdjustmentTransaction = (
+            AdjustmentTransaction.objects.filter(
+                checking_account=self.checking_account_unit_1_user_1,
+                status_description="Confirmed without real change amount in checking account",
+            )
+            .order_by("created_at")
+            .first()  # type: ignore
+        )
 
         self.assertEqual(fake_transaction.amount, 300)
         self.assertEqual(fake_transaction.status, "CONFIRMED")
+        self.assertLess(fake_transaction.created_at, timezone.now() - self.cutoff_timedelta)
         self.assertIsNotNone(fake_transaction.closed_at)
-        self.assertIsNotNone(fake_transaction.status_description)
 
     def test_remove_outdated_transfers(self):
         self.create_adjustments(
@@ -389,17 +396,23 @@ class TransactionsTest(TestCase):
 
         fake_transaction_user_1 = self.get_first_adjustment(self.checking_account_unit_1_user_1)
 
+        self.assertEqual(
+            fake_transaction_user_1.status_description, "Confirmed without real change amount in checking account"
+        )
         self.assertEqual(fake_transaction_user_1.amount, -900)
         self.assertEqual(fake_transaction_user_1.status, "CONFIRMED")
+        self.assertLess(fake_transaction_user_1.created_at, timezone.now() - self.cutoff_timedelta)
         self.assertIsNotNone(fake_transaction_user_1.closed_at)
-        self.assertIsNotNone(fake_transaction_user_1.status_description)
 
         fake_transaction_user_2 = self.get_first_adjustment(self.checking_account_unit_1_user_2)
 
+        self.assertEqual(
+            fake_transaction_user_2.status_description, "Confirmed without real change amount in checking account"
+        )
         self.assertEqual(fake_transaction_user_2.amount, 900)
         self.assertEqual(fake_transaction_user_2.status, "CONFIRMED")
+        self.assertLess(fake_transaction_user_2.created_at, timezone.now() - self.cutoff_timedelta)
         self.assertIsNotNone(fake_transaction_user_2.closed_at)
-        self.assertIsNotNone(fake_transaction_user_2.status_description)
 
     def test_remove_outdated_exchanged(self):
         self.create_adjustments(
@@ -507,17 +520,23 @@ class TransactionsTest(TestCase):
 
         fake_transaction_unit_1 = self.get_first_adjustment(self.checking_account_unit_1_user_1)
 
+        self.assertEqual(
+            fake_transaction_unit_1.status_description, "Confirmed without real change amount in checking account"
+        )
         self.assertEqual(fake_transaction_unit_1.amount, -300)
         self.assertEqual(fake_transaction_unit_1.status, "CONFIRMED")
+        self.assertLess(fake_transaction_unit_1.created_at, timezone.now() - self.cutoff_timedelta)
         self.assertIsNotNone(fake_transaction_unit_1.closed_at)
-        self.assertIsNotNone(fake_transaction_unit_1.status_description)
 
         fake_transaction_unit_2 = self.get_first_adjustment(self.checking_account_unit_2_user_1)
 
+        self.assertEqual(
+            fake_transaction_unit_2.status_description, "Confirmed without real change amount in checking account"
+        )
         self.assertEqual(fake_transaction_unit_2.amount, 3)
         self.assertEqual(fake_transaction_unit_2.status, "CONFIRMED")
+        self.assertLess(fake_transaction_unit_2.created_at, timezone.now() - self.cutoff_timedelta)
         self.assertIsNotNone(fake_transaction_unit_2.closed_at)
-        self.assertIsNotNone(fake_transaction_unit_2.status_description)
 
     def test_collapse_by_service(self):
         service_1 = CurrencyServicesTestFactory()
