@@ -167,4 +167,4 @@ class HolderTypeAdmin(admin.ModelAdmin):
 
 @admin.register(CurrencyService)
 class ServiceAdmin(admin.ModelAdmin):
-    list_display: list[str] = ["name"]
+    list_display = ["name"]

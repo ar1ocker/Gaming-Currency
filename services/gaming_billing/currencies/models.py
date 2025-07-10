@@ -100,6 +100,9 @@ class TransferRule(models.Model):
     created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
+    def __str__(self):
+        return self.name
+
     class Meta:
         verbose_name = "Правило перевода валюты"
         verbose_name_plural = "Правила перевода валют"
