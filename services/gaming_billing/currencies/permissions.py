@@ -87,7 +87,7 @@ class BasePermission:
             max_amount = Decimal(create_section[cls.max_amount_key])
             min_amount = Decimal(create_section[cls.min_amount_key])
 
-            if not (min_amount < amount < max_amount):
+            if not (min_amount <= amount <= max_amount):
                 raise PermissionDenied(f"{cls.verbose_name}: Amount is out of range")
         except KeyError as e:
             raise PermissionDenied(f"{cls.verbose_name}: Missing required permission {e}")
