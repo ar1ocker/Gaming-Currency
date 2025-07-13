@@ -69,6 +69,7 @@ class CurrencyUnit(models.Model):
     precision = models.IntegerField(
         verbose_name="Количество знаков после запятой", validators=[MinValueValidator(0), MaxValueValidator(4)]
     )
+    is_negative_allowed = models.BooleanField(verbose_name="Валюта может уходить в минус", default=False)
 
     created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
