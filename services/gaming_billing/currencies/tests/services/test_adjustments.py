@@ -21,6 +21,7 @@ class AdjustmentTransactionServicesTests(TestCase):
         cls.holder = HoldersTestFactory()
         cls.service = CurrencyServicesService.get_default()
         cls.currency_unit = CurrencyUnitsTestFactory()
+        cls.currency_unit_negative_allowed = CurrencyUnitsTestFactory(is_negative_allowed=True)
 
         return super().setUpTestData()
 
@@ -51,6 +52,22 @@ class AdjustmentTransactionServicesTests(TestCase):
             AdjustmentsService.create(
                 service=self.service, checking_account=self.checking_account, amount=-100, description=""
             )
+
+    def test_negative_amount_with_negative_allowed_unit(self):
+        checking_account = AccountsService().get_or_create(
+            holder=self.holder, currency_unit=self.currency_unit_negative_allowed
+        )[0]
+
+        transaction = AdjustmentsService.create(
+            service=self.service, checking_account=checking_account, amount=-1000, description=""
+        )
+        checking_account.refresh_from_db()
+        self.assertEqual(checking_account.amount, -1000)
+
+        AdjustmentsService.confirm(adjustment_transaction=transaction, status_description="")
+
+        checking_account.refresh_from_db()
+        self.assertEqual(checking_account.amount, -1000)
 
     def test_zero_amount_error(self):
         with self.assertRaisesMessage(AdjustmentsService.ValidationError, "{'amount': ['The amount cannot be zero']}"):

@@ -48,12 +48,15 @@ class AdjustmentsService:
             abs_amount = abs(amount)
 
             if amount < 0:
-                updated = CheckingAccount.objects.filter(pk=checking_account.pk, amount__gte=abs_amount).update(
-                    amount=F("amount") - abs_amount
-                )
+                if checking_account.currency_unit.is_negative_allowed:
+                    CheckingAccount.objects.filter(pk=checking_account.pk).update(amount=F("amount") - abs_amount)
+                else:
+                    updated = CheckingAccount.objects.filter(pk=checking_account.pk, amount__gte=abs_amount).update(
+                        amount=F("amount") - abs_amount
+                    )
 
-                if not updated:
-                    raise ValidationError("Insufficient funds in the checking account")
+                    if not updated:
+                        raise ValidationError("Insufficient funds in the checking account")
 
                 checking_account.refresh_from_db(fields=["amount", "updated_at"])
 
