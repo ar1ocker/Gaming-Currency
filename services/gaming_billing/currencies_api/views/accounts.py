@@ -108,8 +108,10 @@ class CheckingAccountsListAPI(APIView):
         currency_unit = serializers.CharField(required=False)
         amount_min = serializers.IntegerField(required=False)
         amount_max = serializers.IntegerField(required=False)
-        created_at_after = serializers.DateField(required=False)
-        created_at_before = serializers.DateField(required=False)
+        created_at_after = serializers.DateTimeField(required=False)
+        created_at_before = serializers.DateTimeField(required=False)
+
+        ordering = serializers.CharField(required=False)
 
     class OutputSerializer(serializers.Serializer):
         holder_enabled = serializers.BooleanField(source="holder.enabled")
@@ -127,13 +129,9 @@ class CheckingAccountsListAPI(APIView):
         filter_serializer = self.FilterSerializer(data=request.query_params)
         filter_serializer.is_valid(raise_exception=True)
 
-        accounts = (
-            AccountsService.list(
-                filters=filter_serializer.validated_data,  # type: ignore
-            )
-            .select_related("holder__holder_type", "currency_unit")
-            .order_by("-created_at")
-        )
+        accounts = AccountsService.list(
+            filters=filter_serializer.validated_data,  # type: ignore
+        ).select_related("holder__holder_type", "currency_unit")
 
         return get_paginated_response(
             pagination_class=self.Pagination,

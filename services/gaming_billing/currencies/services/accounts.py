@@ -34,6 +34,8 @@ class AccountsFilter(django_filters.FilterSet):
     amount = django_filters.RangeFilter()
     created_at = django_filters.IsoDateTimeFromToRangeFilter()
 
+    ordering = django_filters.OrderingFilter(fields=["created_at", "amount"])
+
     class Meta:
         model = CheckingAccount
         fields = (
