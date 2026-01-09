@@ -1,14 +1,16 @@
 {% extends 'admin/change_form.html' %}
 
 {% block submit_buttons_bottom %}
-    <div class="submit-row">
-        <a href="{% url 'currencies:exchange_confirm' original.pk %}">
-             Confirm
-        </a>
+<div class="form-group">
+    <a class="btn btn-success form-control active" href="{% url 'currencies:exchange_confirm' original.pk %}">
+        Подтвердить транзакцию
+    </a>
+</div>
 
-        <a style="color: red; margin-left: 3em" href="{% url 'currencies:exchange_reject' original.pk %}">
-            Reject
-       </a>
-    </div>
-    {{ block.super }}
+<div class="form-group">
+    <a class="btn btn-warning form-control active" href="{% url 'currencies:exchange_reject' original.pk %}">
+        Отменить транзакцию
+    </a>
+</div>
+{{ block.super }}
 {% endblock %}

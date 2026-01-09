@@ -1,0 +1,86 @@
+{% extends 'admin/base_site.html' %}
+{% load static i18n jazzmin %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% url 'admin:jsi18n' %}"></script>
+{% endblock %}
+
+{% block extrastyle %} 
+{{ block.super }}
+<link href="{% static 'admin/css/vendor/select2/select2.min.css' %}" rel="stylesheet">
+<link href="{% static 'admin/css/autocomplete.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block extrajs %}
+{{ block.super }}
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
+<script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}" defer></script>
+<script src="{% static 'admin/js/autocomplete.js' %}" defer></script>
+<script src="{% static 'jazzmin/js/change_form.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <section id="content" class="content">
+        <div class="row">
+            <div id="content-main" class="col-12">
+                <div class="card card-primary card-outline">
+
+                    <div class="card-header">
+                        <h3 class="card-title">{% trans title %}</h3>
+                    </div>
+
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            {% block field_sets %}
+                                <div class="text-red">
+                                    {{ form.non_field_errors }}
+                                </div>
+                                {% for field in form.visible_fields %}
+                                <div class="form-group{% if field.errors %} errors{% endif %}{% if field.field.widget.is_hidden %} hidden{% endif %} field-{{ field.name }}">
+                                    <div class="row">
+                                        <label class="col-sm-3 text-left" for="id_{{ field.name }}">
+                                            {{ field.label|capfirst }}
+                                            {% if field.field.required %}
+                                            <span class="text-red">* </span>
+                                            {% endif %}
+                                        </label>
+                                        <div class="col-sm-9 fieldBox
+                                                    {% if field.errors %} errors{% endif %}
+                                                    {% if field.field.widget.is_hidden %} hidden {% endif %}">
+                                            {% if field.field.disabled %}
+                                                <div class="readonly">{{ field.value }}</div>
+                                            {% else %}
+                                                {{ field }}
+                                            {% endif %}
+                                            <div class="text-red red">
+                                                {{ field.errors }}
+                                            </div>
+                                            {% if field.help_text %}
+                                                <div class="help-block">{{ field.help_text|safe }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+
+                                {% for field in form.hidden_fields %}
+                                    {{ field }}
+                                {% endfor %}
+                            {% endblock %}
+                            <button type="submit" class="btn btn-success form-control">{% trans "Сохранить" %}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

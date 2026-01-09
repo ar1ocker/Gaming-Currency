@@ -4,7 +4,7 @@ from currencies.models import CurrencyService, TransferRule, TransferTransaction
 from currencies.services import HoldersService, TransfersService
 from currencies.services.accounts import AccountsService
 from django import forms, views
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -14,18 +14,24 @@ from django.utils.decorators import method_decorator
 
 @method_decorator(permission_required("currencies.add_transfertransaction"), name="dispatch")
 class TransferCreateView(views.View):
-    template = "transfers/create.html"
+    template = "transaction/create.html"
 
     class Form(forms.Form):
-        service = forms.ModelChoiceField(CurrencyService.objects.all())
-        transfer_rule = forms.ModelChoiceField(TransferRule.objects.all())
-        from_holder_id = forms.CharField()
-        to_holder_id = forms.CharField()
-        from_amount = forms.DecimalField(min_value=0)
-        auto_reject_timedelta = forms.IntegerField(min_value=180)
+        service = forms.ModelChoiceField(CurrencyService.objects.all(), label="Сервис")
+        transfer_rule = forms.ModelChoiceField(TransferRule.objects.all(), label="Правило перевода")
+        from_holder_id = forms.CharField(label="Внешний уникальный ID держателя источника")
+        to_holder_id = forms.CharField(label="Внешний уникальный ID держателя получателя")
+        from_amount = forms.DecimalField(min_value=0, label="Сумма валюты источника")
+        auto_reject_timedelta = forms.IntegerField(
+            min_value=180, initial=180, label="Количество секунд до автоматической отмены"
+        )
 
     def render_form(self, request, form: forms.Form):
-        return render(request, self.template, {"form": form})
+        return render(
+            request,
+            self.template,
+            {"form": form, "title": "Создание транзакции перевода", **admin.site.each_context(request)},
+        )
 
     def get(self, request) -> HttpResponse:
         return self.render_form(request, self.Form())

@@ -2,7 +2,5 @@
 
 {% block object-tools-items %}
     {{ block.super }}
-    <li>
-        <a href="{% url 'currencies:exchange_create' %}">Create exchange transaction</a>
-    </li>
+    <a class="btn btn-success float-right" href="{% url 'currencies:exchange_create' %}"><i class="fa fa-plus-circle"></i> Создать транзакцию</a>
 {% endblock %}

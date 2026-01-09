@@ -13,7 +13,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 
-@override_settings(ENABLE_HMAC_VALIDATION=False)
+@override_settings(ENABLE_HMAC_VALIDATION=False, LANGUAGE_CODE="en-us")
 class AdjustmentConfirmAPITest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:

@@ -3,7 +3,7 @@ from datetime import timedelta
 from currencies.models import AdjustmentTransaction, CurrencyService, CurrencyUnit
 from currencies.services import AccountsService, AdjustmentsService, HoldersService
 from django import forms, views
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -13,17 +13,23 @@ from django.utils.decorators import method_decorator
 
 @method_decorator(permission_required("currencies.add_adjustmenttransaction"), name="dispatch")
 class AdjustmentCreateView(views.View):
-    template = "adjustments/create.html"
+    template = "transaction/create.html"
 
     class Form(forms.Form):
-        service = forms.ModelChoiceField(CurrencyService.objects.all())
-        holder_id = forms.CharField()
-        to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        amount = forms.DecimalField()
-        auto_reject_timedelta = forms.IntegerField(min_value=180)
+        service = forms.ModelChoiceField(CurrencyService.objects.all(), label="Сервис")
+        holder_id = forms.CharField(label="Внешний уникальный ID держателя")
+        to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all(), label="Валюта получатель")
+        amount = forms.DecimalField(label="Сумма")
+        auto_reject_timedelta = forms.IntegerField(
+            min_value=180, initial=180, label="Количество секунд до автоматической отмены"
+        )
 
     def render_form(self, request, form: forms.Form):
-        return render(request, self.template, {"form": form})
+        return render(
+            request,
+            self.template,
+            {"form": form, "title": "Создание транзакции получения/вычета", **admin.site.each_context(request)},
+        )
 
     def get(self, request) -> HttpResponse:
         return self.render_form(request, self.Form())

@@ -15,13 +15,13 @@ from .views import (
 app_name = "currencies"
 
 urlpatterns = [
-    path("adjustments/create/", AdjustmentCreateView.as_view(), name="adjustment_create"),
-    path("adjustments/confirm/<str:object_pk>/", adjustment_confirm, name="adjustment_confirm"),
-    path("adjustments/reject/<str:object_pk>/", adjustment_reject, name="adjustment_reject"),
-    path("transfers/create/", TransferCreateView.as_view(), name="transfer_create"),
-    path("transfers/confirm/<str:object_pk>/", transfer_confirm, name="transfer_confirm"),
-    path("transfers/reject/<str:object_pk>/", transfer_reject, name="transfer_reject"),
-    path("exchanges/create/", ExchangeCreateView.as_view(), name="exchange_create"),
-    path("exchanges/confirm/<str:object_pk>", exchange_confirm, name="exchange_confirm"),
-    path("exchanges/reject/<str:object_pk>", exchange_reject, name="exchange_reject"),
+    path("adjustmenttransaction/create/", AdjustmentCreateView.as_view(), name="adjustment_create"),
+    path("adjustmenttransaction/<str:object_pk>/confirm/", adjustment_confirm, name="adjustment_confirm"),
+    path("adjustmenttransaction/<str:object_pk>/reject/", adjustment_reject, name="adjustment_reject"),
+    path("transfertransaction/create/", TransferCreateView.as_view(), name="transfer_create"),
+    path("transfertransaction/<str:object_pk>/confirm/", transfer_confirm, name="transfer_confirm"),
+    path("transfertransaction/<str:object_pk>/reject/", transfer_reject, name="transfer_reject"),
+    path("exchangetransaction/create/", ExchangeCreateView.as_view(), name="exchange_create"),
+    path("exchangetransaction/<str:object_pk>/confirm/", exchange_confirm, name="exchange_confirm"),
+    path("exchangetransaction/<str:object_pk>/reject/", exchange_reject, name="exchange_reject"),
 ]

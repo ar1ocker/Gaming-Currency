@@ -43,7 +43,7 @@ class HolderType(models.Model):
 
 class Holder(models.Model):
     enabled = models.BooleanField(verbose_name="Включен")
-    holder_id = models.CharField(verbose_name="Уникальный ID", max_length=255, unique=True)
+    holder_id = models.CharField(verbose_name="Внешний уникальный ID", max_length=255, unique=True)
     holder_type = models.ForeignKey(
         verbose_name="Тип держателя",
         to=HolderType,
@@ -87,9 +87,11 @@ class TransferRule(models.Model):
 
     name = models.CharField(verbose_name="Название", max_length=255, unique=True)
 
-    unit = models.ForeignKey(verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.CASCADE)
+    unit = models.ForeignKey(
+        verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.CASCADE, related_name="transfer_rules"
+    )
     fee_percent = models.DecimalField(
-        verbose_name="Комиссия за обмен", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)]
+        verbose_name="Комиссия за обмен (%)", max_digits=6, decimal_places=1, validators=[MinValueValidator(0)]
     )
     min_from_amount = models.DecimalField(
         verbose_name="Минимальное количество изначально отправляемой валюты",
@@ -125,13 +127,13 @@ class ExchangeRule(models.Model):
         verbose_name="Прямой курс",
         max_digits=13,
         decimal_places=4,
-        help_text="За какое количество валюты 1 дают одну единицу валюты 2",
+        help_text="За какое количество валюты 1 будет выдана одна единицу валюты 2",
     )
     reverse_rate = models.DecimalField(
         verbose_name="Обратный курс",
         max_digits=13,
         decimal_places=4,
-        help_text="Какое количество валюты 1 дадут за одну единицу валюты 2",
+        help_text="Какое количество валюты 1 будет выдано за одну единицу валюты 2",
     )
     min_first_amount = models.DecimalField(
         verbose_name="Минимальное количество валюты 1", max_digits=13, decimal_places=4
@@ -171,14 +173,16 @@ class CheckingAccount(models.Model):
     holder = models.ForeignKey(
         verbose_name="Держатель", to=Holder, on_delete=models.PROTECT, related_name="checking_accounts"
     )
-    currency_unit = models.ForeignKey(verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.PROTECT)
+    currency_unit = models.ForeignKey(
+        verbose_name="Игровая валюта", to=CurrencyUnit, on_delete=models.PROTECT, related_name="checking_accounts"
+    )
     amount = models.DecimalField(verbose_name="Сумма средств", max_digits=13, decimal_places=4)
 
     created_at = models.DateTimeField(verbose_name="Дата создания", auto_now_add=True)
     updated_at = models.DateTimeField(verbose_name="Дата обновления", auto_now=True)
 
     def __str__(self):
-        return f"Счёт держателя {self.holder.holder_id} {self.currency_unit.symbol} - {self.amount}"
+        return f"Счёт {self.id} держателя #{self.holder_id}, валюта #{self.currency_unit_id}, сумма {self.amount}"
 
     class Meta:
         verbose_name = "Счет держателя"

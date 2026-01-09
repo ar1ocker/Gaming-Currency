@@ -8,7 +8,7 @@ from currencies.models import (
 )
 from currencies.services import ExchangesService, HoldersService
 from django import forms, views
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.contrib.auth.decorators import permission_required
 from django.core.validators import MinValueValidator
 from django.http import HttpResponse, HttpResponseRedirect
@@ -19,29 +19,40 @@ from django.utils.decorators import method_decorator
 
 @method_decorator(permission_required("currencies.add_exchangetransaction"), name="dispatch")
 class ExchangeCreateView(views.View):
+    template = "transaction/create.html"
+
     class Form(forms.Form):
-        service = forms.ModelChoiceField(CurrencyService.objects.all())
-        holder_id = forms.CharField()
-        exchange_rule = forms.ModelChoiceField(ExchangeRule.objects.all())
-        from_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all())
-        from_amount = forms.DecimalField(min_value=0)
-        auto_reject_timedelta = forms.IntegerField(validators=[MinValueValidator(180)])
+        service = forms.ModelChoiceField(CurrencyService.objects.all(), label="Сервис")
+        holder_id = forms.CharField(label="Внешний уникальный ID держателя")
+        exchange_rule = forms.ModelChoiceField(ExchangeRule.objects.all(), label="Правило обмена")
+        from_unit = forms.ModelChoiceField(CurrencyUnit.objects.all(), label="Валюта источник")
+        to_unit = forms.ModelChoiceField(CurrencyUnit.objects.all(), label="Валюта получатель")
+        from_amount = forms.DecimalField(min_value=0, label="Сумма валюты источника")
+        auto_reject_timedelta = forms.IntegerField(
+            validators=[MinValueValidator(180)], initial=180, label="Количество секунд до автоматической отмены"
+        )
+
+    def render_form(self, request, form: forms.Form):
+        return render(
+            request,
+            self.template,
+            {"form": form, "title": "Создание транзакции обмена", **admin.site.each_context(request)},
+        )
 
     def get(self, request) -> HttpResponse:
-        return render(request, "exchanges/create.html", {"form": self.Form()})
+        return self.render_form(request, self.Form())
 
     def post(self, request) -> HttpResponse:
         form = self.Form(request.POST)
 
         if not form.is_valid():
-            return render(request, "exchanges/create.html", {"form": form})
+            return self.render_form(request=request, form=form)
 
         holder = HoldersService.get(holder_id=form.cleaned_data["holder_id"])
 
         if holder is None:
             form.add_error("holder_id", "Holder with given ID does not exist")
-            return render(request, "exchanges/create.html", {"form": form})
+            return self.render_form(request=request, form=form)
 
         service = form.cleaned_data["service"]
         exchange_rule = form.cleaned_data["exchange_rule"]
@@ -63,7 +74,7 @@ class ExchangeCreateView(views.View):
             )
         except ExchangesService.ValidationError as e:
             form.add_error(None, e)
-            return render(request, "exchanges/create.html", {"form": form})
+            return self.render_form(request, form)
 
         messages.info(request, "Transaction created")
         return HttpResponseRedirect(
