@@ -47,6 +47,7 @@ func (app *Application) BackupsProcessing(ctx context.Context) {
 				if err != nil {
 					msg := fmt.Sprintf("Error on send file %s to chat %s", result.FilePath, chatID)
 					log.Println(msg)
+					log.Println(err)
 					app.SendMessageToAllAdmins(ctx, msg)
 				} else {
 					log.Printf("Sended backup %v to chat %v\n", filepath.Base(result.FilePath), chatID)
