@@ -35,7 +35,7 @@ pluggy==1.6.0
 prompt_toolkit==3.0.51
 psycopg==3.2.6
 psycopg-binary==3.2.6
-pytest==8.3.5
+pytest==9.0.3
 pytest-cov==6.1.1
 pytest-django==4.11.1
 python-crontab==3.2.0
